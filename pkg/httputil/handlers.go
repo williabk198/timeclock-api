@@ -26,18 +26,18 @@ func BuildRouteHandler[T, U any](
 	endpointHandler EndpointLogicFunc[T, U],
 	reqDecoder RequestDecoderFunc[T],
 	respEncoder ResponseEncoderFunc[U],
-) (http.Handler, error) {
+) http.Handler {
 	switch {
 	case builder.ErrorEncoder == nil:
-		return nil, errors.NewNilValueError("builder.ErrorEncoder")
+		panic(errors.NewNilValueError("builder.ErrorEncoder"))
 	case builder.ErrorHandler == nil:
-		return nil, errors.NewNilValueError("builder.ErrorHandler")
+		panic(errors.NewNilValueError("builder.ErrorHandler"))
 	case endpointHandler == nil:
-		return nil, errors.NewNilValueError("endpointHandler")
+		panic(errors.NewNilValueError("endpointHandler"))
 	case reqDecoder == nil:
-		return nil, errors.NewNilValueError("reqDecoder")
+		panic(errors.NewNilValueError("reqDecoder"))
 	case respEncoder == nil:
-		return nil, errors.NewNilValueError("respEncoder")
+		panic(errors.NewNilValueError("respEncoder"))
 	}
 
 	return routeHandler[T, U]{
@@ -46,7 +46,7 @@ func BuildRouteHandler[T, U any](
 		encoder:      respEncoder,
 		errorHandler: builder.ErrorHandler,
 		errorEncoder: builder.ErrorEncoder,
-	}, nil
+	}
 }
 
 // routeHandler is heavily inspired by the github.com/go-kit/kit package implementation of its `http.Server` type.
