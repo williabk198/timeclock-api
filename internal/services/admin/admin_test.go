@@ -1,0 +1,144 @@
+package admin
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/williabk198/timeclock/internal/datastores"
+	"github.com/williabk198/timeclock/internal/models"
+)
+
+func TestNewService(t *testing.T) {
+	type args struct {
+		adminStore datastores.PersonStore
+	}
+
+	testPersonStore := &mockPersonStore{}
+
+	tests := []struct {
+		name string
+		args args
+		want Service
+	}{
+		{
+			name: "Success",
+			args: args{
+				adminStore: testPersonStore,
+			},
+			want: adminService{
+				personStore: testPersonStore,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, NewService(tt.args.adminStore))
+		})
+	}
+}
+
+func Test_authService_AddPerson(t *testing.T) {
+	type args struct {
+		ctx    context.Context
+		person models.Person
+	}
+
+	type wants struct {
+		id uuid.UUID
+	}
+
+	testPersonID := uuid.New()
+	testPerson := models.Person{
+		Name: models.Name{
+			GivenName:       "Testy",
+			FamilyName:      "McTesterson",
+			FamilyNameFirst: models.FirstNameGiven,
+		},
+		DateOfBirth: time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
+		Gender:      models.GenderNonBinary,
+		Pronouns:    models.Pronouns{Subject: "they", Object: "them"},
+	}
+	testErrorPerson := models.Person{
+		Name: models.Name{
+			GivenName: "err_val",
+		},
+	}
+
+	testPersonStore := &mockPersonStore{}
+	testPersonStore.On("Add", mock.Anything, testPerson).Return(testPersonID, error(nil))
+	testPersonStore.On("Add", mock.Anything, testErrorPerson).Return(uuid.Nil, assert.AnError)
+
+	tests := []struct {
+		name      string
+		a         adminService
+		args      args
+		wants     wants
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			a: adminService{
+				personStore: testPersonStore,
+			},
+			args: args{
+				ctx:    context.Background(),
+				person: testPerson,
+			},
+			wants: wants{
+				id: testPersonID,
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error",
+			a: adminService{
+				personStore: testPersonStore,
+			},
+			args: args{
+				ctx:    context.Background(),
+				person: testErrorPerson,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotID, err := tt.a.AddPerson(tt.args.ctx, tt.args.person)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.wants.id, gotID)
+		})
+	}
+}
+
+type mockPersonStore struct {
+	mock.Mock
+}
+
+func (mps *mockPersonStore) Add(ctx context.Context, item models.Person) (id uuid.UUID, err error) {
+	args := mps.Called(ctx, item)
+	return args.Get(0).(uuid.UUID), args.Error(1)
+}
+func (mps *mockPersonStore) Delete(ctx context.Context, id uuid.UUID) (item models.Person, err error) {
+	args := mps.Called(ctx, item)
+	return args.Get(0).(models.Person), args.Error(1)
+}
+func (mps *mockPersonStore) GetAll(ctx context.Context) (items []models.Person, err error) {
+	args := mps.Called(ctx)
+	return args.Get(0).([]models.Person), args.Error(1)
+}
+func (mps *mockPersonStore) GetAllPaginated(ctx context.Context, offset uint, limit uint) (items []models.Person, err error) {
+	args := mps.Called(ctx, offset, limit)
+	return args.Get(0).([]models.Person), args.Error(1)
+}
+func (mps *mockPersonStore) GetSpecific(ctx context.Context, id uuid.UUID) (item models.Person, err error) {
+	args := mps.Called(ctx, id)
+	return args.Get(0).(models.Person), args.Error(1)
+}
+func (mps *mockPersonStore) Update(ctx context.Context, id uuid.UUID, item models.Person) (err error) {
+	args := mps.Called(ctx, id, item)
+	return args.Error(0)
+}

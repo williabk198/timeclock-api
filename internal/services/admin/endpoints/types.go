@@ -1,4 +1,4 @@
-package core
+package endpoints
 
 import "github.com/williabk198/timeclock/internal/models"
 

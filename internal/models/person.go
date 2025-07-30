@@ -1,17 +1,15 @@
 package models
 
 import (
+	"fmt"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type Person struct {
-	ID          uuid.UUID
-	Name        Name      `db:",inline"`
-	DateOfBirth time.Time `db:"dob"`
-	Gender      Gender
-	Pronouns    Pronouns
+	Name        Name      `jagsqlb:"name;inline"`
+	DateOfBirth time.Time `jagsqlb:"dob"`
+	Gender      Gender    `jagsqlb:"gender"`
+	Pronouns    Pronouns  `jagsqlb:"pronouns"`
 }
 
 type FirstName string
@@ -22,9 +20,9 @@ const (
 )
 
 type Name struct {
-	GivenName       string    `db:"given_name" json:"givenName"`
-	FamilyName      string    `db:"family_name" json:"familyName"`
-	FamilyNameFirst FirstName `db:"first_name" json:"firstName"`
+	GivenName       string    `jagsqlb:"given_name" json:"givenName"`
+	FamilyName      string    `jagsqlb:"family_name" json:"familyName"`
+	FamilyNameFirst FirstName `jagsqlb:"first_name" json:"firstName"`
 }
 
 type Gender string
@@ -42,6 +40,10 @@ const (
 type Pronouns struct {
 	Subject string
 	Object  string
+}
+
+func (p Pronouns) MarshalQuery() (string, error) {
+	return fmt.Sprintf("%s/%s", p.Subject, p.Object), nil
 }
 
 // TODO: Create `Marshal` and `Unmarshal` functions for Pronouns as it should be stored as one property in the DB.
