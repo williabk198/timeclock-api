@@ -28,7 +28,7 @@ func Test_personEndpoints_Add(t *testing.T) {
 		Gender:      "non-binary",
 		Pronouns:    "they/them",
 	}
-	testGoodPersonDB := &models.Person{
+	testGoodPersonDB := models.Person{
 		Name:        testGoodPerson.Name,
 		DateOfBirth: time.Unix(testGoodPerson.DateOfBirth, 0),
 		Gender:      models.Gender(testGoodPerson.Gender),
@@ -45,7 +45,7 @@ func Test_personEndpoints_Add(t *testing.T) {
 		Gender:      "error value",
 		Pronouns:    "they/them",
 	}
-	testBadPersonDB := &models.Person{
+	testBadPersonDB := models.Person{
 		Name:        testBadPerson.Name,
 		DateOfBirth: time.Unix(testBadPerson.DateOfBirth, 0),
 		Gender:      models.Gender(testBadPerson.Gender),
