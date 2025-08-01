@@ -230,6 +230,7 @@ func Test_personStore_GetSpecific(t *testing.T) {
 			ps: personStore{
 				dbConn:     mockSession,
 				sqlBuilder: testSqlBuilder,
+				tableName:  "person.persons",
 			},
 			args: args{
 				ctx: context.Background(),
@@ -246,10 +247,24 @@ func Test_personStore_GetSpecific(t *testing.T) {
 			assertion: assert.NoError,
 		},
 		{
-			name: "Error",
+			name: "Error; Query Builder",
 			ps: personStore{
 				dbConn:     mockSession,
 				sqlBuilder: testSqlBuilder,
+				tableName:  ".invalid",
+			},
+			args: args{
+				ctx: context.Background(),
+				id:  testPersonID,
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Query Execution",
+			ps: personStore{
+				dbConn:     mockSession,
+				sqlBuilder: testSqlBuilder,
+				tableName:  "person.persons",
 			},
 			args: args{
 				ctx: context.Background(),
@@ -260,6 +275,26 @@ func Test_personStore_GetSpecific(t *testing.T) {
 				arguments: []driver.Value{testNotFoundID},
 				result:    sqlmock.NewRows(nil),
 				returnErr: sql.ErrNoRows,
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Pronoun Parser",
+			ps: personStore{
+				dbConn:     mockSession,
+				sqlBuilder: testSqlBuilder,
+				tableName:  "person.persons",
+			},
+			args: args{
+				ctx: context.Background(),
+				id:  testPersonID,
+			},
+			wantQuery: &wantQuery{
+				rawQuery:  `SELECT * FROM "person"."persons" WHERE "id" = $1`,
+				arguments: []driver.Value{testPersonID},
+				result: sqlmock.NewRows(tableRows).AddRow(
+					testPersonID.String(), "Testy", "McTesterson", "given", time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC), "non-binary", "malformed//data",
+				),
 			},
 			assertion: assert.Error,
 		},
