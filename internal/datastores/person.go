@@ -6,7 +6,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/williabk198/jagsqlb"
+	"github.com/williabk198/jagsqlb/condition"
 	"github.com/williabk198/timeclock/internal/models"
+	"github.com/williabk198/timeclock/internal/utils"
 )
 
 type PersonStore interface {
@@ -46,7 +48,27 @@ func (ps personStore) GetAllPaginated(ctx context.Context, offset uint, limit ui
 
 // GetSpecific implements Store.
 func (ps personStore) GetSpecific(ctx context.Context, id uuid.UUID) (item models.Person, err error) {
-	panic("unimplemented")
+	query, params, err := ps.sqlBuilder.Select(ps.tableName, "*").Where(condition.Equals("id", id)).Build()
+	if err != nil {
+		return models.Person{}, err
+	}
+
+	var rawPronounVal string
+	row := ps.dbConn.QueryRowContext(ctx, query, params...)
+	if err := row.Scan(
+		&id, &item.Name.GivenName, &item.Name.FamilyName, &item.Name.FamilyNameFirst,
+		&item.DateOfBirth, &item.Gender, &rawPronounVal,
+	); err != nil {
+		return models.Person{}, err
+	}
+
+	pronouns, err := utils.ParsePronouns(rawPronounVal)
+	if err != nil {
+		return models.Person{}, err
+	}
+	item.Pronouns = pronouns
+
+	return item, nil
 }
 
 // Update implements Store.
