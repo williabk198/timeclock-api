@@ -21,7 +21,17 @@ type personStore struct {
 
 // Add implements Store.
 func (ps personStore) Add(ctx context.Context, item models.Person) (id uuid.UUID, err error) {
-	panic("unimplemented")
+	query, params, err := ps.sqlBuilder.Insert(ps.tableName).Data(item).Returning("id").Build()
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	row := ps.dbConn.QueryRowContext(ctx, query, params...)
+	if err := row.Scan(&id); err != nil {
+		return uuid.Nil, err
+	}
+
+	return id, nil
 }
 
 // Delete implements Store.

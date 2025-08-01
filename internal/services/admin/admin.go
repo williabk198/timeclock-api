@@ -18,9 +18,11 @@ type adminService struct {
 
 // AddPunch implements Service.
 func (as adminService) AddPerson(ctx context.Context, person models.Person) (uuid.UUID, error) {
-	panic("unimplemented")
+	return as.personStore.Add(ctx, person)
 }
 
 func NewService(personStore datastores.PersonStore) Service {
-	panic("unimplemented")
+	return adminService{
+		personStore: personStore,
+	}
 }
