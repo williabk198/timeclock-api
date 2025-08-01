@@ -198,7 +198,7 @@ func Test_personStore_GetSpecific(t *testing.T) {
 				rawQuery:  `SELECT * FROM "person"."persons" WHERE "id" = $1`,
 				arguments: []driver.Value{testPersonID},
 				result: sqlmock.NewRows(tableRows).AddRow(
-					testPersonID.String(), "Testy", "McTesterson", "given", 0, "non-binary", "they/them",
+					testPersonID.String(), "Testy", "McTesterson", "given", time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC), "non-binary", "they/them",
 				),
 			},
 			wantItem:  testPerson,
@@ -216,7 +216,8 @@ func Test_personStore_GetSpecific(t *testing.T) {
 			},
 			wantQuery: &wantQuery{
 				rawQuery:  `SELECT * FROM "person"."persons" WHERE "id" = $1`,
-				arguments: []driver.Value{testPersonID},
+				arguments: []driver.Value{testNotFoundID},
+				result:    sqlmock.NewRows(nil),
 				returnErr: sql.ErrNoRows,
 			},
 			assertion: assert.Error,
