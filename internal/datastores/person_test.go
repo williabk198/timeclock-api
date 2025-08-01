@@ -88,7 +88,7 @@ func Test_personStore_Add(t *testing.T) {
 
 			// Check to see if the expectations of the query were met
 			if err := mockDb.ExpectationsWereMet(); err != nil {
-				t.Errorf("sql expections were not met: %v", err)
+				t.Errorf("sql expectations were not met: %v", err)
 			}
 		})
 	}
