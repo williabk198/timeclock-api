@@ -2,6 +2,9 @@ package transport
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -27,17 +30,27 @@ func NewHttpHandler(adminEndpoints endpoints.Endpoints) http.Handler {
 }
 
 func errorEncoder(ctx context.Context, err error, w http.ResponseWriter) {
-	panic("unimplemented")
+	w.WriteHeader(http.StatusInternalServerError) // TODO: Base this and the returned message on `err`
+	json.NewEncoder(w).Encode(struct {
+		Error string
+	}{
+		err.Error(),
+	})
 }
 
 func errorHandler(ctx context.Context, err error) {
-	panic("unimplemented")
+	slog.ErrorContext(ctx, err.Error())
 }
 
 func decodeRequest(ctx context.Context, r *http.Request) (endpoints.PersonData, error) {
-	panic("unimplemented")
+	var personData endpoints.PersonData
+	if err := json.NewDecoder(r.Body).Decode(&personData); err != nil {
+		return personData, fmt.Errorf("failed to parse data from request body: %w", err)
+	}
+	return personData, nil
 }
 
 func encodeResponse(ctx context.Context, w http.ResponseWriter, data endpoints.PersonData) error {
-	panic("unimplemented")
+	w.WriteHeader(http.StatusOK)
+	return json.NewEncoder(w).Encode(data)
 }
