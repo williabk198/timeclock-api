@@ -122,3 +122,8 @@ func (mas *mockAdminService) AddPerson(ctx context.Context, person models.Person
 	args := mas.Called(ctx, person)
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }
+
+func (mas *mockAdminService) GetPerson(ctx context.Context, id uuid.UUID) (models.Person, error) {
+	args := mas.Called(ctx, id)
+	return args.Get(0).(models.Person), args.Error(1)
+}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/williabk198/timeclock/internal/models"
 	"github.com/williabk198/timeclock/internal/services/admin"
 	"github.com/williabk198/timeclock/internal/utils"
@@ -35,4 +36,9 @@ func (ape adminPersonEndpoints) Add(ctx context.Context, person PersonData) (Per
 
 	person.ID = id.String()
 	return person, nil
+}
+
+// GetSpecific implements PersonEndpoints.
+func (ape adminPersonEndpoints) GetSpecific(ctx context.Context, id uuid.UUID) (PersonData, error) {
+	panic("unimplemented")
 }

@@ -114,6 +114,69 @@ func Test_authService_AddPerson(t *testing.T) {
 	}
 }
 
+func Test_adminService_GetPerson(t *testing.T) {
+	type args struct {
+		ctx context.Context
+		id  uuid.UUID
+	}
+
+	testNotFoundID := uuid.New()
+	testPersonID := uuid.New()
+	testPerson := models.Person{
+		Name: models.Name{
+			GivenName:       "Testy",
+			FamilyName:      "McTesterson",
+			FamilyNameFirst: models.FirstNameGiven,
+		},
+		DateOfBirth: time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
+		Gender:      models.GenderNonBinary,
+		Pronouns:    models.Pronouns{Subject: "they", Object: "them"},
+	}
+
+	testPersonStore := &mockPersonStore{}
+	testPersonStore.On("GetSpecific", mock.Anything, testPersonID).Return(testPerson, error(nil))
+	testPersonStore.On("GetSpecific", mock.Anything, testNotFoundID).Return(models.Person{}, assert.AnError)
+
+	tests := []struct {
+		name      string
+		as        adminService
+		args      args
+		want      models.Person
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			as: adminService{
+				personStore: testPersonStore,
+			},
+			args: args{
+				ctx: context.Background(),
+				id:  testPersonID,
+			},
+			want:      testPerson,
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error",
+			as: adminService{
+				personStore: testPersonStore,
+			},
+			args: args{
+				ctx: context.Background(),
+				id:  testNotFoundID,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.as.GetPerson(tt.args.ctx, tt.args.id)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 type mockPersonStore struct {
 	mock.Mock
 }

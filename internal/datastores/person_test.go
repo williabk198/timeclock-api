@@ -146,20 +146,99 @@ func Test_personStore_GetSpecific(t *testing.T) {
 		ctx context.Context
 		id  uuid.UUID
 	}
+	type wantQuery struct {
+		rawQuery  string
+		arguments []driver.Value
+		result    *sqlmock.Rows
+		returnErr error
+	}
+
+	tableRows := []string{"id", "given_name", "family_name", "first_name", "dob", "gender", "pronouns"}
+	testSqlBuilder := jagsqlb.NewSqlBuilder()
+	mockSession, mockDb, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testNotFoundID := uuid.New()
+	testPersonID := uuid.New()
+	testPerson := models.Person{
+		Name: models.Name{
+			GivenName:       "Testy",
+			FamilyName:      "McTesterson",
+			FamilyNameFirst: models.FirstNameGiven,
+		},
+		DateOfBirth: time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
+		Gender:      models.GenderNonBinary,
+		Pronouns: models.Pronouns{
+			Subject: "they",
+			Object:  "them",
+		},
+	}
+
 	tests := []struct {
 		name      string
 		ps        personStore
 		args      args
+		wantQuery *wantQuery
 		wantItem  models.Person
 		assertion assert.ErrorAssertionFunc
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Success",
+			ps: personStore{
+				dbConn:     mockSession,
+				sqlBuilder: testSqlBuilder,
+			},
+			args: args{
+				ctx: context.Background(),
+				id:  testPersonID,
+			},
+			wantQuery: &wantQuery{
+				rawQuery:  `SELECT * FROM "person"."persons" WHERE "id" = $1`,
+				arguments: []driver.Value{testPersonID},
+				result: sqlmock.NewRows(tableRows).AddRow(
+					testPersonID.String(), "Testy", "McTesterson", "given", 0, "non-binary", "they/them",
+				),
+			},
+			wantItem:  testPerson,
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error",
+			ps: personStore{
+				dbConn:     mockSession,
+				sqlBuilder: testSqlBuilder,
+			},
+			args: args{
+				ctx: context.Background(),
+				id:  testNotFoundID,
+			},
+			wantQuery: &wantQuery{
+				rawQuery:  `SELECT * FROM "person"."persons" WHERE "id" = $1`,
+				arguments: []driver.Value{testPersonID},
+				returnErr: sql.ErrNoRows,
+			},
+			assertion: assert.Error,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantQuery != nil {
+				mockDb.ExpectQuery(regexp.QuoteMeta(tt.wantQuery.rawQuery)).
+					WithArgs(tt.wantQuery.arguments...).WillReturnRows(
+					tt.wantQuery.result,
+				).WillReturnError(tt.wantQuery.returnErr)
+			}
+
 			gotItem, err := tt.ps.GetSpecific(tt.args.ctx, tt.args.id)
 			tt.assertion(t, err)
 			assert.Equal(t, tt.wantItem, gotItem)
+
+			// Check to see if the expectations of the query were met
+			if err := mockDb.ExpectationsWereMet(); err != nil {
+				t.Errorf("sql expectations were not met: %v", err)
+			}
 		})
 	}
 }
