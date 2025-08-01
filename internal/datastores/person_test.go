@@ -48,6 +48,7 @@ func Test_personStore_Add(t *testing.T) {
 			ps: personStore{
 				dbConn:     mockSession,
 				sqlBuilder: testSqlBuilder,
+				tableName:  "person.persons",
 			},
 			args: args{
 				ctx: context.Background(),
@@ -71,6 +72,46 @@ func Test_personStore_Add(t *testing.T) {
 			},
 			wantId:    newPersonID,
 			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Query Builder",
+			ps: personStore{
+				dbConn:     mockSession,
+				sqlBuilder: testSqlBuilder,
+				tableName:  ".invalid",
+			},
+			args:      args{ctx: context.Background(), item: models.Person{}},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Query Execution",
+			ps: personStore{
+				dbConn:     mockSession,
+				sqlBuilder: testSqlBuilder,
+				tableName:  "person.persons",
+			},
+			args: args{
+				ctx: context.Background(),
+				item: models.Person{
+					Name: models.Name{
+						GivenName:       "Testy",
+						FamilyName:      "McTesterson",
+						FamilyNameFirst: models.FirstNameGiven,
+					},
+					DateOfBirth: time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
+					Gender:      models.GenderNonBinary,
+					Pronouns:    models.Pronouns{Subject: "they", Object: "them"},
+				},
+			},
+			wantQuery: &wantQuery{
+				rawQuery: `INSERT INTO "person"."persons" ("given_name", "family_name", "first_name", "dob", "gender", "pronouns") VALUES ($1, $2, $3, $4, $5, $6) RETURNING "id"`,
+				arguments: []driver.Value{
+					"Testy", "McTesterson", "given", time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC), "non-binary", "they/them",
+				},
+				result:    mockDb.NewRows(nil),
+				returnErr: assert.AnError,
+			},
+			assertion: assert.Error,
 		},
 	}
 	for _, tt := range tests {
