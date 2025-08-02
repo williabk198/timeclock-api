@@ -23,8 +23,8 @@ func (as adminService) AddPerson(ctx context.Context, person models.Person) (uui
 }
 
 // GetPerson implements Service.
-func (as adminService) GetPerson(context.Context, uuid.UUID) (models.Person, error) {
-	panic("unimplemented")
+func (as adminService) GetPerson(ctx context.Context, id uuid.UUID) (models.Person, error) {
+	return as.personStore.GetSpecific(ctx, id)
 }
 
 func NewService(personStore datastores.PersonStore) Service {

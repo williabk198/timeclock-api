@@ -40,5 +40,16 @@ func (ape adminPersonEndpoints) Add(ctx context.Context, person PersonData) (Per
 
 // GetSpecific implements PersonEndpoints.
 func (ape adminPersonEndpoints) GetSpecific(ctx context.Context, id uuid.UUID) (PersonData, error) {
-	panic("unimplemented")
+	person, err := ape.adminService.GetPerson(ctx, id)
+	if err != nil {
+		return PersonData{}, err
+	}
+
+	return PersonData{
+		ID:          id.String(),
+		Name:        person.Name,
+		DateOfBirth: person.DateOfBirth.Unix(),
+		Gender:      string(person.Gender),
+		Pronouns:    person.Pronouns.String(),
+	}, nil
 }
