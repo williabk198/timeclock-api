@@ -114,6 +114,79 @@ func Test_personEndpoints_Add(t *testing.T) {
 	}
 }
 
+func Test_adminPersonEndpoints_GetSpecific(t *testing.T) {
+	type args struct {
+		ctx context.Context
+		id  uuid.UUID
+	}
+
+	testDoesNotExistID := uuid.New()
+	testPersonID := uuid.New()
+	testPerson := models.Person{
+		Name: models.Name{
+			GivenName:       "Testy",
+			FamilyName:      "McTesterson",
+			FamilyNameFirst: models.FirstNameGiven,
+		},
+		DateOfBirth: time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
+		Gender:      models.GenderNonBinary,
+		Pronouns: models.Pronouns{
+			Subject: "they",
+			Object:  "them",
+		},
+	}
+	testPersonData := PersonData{
+		ID:          testPersonID.String(),
+		Name:        testPerson.Name,
+		DateOfBirth: testPerson.DateOfBirth.Unix(),
+		Gender:      string(testPerson.Gender),
+		Pronouns:    testPerson.Pronouns.String(),
+	}
+
+	testAdminService := &mockAdminService{}
+	testAdminService.On("GetPerson", mock.Anything, testPersonID).Return(testPerson, error(nil))
+	testAdminService.On("GetPerson", mock.Anything, testDoesNotExistID).Return(models.Person{}, assert.AnError)
+
+	tests := []struct {
+		name      string
+		ape       adminPersonEndpoints
+		args      args
+		want      PersonData
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			ape: adminPersonEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				id:  testPersonID,
+			},
+			want:      testPersonData,
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error",
+			ape: adminPersonEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				id:  testDoesNotExistID,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.ape.GetSpecific(tt.args.ctx, tt.args.id)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 type mockAdminService struct {
 	mock.Mock
 }
