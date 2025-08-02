@@ -42,9 +42,10 @@ type Pronouns struct {
 	Object  string
 }
 
-func (p Pronouns) MarshalQuery() (string, error) {
-	return fmt.Sprintf("%s/%s", p.Subject, p.Object), nil
+func (p Pronouns) String() string {
+	return fmt.Sprintf("%s/%s", p.Subject, p.Object)
 }
 
-// TODO: Create `Marshal` and `Unmarshal` functions for Pronouns as it should be stored as one property in the DB.
-// For example if the values here are "he" and "him", then the DB entry should be "he/him"
+func (p Pronouns) MarshalQuery() (string, error) {
+	return p.String(), nil
+}
