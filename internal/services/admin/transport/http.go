@@ -22,9 +22,16 @@ func NewHttpHandler(adminEndpoints endpoints.Endpoints) http.Handler {
 	rootRouter.Handle("/person", httputil.BuildRouteHandler(
 		routeHandleBuilder,
 		adminEndpoints.Person().Add,
-		decodeRequest,
-		encodeResponse,
+		decodeCreateItemRequestData,
+		encodeResponseBodyJSON,
 	)).Methods(http.MethodPost)
+
+	rootRouter.Handle("/person/{id}", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		adminEndpoints.Person().GetSpecific,
+		decodeFetchItemRequestData("id"),
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodGet)
 
 	return rootRouter
 }
@@ -42,15 +49,25 @@ func errorHandler(ctx context.Context, err error) {
 	slog.ErrorContext(ctx, err.Error())
 }
 
-func decodeRequest(ctx context.Context, r *http.Request) (endpoints.PersonData, error) {
-	var personData endpoints.PersonData
-	if err := json.NewDecoder(r.Body).Decode(&personData); err != nil {
-		return personData, fmt.Errorf("failed to parse data from request body: %w", err)
+func decodeCreateItemRequestData[T any](ctx context.Context, r *http.Request) (reqData T, err error) {
+	if err := json.NewDecoder(r.Body).Decode(&reqData); err != nil {
+		return reqData, fmt.Errorf("failed to parse data from request body: %w", err)
 	}
-	return personData, nil
+	return reqData, nil
 }
 
-func encodeResponse(ctx context.Context, w http.ResponseWriter, data endpoints.PersonData) error {
+func decodeFetchItemRequestData(key string) func(context.Context, *http.Request) (string, error) {
+	return func(ctx context.Context, r *http.Request) (string, error) {
+		return mux.Vars(r)[key], nil
+	}
+}
+
+func encodeResponseBodyJSON[T any](ctx context.Context, w http.ResponseWriter, data T) error {
 	w.WriteHeader(http.StatusOK)
 	return json.NewEncoder(w).Encode(data)
+}
+
+type UpdateRequestData[T any] struct {
+	ID   string
+	data T
 }
