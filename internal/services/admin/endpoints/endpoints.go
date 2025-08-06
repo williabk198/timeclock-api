@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/google/uuid"
 	"github.com/williabk198/timeclock/internal/datastores"
 	"github.com/williabk198/timeclock/internal/services/admin"
 )
@@ -15,7 +14,7 @@ type Endpoints interface {
 
 type PersonEndpoints interface {
 	Add(ctx context.Context, person PersonData) (PersonData, error)
-	GetSpecific(ctx context.Context, id uuid.UUID) (PersonData, error)
+	GetSpecific(ctx context.Context, id string) (PersonData, error)
 }
 
 type adminEndpoints struct {

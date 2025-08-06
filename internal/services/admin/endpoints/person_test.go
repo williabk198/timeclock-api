@@ -117,7 +117,7 @@ func Test_personEndpoints_Add(t *testing.T) {
 func Test_adminPersonEndpoints_GetSpecific(t *testing.T) {
 	type args struct {
 		ctx context.Context
-		id  uuid.UUID
+		id  string
 	}
 
 	testDoesNotExistID := uuid.New()
@@ -161,7 +161,7 @@ func Test_adminPersonEndpoints_GetSpecific(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				id:  testPersonID,
+				id:  testPersonID.String(),
 			},
 			want:      testPersonData,
 			assertion: assert.NoError,
@@ -173,7 +173,7 @@ func Test_adminPersonEndpoints_GetSpecific(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				id:  testDoesNotExistID,
+				id:  testDoesNotExistID.String(),
 			},
 			assertion: assert.Error,
 		},
