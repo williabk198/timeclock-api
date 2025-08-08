@@ -326,17 +326,150 @@ func Test_personStore_Update(t *testing.T) {
 		id   uuid.UUID
 		item models.Person
 	}
+
+	type wantQuery struct {
+		rawQuery  string
+		arguments []driver.Value
+		result    *sqlmock.Rows
+		returnErr error
+	}
+
+	testSqlBuilder := jagsqlb.NewSqlBuilder()
+	mockSession, mockDb, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testPersonID := uuid.New()
+
 	tests := []struct {
 		name      string
 		ps        personStore
 		args      args
+		wantQuery *wantQuery
 		assertion assert.ErrorAssertionFunc
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Success",
+			ps: personStore{
+				dbConn:     mockSession,
+				sqlBuilder: testSqlBuilder,
+				tableName:  "person.persons",
+			},
+			args: args{
+				ctx: context.Background(),
+				id:  testPersonID,
+				item: models.Person{
+					Name: models.Name{
+						GivenName:       "Testy",
+						FamilyName:      "McTesterson",
+						FamilyNameFirst: models.FirstNameGiven,
+					},
+					DateOfBirth: time.Date(1992, 1, 27, 11, 57, 0, 0, time.FixedZone("EST", -18000)),
+					Gender:      models.GenderMale,
+					Pronouns: models.Pronouns{
+						Subject: "he",
+						Object:  "him",
+					},
+				},
+			},
+			wantQuery: &wantQuery{
+				rawQuery: `UPDATE "person"."persons" SET "given_name"=$1, "family_name"=$2, "first_name"=$3, "dob"=$4, gender=$5, pronouns=$6 WHERE "id" = $7;`,
+				arguments: []driver.Value{
+					"Testy",
+					"McTesterson",
+					models.FirstNameGiven,
+					time.Date(1992, 1, 27, 11, 57, 0, 0, time.FixedZone("EST", -18000)),
+					models.GenderMale,
+					"he/him",
+					testPersonID,
+				},
+				result: sqlmock.NewRows(nil),
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; SQL Builder",
+			ps: personStore{
+				dbConn:     mockSession,
+				sqlBuilder: testSqlBuilder,
+				tableName:  ".invalid_name",
+			},
+			args: args{
+				ctx: context.Background(),
+				id:  testPersonID,
+				item: models.Person{
+					Name: models.Name{
+						GivenName:       "Testy",
+						FamilyName:      "McTesterson",
+						FamilyNameFirst: models.FirstNameGiven,
+					},
+					DateOfBirth: time.Date(1992, 1, 27, 11, 57, 0, 0, time.FixedZone("EST", -18000)),
+					Gender:      models.GenderMale,
+					Pronouns: models.Pronouns{
+						Subject: "he",
+						Object:  "him",
+					},
+				},
+			},
+			wantQuery: &wantQuery{
+				rawQuery: `UPDATE "person"."persons" SET "given_name"=$1, "family_name"=$2, "first_name"=$3, "dob"=$4, gender=$5, pronouns=$6 WHERE "id" = $7;`,
+				arguments: []driver.Value{
+					"Testy",
+					"McTesterson",
+					models.FirstNameGiven,
+					time.Date(1992, 1, 27, 11, 57, 0, 0, time.FixedZone("EST", -18000)),
+					models.GenderMale,
+					"he/him",
+					testPersonID,
+				},
+				result:    sqlmock.NewRows(nil),
+				returnErr: assert.AnError,
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; SQL Execution",
+			ps: personStore{
+				dbConn:     mockSession,
+				sqlBuilder: testSqlBuilder,
+				tableName:  "person.persons",
+			},
+			args: args{
+				ctx: context.Background(),
+				id:  testPersonID,
+				item: models.Person{
+					Name: models.Name{
+						GivenName:       "Testy",
+						FamilyName:      "McTesterson",
+						FamilyNameFirst: models.FirstNameGiven,
+					},
+					DateOfBirth: time.Date(1992, 1, 27, 11, 57, 0, 0, time.FixedZone("EST", -18000)),
+					Gender:      models.GenderMale,
+					Pronouns: models.Pronouns{
+						Subject: "he",
+						Object:  "him",
+					},
+				},
+			},
+			assertion: assert.Error,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantQuery != nil {
+				mockDb.ExpectQuery(regexp.QuoteMeta(tt.wantQuery.rawQuery)).
+					WithArgs(tt.wantQuery.arguments...).WillReturnRows(
+					tt.wantQuery.result,
+				).WillReturnError(tt.wantQuery.returnErr)
+			}
+
 			tt.assertion(t, tt.ps.Update(tt.args.ctx, tt.args.id, tt.args.item))
+
+			// Check to see if the expectations of the query were met
+			if err := mockDb.ExpectationsWereMet(); err != nil {
+				t.Errorf("sql expectations were not met: %v", err)
+			}
 		})
 	}
 }

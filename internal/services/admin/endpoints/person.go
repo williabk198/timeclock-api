@@ -58,3 +58,8 @@ func (ape adminPersonEndpoints) GetSpecific(ctx context.Context, idStr string) (
 		Pronouns:    person.Pronouns.String(),
 	}, nil
 }
+
+// Update implements PersonEndpoints.
+func (ape adminPersonEndpoints) Update(ctx context.Context, urd UpdateRequestData[PersonData]) (PersonData, error) {
+	panic("unimplemented")
+}

@@ -177,6 +177,27 @@ func Test_adminService_GetPerson(t *testing.T) {
 	}
 }
 
+func Test_adminService_UpdatePerson(t *testing.T) {
+	type args struct {
+		ctx  context.Context
+		id   uuid.UUID
+		data models.Person
+	}
+	tests := []struct {
+		name      string
+		as        adminService
+		args      args
+		assertion assert.ErrorAssertionFunc
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.assertion(t, tt.as.UpdatePerson(tt.args.ctx, tt.args.id, tt.args.data))
+		})
+	}
+}
+
 type mockPersonStore struct {
 	mock.Mock
 }

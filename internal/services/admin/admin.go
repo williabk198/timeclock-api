@@ -11,6 +11,7 @@ import (
 type Service interface {
 	AddPerson(context.Context, models.Person) (uuid.UUID, error)
 	GetPerson(context.Context, uuid.UUID) (models.Person, error)
+	UpdatePerson(context.Context, uuid.UUID, models.Person) error
 }
 
 type adminService struct {
@@ -25,6 +26,11 @@ func (as adminService) AddPerson(ctx context.Context, person models.Person) (uui
 // GetPerson implements Service.
 func (as adminService) GetPerson(ctx context.Context, id uuid.UUID) (models.Person, error) {
 	return as.personStore.GetSpecific(ctx, id)
+}
+
+// UpdatePerson implements Service.
+func (as adminService) UpdatePerson(ctx context.Context, id uuid.UUID, data models.Person) error {
+	panic("unimplemented")
 }
 
 func NewService(personStore datastores.PersonStore) Service {
