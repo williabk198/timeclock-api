@@ -6,7 +6,7 @@ import (
 )
 
 type Person struct {
-	Name        Name      `jagsqlb:"name;inline"`
+	Name        Name      `jagsqlb:";inline"`
 	DateOfBirth time.Time `jagsqlb:"dob"`
 	Gender      Gender    `jagsqlb:"gender"`
 	Pronouns    Pronouns  `jagsqlb:"pronouns"`

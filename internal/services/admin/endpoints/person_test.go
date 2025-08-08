@@ -187,6 +187,105 @@ func Test_adminPersonEndpoints_GetSpecific(t *testing.T) {
 	}
 }
 
+func Test_adminPersonEndpoints_Update(t *testing.T) {
+	type args struct {
+		ctx context.Context
+		urd UpdateRequestData[PersonData]
+	}
+	testPersonID := uuid.New()
+	testPerson := models.Person{
+		Name: models.Name{
+			GivenName:       "Tetsuya",
+			FamilyName:      "Takahashi",
+			FamilyNameFirst: models.FirstNameFamily,
+		},
+		DateOfBirth: time.Date(1966, 11, 18, 0, 0, 0, 0, time.UTC),
+		Gender:      models.GenderMale,
+		Pronouns: models.Pronouns{
+			Subject: "he",
+			Object:  "him",
+		},
+	}
+	testPersonData := PersonData{
+		Name:        testPerson.Name,
+		DateOfBirth: testPerson.DateOfBirth.Unix(),
+		Gender:      string(testPerson.Gender),
+		Pronouns:    testPerson.Pronouns.String(),
+	}
+	testBadPerson := models.Person{
+		Name: models.Name{
+			GivenName:       "Testy",
+			FamilyName:      "McTesterson",
+			FamilyNameFirst: models.FirstNameGiven,
+		},
+	}
+	testBadPersonData := PersonData{
+		Name: testBadPerson.Name,
+	}
+
+	testAdminService := &mockAdminService{}
+	testAdminService.On("Update", mock.Anything, testPersonID, testPerson).Return(testPerson, error(nil))
+	testAdminService.On("Update", mock.Anything, testPersonID, testBadPerson).Return(models.Person{}, assert.AnError)
+
+	tests := []struct {
+		name      string
+		ape       adminPersonEndpoints
+		args      args
+		want      PersonData
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			ape: adminPersonEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				urd: UpdateRequestData[PersonData]{
+					ID:   testPersonID.String(),
+					Data: testPersonData,
+				},
+			},
+			want:      testPersonData,
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Bad ID Value",
+			ape: adminPersonEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				urd: UpdateRequestData[PersonData]{
+					ID: "bad_value",
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Service",
+			ape: adminPersonEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				urd: UpdateRequestData[PersonData]{
+					ID:   testPersonID.String(),
+					Data: testBadPersonData,
+				},
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.ape.Update(tt.args.ctx, tt.args.urd)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 type mockAdminService struct {
 	mock.Mock
 }
@@ -199,4 +298,9 @@ func (mas *mockAdminService) AddPerson(ctx context.Context, person models.Person
 func (mas *mockAdminService) GetPerson(ctx context.Context, id uuid.UUID) (models.Person, error) {
 	args := mas.Called(ctx, id)
 	return args.Get(0).(models.Person), args.Error(1)
+}
+
+func (mas *mockAdminService) UpdatePerson(ctx context.Context, id uuid.UUID, data models.Person) error {
+	args := mas.Called(ctx, id, data)
+	return args.Error(0)
 }
