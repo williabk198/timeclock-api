@@ -199,7 +199,7 @@ func Test_adminPersonEndpoints_Update(t *testing.T) {
 			FamilyName:      "Takahashi",
 			FamilyNameFirst: models.FirstNameFamily,
 		},
-		DateOfBirth: time.Date(1966, 11, 18, 0, 0, 0, 0, time.UTC),
+		DateOfBirth: time.Date(1966, 11, 18, 0, 0, 0, 0, time.UTC).Local(),
 		Gender:      models.GenderMale,
 		Pronouns: models.Pronouns{
 			Subject: "he",
@@ -224,8 +224,8 @@ func Test_adminPersonEndpoints_Update(t *testing.T) {
 	}
 
 	testAdminService := &mockAdminService{}
-	testAdminService.On("Update", mock.Anything, testPersonID, testPerson).Return(testPerson, error(nil))
-	testAdminService.On("Update", mock.Anything, testPersonID, testBadPerson).Return(models.Person{}, assert.AnError)
+	testAdminService.On("UpdatePerson", mock.Anything, testPersonID, testPerson).Return(error(nil))
+	testAdminService.On("UpdatePerson", mock.Anything, testPersonID, testBadPerson).Return(assert.AnError)
 
 	tests := []struct {
 		name      string

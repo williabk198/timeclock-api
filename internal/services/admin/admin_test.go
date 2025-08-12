@@ -183,13 +183,54 @@ func Test_adminService_UpdatePerson(t *testing.T) {
 		id   uuid.UUID
 		data models.Person
 	}
+
+	testNotFoundID := uuid.New()
+	testPersonID := uuid.New()
+	testPerson := models.Person{
+		Name: models.Name{
+			GivenName:       "Testy",
+			FamilyName:      "McTesterson",
+			FamilyNameFirst: models.FirstNameGiven,
+		},
+		DateOfBirth: time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
+		Gender:      models.GenderNonBinary,
+		Pronouns:    models.Pronouns{Subject: "they", Object: "them"},
+	}
+
+	testPersonStore := &mockPersonStore{}
+	testPersonStore.On("Update", mock.Anything, testPersonID, testPerson).Return(error(nil))
+	testPersonStore.On("Update", mock.Anything, testNotFoundID, testPerson).Return(assert.AnError)
+
 	tests := []struct {
 		name      string
 		as        adminService
 		args      args
 		assertion assert.ErrorAssertionFunc
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Success",
+			as: adminService{
+				personStore: testPersonStore,
+			},
+			args: args{
+				ctx:  context.Background(),
+				id:   testPersonID,
+				data: testPerson,
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error",
+			as: adminService{
+				personStore: testPersonStore,
+			},
+			args: args{
+				ctx:  context.Background(),
+				id:   testNotFoundID,
+				data: testPerson,
+			},
+			assertion: assert.Error,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
