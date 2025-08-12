@@ -73,7 +73,16 @@ func (ps personStore) GetSpecific(ctx context.Context, id uuid.UUID) (item model
 
 // Update implements Store.
 func (ps personStore) Update(ctx context.Context, id uuid.UUID, item models.Person) (err error) {
-	panic("unimplemented")
+	query, params, err := ps.sqlBuilder.Update(ps.tableName).SetStruct(item).Where(condition.Equals("id", id)).Build()
+	if err != nil {
+		return err
+	}
+
+	if _, err := ps.dbConn.ExecContext(ctx, query, params...); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func NewPersonStore(dbConn *sql.DB) PersonStore {
