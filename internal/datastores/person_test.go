@@ -330,7 +330,7 @@ func Test_personStore_Update(t *testing.T) {
 	type wantQuery struct {
 		rawQuery  string
 		arguments []driver.Value
-		result    *sqlmock.Rows
+		result    driver.Result
 		returnErr error
 	}
 
@@ -374,7 +374,7 @@ func Test_personStore_Update(t *testing.T) {
 				},
 			},
 			wantQuery: &wantQuery{
-				rawQuery: `UPDATE "person"."persons" SET "given_name"=$1, "family_name"=$2, "first_name"=$3, "dob"=$4, gender=$5, pronouns=$6 WHERE "id" = $7;`,
+				rawQuery: `UPDATE "person"."persons" SET "given_name"=$1, "family_name"=$2, "first_name"=$3, "dob"=$4, "gender"=$5, "pronouns"=$6 WHERE "id" = $7;`,
 				arguments: []driver.Value{
 					"Testy",
 					"McTesterson",
@@ -382,9 +382,9 @@ func Test_personStore_Update(t *testing.T) {
 					time.Date(1992, 1, 27, 11, 57, 0, 0, time.FixedZone("EST", -18000)),
 					models.GenderMale,
 					"he/him",
-					testPersonID,
+					testPersonID.String(),
 				},
-				result: sqlmock.NewRows(nil),
+				result: sqlmock.NewResult(0, 1),
 			},
 			assertion: assert.NoError,
 		},
@@ -412,20 +412,6 @@ func Test_personStore_Update(t *testing.T) {
 					},
 				},
 			},
-			wantQuery: &wantQuery{
-				rawQuery: `UPDATE "person"."persons" SET "given_name"=$1, "family_name"=$2, "first_name"=$3, "dob"=$4, gender=$5, pronouns=$6 WHERE "id" = $7;`,
-				arguments: []driver.Value{
-					"Testy",
-					"McTesterson",
-					models.FirstNameGiven,
-					time.Date(1992, 1, 27, 11, 57, 0, 0, time.FixedZone("EST", -18000)),
-					models.GenderMale,
-					"he/him",
-					testPersonID,
-				},
-				result:    sqlmock.NewRows(nil),
-				returnErr: assert.AnError,
-			},
 			assertion: assert.Error,
 		},
 		{
@@ -452,16 +438,29 @@ func Test_personStore_Update(t *testing.T) {
 					},
 				},
 			},
+			wantQuery: &wantQuery{
+				rawQuery: `UPDATE "person"."persons" SET "given_name"=$1, "family_name"=$2, "first_name"=$3, "dob"=$4, "gender"=$5, "pronouns"=$6 WHERE "id" = $7;`,
+				arguments: []driver.Value{
+					"Testy",
+					"McTesterson",
+					models.FirstNameGiven,
+					time.Date(1992, 1, 27, 11, 57, 0, 0, time.FixedZone("EST", -18000)),
+					models.GenderMale,
+					"he/him",
+					testPersonID,
+				},
+				returnErr: assert.AnError,
+			},
 			assertion: assert.Error,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.wantQuery != nil {
-				mockDb.ExpectQuery(regexp.QuoteMeta(tt.wantQuery.rawQuery)).
-					WithArgs(tt.wantQuery.arguments...).WillReturnRows(
-					tt.wantQuery.result,
-				).WillReturnError(tt.wantQuery.returnErr)
+				mockDb.ExpectExec(regexp.QuoteMeta(tt.wantQuery.rawQuery)).
+					WithArgs(tt.wantQuery.arguments...).
+					WillReturnResult(tt.wantQuery.result).
+					WillReturnError(tt.wantQuery.returnErr)
 			}
 
 			tt.assertion(t, tt.ps.Update(tt.args.ctx, tt.args.id, tt.args.item))
