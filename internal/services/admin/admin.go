@@ -25,8 +25,8 @@ func (as adminService) AddPerson(ctx context.Context, person models.Person) (uui
 }
 
 // DeletePerson implements Service.
-func (as adminService) DeletePerson(context.Context, uuid.UUID) (models.Person, error) {
-	panic("unimplemented")
+func (as adminService) DeletePerson(ctx context.Context, id uuid.UUID) (models.Person, error) {
+	return as.personStore.Delete(ctx, id)
 }
 
 // GetPerson implements Service.

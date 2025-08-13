@@ -38,7 +38,27 @@ func (ps personStore) Add(ctx context.Context, item models.Person) (id uuid.UUID
 
 // Delete implements Store.
 func (ps personStore) Delete(ctx context.Context, id uuid.UUID) (item models.Person, err error) {
-	panic("unimplemented")
+	query, params, err := ps.sqlBuilder.Delete(ps.tableName).Where(condition.Equals("id", id)).Returning("*").Build()
+	if err != nil {
+		return models.Person{}, err
+	}
+
+	var rawPronounVal string
+	var person models.Person
+	row := ps.dbConn.QueryRowContext(ctx, query, params...)
+	if err := row.Scan(
+		&id, &person.Name.GivenName, &person.Name.FamilyName, &person.Name.FamilyNameFirst,
+		&person.DateOfBirth, &person.Gender, &rawPronounVal,
+	); err != nil {
+		return models.Person{}, err
+	}
+
+	person.Pronouns, err = utils.ParsePronouns(rawPronounVal)
+	if err != nil {
+		return models.Person{}, nil
+	}
+
+	return person, nil
 }
 
 // GetAllPaginated implements Store.
