@@ -38,6 +38,11 @@ func (ape adminPersonEndpoints) Add(ctx context.Context, person PersonData) (Per
 	return person, nil
 }
 
+// Delete implements PersonEndpoints.
+func (ape adminPersonEndpoints) Delete(ctx context.Context, idStr string) (PersonData, error) {
+	panic("unimplemented")
+}
+
 // GetSpecific implements PersonEndpoints.
 func (ape adminPersonEndpoints) GetSpecific(ctx context.Context, idStr string) (PersonData, error) {
 	id, err := uuid.Parse(idStr)

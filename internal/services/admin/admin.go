@@ -10,6 +10,7 @@ import (
 
 type Service interface {
 	AddPerson(context.Context, models.Person) (uuid.UUID, error)
+	DeletePerson(context.Context, uuid.UUID) (models.Person, error)
 	GetPerson(context.Context, uuid.UUID) (models.Person, error)
 	UpdatePerson(context.Context, uuid.UUID, models.Person) error
 }
@@ -21,6 +22,11 @@ type adminService struct {
 // AddPunch implements Service.
 func (as adminService) AddPerson(ctx context.Context, person models.Person) (uuid.UUID, error) {
 	return as.personStore.Add(ctx, person)
+}
+
+// DeletePerson implements Service.
+func (as adminService) DeletePerson(context.Context, uuid.UUID) (models.Person, error) {
+	panic("unimplemented")
 }
 
 // GetPerson implements Service.
