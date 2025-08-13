@@ -30,7 +30,7 @@ func (as adminService) GetPerson(ctx context.Context, id uuid.UUID) (models.Pers
 
 // UpdatePerson implements Service.
 func (as adminService) UpdatePerson(ctx context.Context, id uuid.UUID, data models.Person) error {
-	panic("unimplemented")
+	return as.personStore.Update(ctx, id, data)
 }
 
 func NewService(personStore datastores.PersonStore) Service {

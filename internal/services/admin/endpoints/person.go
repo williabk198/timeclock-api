@@ -60,6 +60,28 @@ func (ape adminPersonEndpoints) GetSpecific(ctx context.Context, idStr string) (
 }
 
 // Update implements PersonEndpoints.
-func (ape adminPersonEndpoints) Update(ctx context.Context, urd UpdateRequestData[PersonData]) (PersonData, error) {
-	panic("unimplemented")
+func (ape adminPersonEndpoints) Update(ctx context.Context, updateReqData UpdateRequestData[PersonData]) (PersonData, error) {
+	id, err := uuid.Parse(updateReqData.ID)
+	if err != nil {
+		return PersonData{}, err
+	}
+
+	pronouns, err := utils.ParsePronouns(updateReqData.Data.Pronouns)
+	if err != nil {
+		return PersonData{}, err
+	}
+
+	updatedVals := models.Person{
+		Name:        updateReqData.Data.Name,
+		DateOfBirth: time.Unix(updateReqData.Data.DateOfBirth, 0),
+		Gender:      models.Gender(updateReqData.Data.Gender),
+		Pronouns:    pronouns,
+	}
+
+	err = ape.adminService.UpdatePerson(ctx, id, updatedVals)
+	if err != nil {
+		return PersonData{}, err
+	}
+
+	return updateReqData.Data, nil
 }
