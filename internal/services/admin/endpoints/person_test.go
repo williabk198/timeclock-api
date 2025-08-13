@@ -114,6 +114,78 @@ func Test_personEndpoints_Add(t *testing.T) {
 	}
 }
 
+func Test_adminPersonEndpoints_Delete(t *testing.T) {
+	type args struct {
+		ctx   context.Context
+		idStr string
+	}
+
+	testDoesNotExistID := uuid.New()
+	testPersonID := uuid.New()
+	testPerson := models.Person{
+		Name: models.Name{
+			GivenName:       "Testy",
+			FamilyName:      "McTesterson",
+			FamilyNameFirst: models.FirstNameGiven,
+		},
+		DateOfBirth: time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
+		Gender:      models.GenderNonBinary,
+		Pronouns: models.Pronouns{
+			Subject: "they",
+			Object:  "them",
+		},
+	}
+
+	testAdminService := &mockAdminService{}
+	testAdminService.On("DeletePerson", mock.Anything, testPersonID).Return(testPerson, error(nil))
+	testAdminService.On("DeletePerson", mock.Anything, testDoesNotExistID).Return(models.Person{}, assert.AnError)
+
+	tests := []struct {
+		name      string
+		ape       adminPersonEndpoints
+		args      args
+		want      PersonData
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			ape: adminPersonEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx:   context.Background(),
+				idStr: testPersonID.String(),
+			},
+			want: PersonData{
+				ID:          testPersonID.String(),
+				Name:        testPerson.Name,
+				DateOfBirth: testPerson.DateOfBirth.Unix(),
+				Gender:      string(testPerson.Gender),
+				Pronouns:    testPerson.Pronouns.String(),
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error",
+			ape: adminPersonEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx:   context.Background(),
+				idStr: testDoesNotExistID.String(),
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.ape.Delete(tt.args.ctx, tt.args.idStr)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func Test_adminPersonEndpoints_GetSpecific(t *testing.T) {
 	type args struct {
 		ctx context.Context
@@ -293,6 +365,11 @@ type mockAdminService struct {
 func (mas *mockAdminService) AddPerson(ctx context.Context, person models.Person) (uuid.UUID, error) {
 	args := mas.Called(ctx, person)
 	return args.Get(0).(uuid.UUID), args.Error(1)
+}
+
+func (mas *mockAdminService) DeletePerson(ctx context.Context, id uuid.UUID) (models.Person, error) {
+	args := mas.Called(ctx, id)
+	return args.Get(0).(models.Person), args.Error(1)
 }
 
 func (mas *mockAdminService) GetPerson(ctx context.Context, id uuid.UUID) (models.Person, error) {
