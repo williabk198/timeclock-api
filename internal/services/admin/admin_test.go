@@ -134,8 +134,8 @@ func Test_adminService_DeletePerson(t *testing.T) {
 	}
 
 	testPersonStore := &mockPersonStore{}
-	testPersonStore.On("GetSpecific", mock.Anything, testPersonID).Return(testPerson, error(nil))
-	testPersonStore.On("GetSpecific", mock.Anything, testNotFoundID).Return(models.Person{}, assert.AnError)
+	testPersonStore.On("Delete", mock.Anything, testPersonID).Return(testPerson, error(nil))
+	testPersonStore.On("Delete", mock.Anything, testNotFoundID).Return(models.Person{}, assert.AnError)
 
 	tests := []struct {
 		name      string
@@ -311,7 +311,7 @@ func (mps *mockPersonStore) Add(ctx context.Context, item models.Person) (id uui
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }
 func (mps *mockPersonStore) Delete(ctx context.Context, id uuid.UUID) (item models.Person, err error) {
-	args := mps.Called(ctx, item)
+	args := mps.Called(ctx, id)
 	return args.Get(0).(models.Person), args.Error(1)
 }
 func (mps *mockPersonStore) GetAll(ctx context.Context) (items []models.Person, err error) {
