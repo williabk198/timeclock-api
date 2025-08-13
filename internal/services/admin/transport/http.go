@@ -33,6 +33,13 @@ func NewHttpHandler(adminEndpoints endpoints.Endpoints) http.Handler {
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodGet)
 
+	rootRouter.Handle("/person/{id}", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		adminEndpoints.Person().Update,
+		decodeUpdateItemRequestData[endpoints.PersonData]("id"),
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodPut)
+
 	return rootRouter
 }
 
@@ -62,12 +69,22 @@ func decodeFetchItemRequestData(key string) func(context.Context, *http.Request)
 	}
 }
 
+func decodeUpdateItemRequestData[T any](key string) httputil.RequestDecoderFunc[endpoints.UpdateRequestData[T]] {
+	return func(ctx context.Context, r *http.Request) (endpoints.UpdateRequestData[T], error) {
+		id, _ := decodeFetchItemRequestData(key)(ctx, r)
+		data, err := decodeCreateItemRequestData[T](ctx, r)
+		if err != nil {
+			return endpoints.UpdateRequestData[T]{}, err
+		}
+
+		return endpoints.UpdateRequestData[T]{
+			ID:   id,
+			Data: data,
+		}, nil
+	}
+}
+
 func encodeResponseBodyJSON[T any](ctx context.Context, w http.ResponseWriter, data T) error {
 	w.WriteHeader(http.StatusOK)
 	return json.NewEncoder(w).Encode(data)
-}
-
-type UpdateRequestData[T any] struct {
-	ID   string
-	data T
 }
