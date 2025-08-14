@@ -259,20 +259,192 @@ func Test_personStore_GetAllPaginated(t *testing.T) {
 		offset uint
 		limit  uint
 	}
+	type wantQuery struct {
+		rawQuery  string
+		arguments []driver.Value
+		result    *sqlmock.Rows
+		returnErr error
+	}
+
+	tableRows := []string{"id", "given_name", "family_name", "first_name", "dob", "gender", "pronouns"}
+	testSqlBuilder := jagsqlb.NewSqlBuilder()
+	mockSession, mockDb, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testIDs := []uuid.UUID{
+		uuid.New(),
+		uuid.New(),
+		uuid.New(),
+		uuid.New(),
+	}
+	testPersons := []models.Person{
+		{
+			Name:        models.Name{GivenName: "Testy", FamilyName: "McTesterson", FamilyNameFirst: models.FirstNameGiven},
+			DateOfBirth: time.Unix(0, 0),
+			Gender:      models.GenderNonBinary,
+			Pronouns:    models.Pronouns{Subject: "they", Object: "them"},
+		},
+		{
+			Name:        models.Name{GivenName: "Tetsuya", FamilyName: "Takahashi", FamilyNameFirst: models.FirstNameFamily},
+			DateOfBirth: time.Date(1966, 11, 18, 0, 0, 0, 0, time.UTC),
+			Gender:      models.GenderMale,
+			Pronouns:    models.Pronouns{Subject: "he", Object: "him"},
+		},
+		{
+			Name:        models.Name{GivenName: "Brandon", FamilyName: "Williams", FamilyNameFirst: models.FirstNameGiven},
+			DateOfBirth: time.Date(1992, 1, 27, 0, 0, 0, 0, time.UTC),
+			Gender:      models.GenderMale,
+			Pronouns:    models.Pronouns{Subject: "he", Object: "him"},
+		},
+		{
+			Name:        models.Name{GivenName: "Testita", FamilyName: "Tester", FamilyNameFirst: models.FirstNameGiven},
+			DateOfBirth: time.Date(1950, 1, 1, 0, 0, 0, 0, time.UTC),
+			Gender:      models.GenderFemale,
+			Pronouns:    models.Pronouns{Subject: "she", Object: "her"},
+		},
+	}
+
 	tests := []struct {
 		name      string
 		ps        personStore
 		args      args
+		wantQuery *wantQuery
 		wantItems []models.Person
 		assertion assert.ErrorAssertionFunc
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Success; Zero Offset",
+			ps: personStore{
+				dbConn:     mockSession,
+				sqlBuilder: testSqlBuilder,
+				tableName:  "person.persons",
+			},
+			args: args{
+				ctx:   context.Background(),
+				limit: 5,
+			},
+			wantQuery: &wantQuery{
+				rawQuery:  `SELECT * FROM "person"."persons" OFFSET 0 LIMIT 5`,
+				arguments: []driver.Value{},
+				result: sqlmock.NewRows(tableRows).AddRows(
+					[]driver.Value{
+						testIDs[0].String(), "Testy", "McTesterson", "given", time.Unix(0, 0), "non-binary", "they/them",
+					},
+					[]driver.Value{
+						testIDs[1].String(), "Tetsuya", "Takahashi", "family", time.Date(1966, 11, 18, 0, 0, 0, 0, time.UTC), "male", "he/him",
+					},
+					[]driver.Value{
+						testIDs[2].String(), "Brandon", "Williams", "given", time.Date(1992, 1, 27, 0, 0, 0, 0, time.UTC), "male", "he/him",
+					},
+					[]driver.Value{
+						testIDs[3].String(), "Testita", "Tester", "given", time.Date(1950, 1, 1, 0, 0, 0, 0, time.UTC), "female", "she/her",
+					},
+				),
+			},
+			wantItems: testPersons,
+			assertion: assert.NoError,
+		},
+		{
+			name: "Success; Zero Limit",
+			ps: personStore{
+				dbConn:     mockSession,
+				sqlBuilder: testSqlBuilder,
+				tableName:  "person.persons",
+			},
+			args: args{
+				ctx:    context.Background(),
+				offset: 1,
+				limit:  0,
+			},
+			wantQuery: &wantQuery{
+				rawQuery:  `SELECT * FROM "person"."persons" OFFSET 1 LIMIT 0;`,
+				arguments: []driver.Value{},
+				result:    sqlmock.NewRows(tableRows),
+			},
+			wantItems: []models.Person{},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Success with Non-Zero Limit and Offset",
+			ps: personStore{
+				dbConn:     mockSession,
+				sqlBuilder: testSqlBuilder,
+				tableName:  "person.persons",
+			},
+			args: args{
+				ctx:    context.Background(),
+				offset: 1,
+				limit:  2,
+			},
+			wantQuery: &wantQuery{
+				rawQuery:  `SELECT * FROM "person"."persons" OFFSET 1 LIMIT 2`,
+				arguments: []driver.Value{},
+				result: sqlmock.NewRows(tableRows).AddRows(
+					[]driver.Value{
+						testIDs[1].String(), "Tetsuya", "Takahashi", "family", time.Date(1966, 11, 18, 0, 0, 0, 0, time.UTC), "male", "he/him",
+					},
+					[]driver.Value{
+						testIDs[2].String(), "Brandon", "Williams", "given", time.Date(1992, 1, 27, 0, 0, 0, 0, time.UTC), "male", "he/him",
+					},
+				),
+			},
+			wantItems: testPersons[1:3],
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Query Builder",
+			ps: personStore{
+				dbConn:     mockSession,
+				sqlBuilder: testSqlBuilder,
+				tableName:  ".invalid_name",
+			},
+			args: args{
+				ctx:    context.Background(),
+				offset: 0,
+				limit:  0,
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Query Execution",
+			ps: personStore{
+				dbConn:     mockSession,
+				sqlBuilder: testSqlBuilder,
+				tableName:  "person.persons",
+			},
+			args: args{
+				ctx:    context.Background(),
+				offset: 0,
+				limit:  0,
+			},
+			wantQuery: &wantQuery{
+				rawQuery:  `SELECT * FROM "person"."persons" OFFSET 0 LIMIT 0`,
+				arguments: []driver.Value{},
+				result:    sqlmock.NewRows(nil),
+				returnErr: assert.AnError,
+			},
+			assertion: assert.Error,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantQuery != nil {
+				mockDb.ExpectQuery(regexp.QuoteMeta(tt.wantQuery.rawQuery)).
+					WithArgs(tt.wantQuery.arguments...).WillReturnRows(
+					tt.wantQuery.result,
+				).WillReturnError(tt.wantQuery.returnErr)
+			}
+
 			gotItems, err := tt.ps.GetAllPaginated(tt.args.ctx, tt.args.offset, tt.args.limit)
 			tt.assertion(t, err)
 			assert.Equal(t, tt.wantItems, gotItems)
+
+			// Check to see if the expectations of the query were met
+			if err := mockDb.ExpectationsWereMet(); err != nil {
+				t.Errorf("sql expectations were not met: %v", err)
+			}
 		})
 	}
 }

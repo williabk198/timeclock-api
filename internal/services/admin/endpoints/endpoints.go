@@ -16,6 +16,7 @@ type PersonEndpoints interface {
 	Add(ctx context.Context, person PersonData) (PersonData, error)
 	Delete(ctx context.Context, id string) (PersonData, error)
 	GetSpecific(ctx context.Context, id string) (PersonData, error)
+	GetAll(ctx context.Context, offset, limit uint) ([]PersonData, error)
 	Update(ctx context.Context, urd UpdateRequestData[PersonData]) (PersonData, error)
 }
 
