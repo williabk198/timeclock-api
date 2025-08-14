@@ -177,6 +177,80 @@ func Test_adminService_DeletePerson(t *testing.T) {
 	}
 }
 
+func Test_adminService_GetAllPersons(t *testing.T) {
+	type args struct {
+		ctx    context.Context
+		offset uint
+		limit  uint
+	}
+
+	testPersons := []models.Person{
+		{
+			Name:        models.Name{GivenName: "Testy", FamilyName: "McTesterson", FamilyNameFirst: models.FirstNameGiven},
+			DateOfBirth: time.Unix(0, 0),
+			Gender:      models.GenderNonBinary,
+			Pronouns:    models.Pronouns{Subject: "they", Object: "them"},
+		},
+		{
+			Name:        models.Name{GivenName: "Brandon", FamilyName: "Williams", FamilyNameFirst: models.FirstNameGiven},
+			DateOfBirth: time.Date(1992, 1, 27, 0, 0, 0, 0, time.UTC),
+			Gender:      models.GenderMale,
+			Pronouns:    models.Pronouns{Subject: "he", Object: "him"},
+		},
+		{
+			Name:        models.Name{GivenName: "Testita", FamilyName: "Tester", FamilyNameFirst: models.FirstNameGiven},
+			DateOfBirth: time.Date(1950, 1, 1, 0, 0, 0, 0, time.UTC),
+			Gender:      models.GenderFemale,
+			Pronouns:    models.Pronouns{Subject: "she", Object: "her"},
+		},
+	}
+
+	testPersonStore := &mockPersonStore{}
+	testPersonStore.On("GetAllPaginated", mock.Anything, 0, 2).Return(testPersons[:2], error(nil))
+	testPersonStore.On("GetAllPaginated", mock.Anything, 0, 0).Return([]models.Person{}, assert.AnError)
+
+	tests := []struct {
+		name      string
+		as        adminService
+		args      args
+		want      []models.Person
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			as: adminService{
+				personStore: testPersonStore,
+			},
+			args: args{
+				ctx:    context.Background(),
+				offset: 0,
+				limit:  2,
+			},
+			want:      testPersons[:2],
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error",
+			as: adminService{
+				personStore: testPersonStore,
+			},
+			args: args{
+				ctx:    context.Background(),
+				offset: 0,
+				limit:  0,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.as.GetAllPersons(tt.args.ctx, tt.args.offset, tt.args.limit)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func Test_adminService_GetPerson(t *testing.T) {
 	type args struct {
 		ctx context.Context

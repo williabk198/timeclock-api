@@ -372,6 +372,11 @@ func (mas *mockAdminService) DeletePerson(ctx context.Context, id uuid.UUID) (mo
 	return args.Get(0).(models.Person), args.Error(1)
 }
 
+func (mas *mockAdminService) GetAllPersons(ctx context.Context, offset, limit uint) ([]models.Person, error) {
+	args := mas.Called(ctx, offset, limit)
+	return args.Get(0).([]models.Person), args.Error(1)
+}
+
 func (mas *mockAdminService) GetPerson(ctx context.Context, id uuid.UUID) (models.Person, error) {
 	args := mas.Called(ctx, id)
 	return args.Get(0).(models.Person), args.Error(1)
