@@ -234,7 +234,7 @@ func Test_adminPersonEndpoints_GetAll(t *testing.T) {
 
 	testAdminService := &mockAdminService{}
 	testAdminService.On("GetAllPersons", mock.Anything, uint(1), uint(2)).Return(testPersons[1:3], error(nil))
-	testAdminService.On("GetAllPersons", mock.Anything, uint(0), uint(0)).Return(models.Person{}, assert.AnError)
+	testAdminService.On("GetAllPersons", mock.Anything, uint(0), uint(0)).Return([]models.Person{}, assert.AnError)
 
 	tests := []struct {
 		name      string
