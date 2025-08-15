@@ -61,7 +61,23 @@ func (ape adminPersonEndpoints) Delete(ctx context.Context, idStr string) (Perso
 
 // GetAll implements PersonEndpoints.
 func (ape adminPersonEndpoints) GetAll(ctx context.Context, reqData GetPaginatedRequestData) ([]PersonData, error) {
-	panic("unimplemented")
+	persons, err := ape.adminService.GetAllPersons(ctx, reqData.Offset, reqData.Limit)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]PersonData, len(persons))
+	for i, p := range persons {
+		result[i] = PersonData{
+			ID:          p.ID.String(),
+			Name:        p.Name,
+			DateOfBirth: p.DateOfBirth.Unix(),
+			Gender:      string(p.Gender),
+			Pronouns:    p.Pronouns.String(),
+		}
+	}
+
+	return result, nil
 }
 
 // GetSpecific implements PersonEndpoints.
