@@ -49,7 +49,18 @@ func (ps personStore) Delete(ctx context.Context, id uuid.UUID) (item models.Per
 
 // GetAllPaginated implements Store.
 func (ps personStore) GetAllPaginated(ctx context.Context, offset uint, limit uint) (items []models.Person, err error) {
-	panic("unimplemented")
+	query, params, err := ps.sqlBuilder.Select(ps.tableName, "*").Offset(offset).Limit(limit).Build()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := ps.dbConn.QueryContext(ctx, query, params...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return ps.personSliceFromRows(rows)
 }
 
 // GetSpecific implements Store.

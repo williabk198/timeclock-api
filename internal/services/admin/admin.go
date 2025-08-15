@@ -32,7 +32,7 @@ func (as adminService) DeletePerson(ctx context.Context, id uuid.UUID) (models.P
 
 // GetAllPersons implements Service.
 func (as adminService) GetAllPersons(ctx context.Context, offset uint, limit uint) ([]models.Person, error) {
-	panic("unimplemented")
+	return as.personStore.GetAllPaginated(ctx, offset, limit)
 }
 
 // GetPerson implements Service.
