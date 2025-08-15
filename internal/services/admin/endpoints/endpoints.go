@@ -16,7 +16,7 @@ type PersonEndpoints interface {
 	Add(ctx context.Context, person PersonData) (PersonData, error)
 	Delete(ctx context.Context, id string) (PersonData, error)
 	GetSpecific(ctx context.Context, id string) (PersonData, error)
-	GetAll(ctx context.Context, offset, limit uint) ([]PersonData, error)
+	GetAll(ctx context.Context, reqData GetPaginatedRequestData) ([]PersonData, error)
 	Update(ctx context.Context, urd UpdateRequestData[PersonData]) (PersonData, error)
 }
 
@@ -40,4 +40,9 @@ func NewAdminEndpointHandlers(dbSession *sql.DB) Endpoints {
 type UpdateRequestData[T any] struct {
 	ID   string
 	Data T
+}
+
+type GetPaginatedRequestData struct {
+	Offset uint
+	Limit  uint
 }

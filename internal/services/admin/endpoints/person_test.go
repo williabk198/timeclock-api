@@ -186,6 +186,102 @@ func Test_adminPersonEndpoints_Delete(t *testing.T) {
 	}
 }
 
+func Test_adminPersonEndpoints_GetAll(t *testing.T) {
+	type args struct {
+		ctx     context.Context
+		reqData GetPaginatedRequestData
+	}
+
+	testPersons := []models.Person{
+		{
+			ID:          uuid.New(),
+			Name:        models.Name{GivenName: "Testy", FamilyName: "McTesterson", FamilyNameFirst: models.FirstNameGiven},
+			DateOfBirth: time.Unix(0, 0),
+			Gender:      models.GenderNonBinary,
+			Pronouns:    models.Pronouns{Subject: "they", Object: "them"},
+		},
+		{
+			ID:          uuid.New(),
+			Name:        models.Name{GivenName: "Brandon", FamilyName: "Williams", FamilyNameFirst: models.FirstNameGiven},
+			DateOfBirth: time.Date(1992, 1, 27, 0, 0, 0, 0, time.UTC),
+			Gender:      models.GenderMale,
+			Pronouns:    models.Pronouns{Subject: "he", Object: "him"},
+		},
+		{
+			ID:          uuid.New(),
+			Name:        models.Name{GivenName: "Testita", FamilyName: "Tester", FamilyNameFirst: models.FirstNameGiven},
+			DateOfBirth: time.Date(1950, 1, 1, 0, 0, 0, 0, time.UTC),
+			Gender:      models.GenderFemale,
+			Pronouns:    models.Pronouns{Subject: "she", Object: "her"},
+		},
+	}
+	resultData := []PersonData{
+		{
+			ID:          testPersons[1].ID.String(),
+			Name:        testPersons[1].Name,
+			DateOfBirth: testPersons[1].DateOfBirth.Unix(),
+			Gender:      string(testPersons[1].Gender),
+			Pronouns:    testPersons[1].Pronouns.String(),
+		},
+		{
+			ID:          testPersons[2].ID.String(),
+			Name:        testPersons[2].Name,
+			DateOfBirth: testPersons[2].DateOfBirth.Unix(),
+			Gender:      string(testPersons[2].Gender),
+			Pronouns:    testPersons[2].Pronouns.String(),
+		},
+	}
+
+	testAdminService := &mockAdminService{}
+	testAdminService.On("GetAllPersons", mock.Anything, uint(1), uint(2)).Return(testPersons[1:3], error(nil))
+	testAdminService.On("GetAllPersons", mock.Anything, uint(0), uint(0)).Return(models.Person{}, assert.AnError)
+
+	tests := []struct {
+		name      string
+		ape       adminPersonEndpoints
+		args      args
+		want      []PersonData
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			ape: adminPersonEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: GetPaginatedRequestData{
+					Offset: 1,
+					Limit:  2,
+				},
+			},
+			want:      resultData,
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error",
+			ape: adminPersonEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: GetPaginatedRequestData{
+					Offset: 0,
+					Limit:  0,
+				},
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.ape.GetAll(tt.args.ctx, tt.args.reqData)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func Test_adminPersonEndpoints_GetSpecific(t *testing.T) {
 	type args struct {
 		ctx context.Context

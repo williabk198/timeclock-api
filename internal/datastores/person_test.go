@@ -157,6 +157,7 @@ func Test_personStore_Delete(t *testing.T) {
 
 	testPersonID := uuid.New()
 	testPerson := models.Person{
+		ID: testPersonID,
 		Name: models.Name{
 			GivenName:       "Testy",
 			FamilyName:      "McTesterson",
@@ -273,32 +274,30 @@ func Test_personStore_GetAllPaginated(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	testIDs := []uuid.UUID{
-		uuid.New(),
-		uuid.New(),
-		uuid.New(),
-		uuid.New(),
-	}
 	testPersons := []models.Person{
 		{
+			ID:          uuid.New(),
 			Name:        models.Name{GivenName: "Testy", FamilyName: "McTesterson", FamilyNameFirst: models.FirstNameGiven},
 			DateOfBirth: time.Unix(0, 0),
 			Gender:      models.GenderNonBinary,
 			Pronouns:    models.Pronouns{Subject: "they", Object: "them"},
 		},
 		{
+			ID:          uuid.New(),
 			Name:        models.Name{GivenName: "Tetsuya", FamilyName: "Takahashi", FamilyNameFirst: models.FirstNameFamily},
 			DateOfBirth: time.Date(1966, 11, 18, 0, 0, 0, 0, time.UTC),
 			Gender:      models.GenderMale,
 			Pronouns:    models.Pronouns{Subject: "he", Object: "him"},
 		},
 		{
+			ID:          uuid.New(),
 			Name:        models.Name{GivenName: "Brandon", FamilyName: "Williams", FamilyNameFirst: models.FirstNameGiven},
 			DateOfBirth: time.Date(1992, 1, 27, 0, 0, 0, 0, time.UTC),
 			Gender:      models.GenderMale,
 			Pronouns:    models.Pronouns{Subject: "he", Object: "him"},
 		},
 		{
+			ID:          uuid.New(),
 			Name:        models.Name{GivenName: "Testita", FamilyName: "Tester", FamilyNameFirst: models.FirstNameGiven},
 			DateOfBirth: time.Date(1950, 1, 1, 0, 0, 0, 0, time.UTC),
 			Gender:      models.GenderFemale,
@@ -330,16 +329,16 @@ func Test_personStore_GetAllPaginated(t *testing.T) {
 				arguments: []driver.Value{},
 				result: sqlmock.NewRows(tableRows).AddRows(
 					[]driver.Value{
-						testIDs[0].String(), "Testy", "McTesterson", "given", time.Unix(0, 0), "non-binary", "they/them",
+						testPersons[0].ID.String(), "Testy", "McTesterson", "given", time.Unix(0, 0), "non-binary", "they/them",
 					},
 					[]driver.Value{
-						testIDs[1].String(), "Tetsuya", "Takahashi", "family", time.Date(1966, 11, 18, 0, 0, 0, 0, time.UTC), "male", "he/him",
+						testPersons[1].ID.String(), "Tetsuya", "Takahashi", "family", time.Date(1966, 11, 18, 0, 0, 0, 0, time.UTC), "male", "he/him",
 					},
 					[]driver.Value{
-						testIDs[2].String(), "Brandon", "Williams", "given", time.Date(1992, 1, 27, 0, 0, 0, 0, time.UTC), "male", "he/him",
+						testPersons[2].ID.String(), "Brandon", "Williams", "given", time.Date(1992, 1, 27, 0, 0, 0, 0, time.UTC), "male", "he/him",
 					},
 					[]driver.Value{
-						testIDs[3].String(), "Testita", "Tester", "given", time.Date(1950, 1, 1, 0, 0, 0, 0, time.UTC), "female", "she/her",
+						testPersons[3].ID.String(), "Testita", "Tester", "given", time.Date(1950, 1, 1, 0, 0, 0, 0, time.UTC), "female", "she/her",
 					},
 				),
 			},
@@ -383,10 +382,10 @@ func Test_personStore_GetAllPaginated(t *testing.T) {
 				arguments: []driver.Value{},
 				result: sqlmock.NewRows(tableRows).AddRows(
 					[]driver.Value{
-						testIDs[1].String(), "Tetsuya", "Takahashi", "family", time.Date(1966, 11, 18, 0, 0, 0, 0, time.UTC), "male", "he/him",
+						testPersons[1].ID.String(), "Tetsuya", "Takahashi", "family", time.Date(1966, 11, 18, 0, 0, 0, 0, time.UTC), "male", "he/him",
 					},
 					[]driver.Value{
-						testIDs[2].String(), "Brandon", "Williams", "given", time.Date(1992, 1, 27, 0, 0, 0, 0, time.UTC), "male", "he/him",
+						testPersons[2].ID.String(), "Brandon", "Williams", "given", time.Date(1992, 1, 27, 0, 0, 0, 0, time.UTC), "male", "he/him",
 					},
 				),
 			},
@@ -471,6 +470,7 @@ func Test_personStore_GetSpecific(t *testing.T) {
 	testNotFoundID := uuid.New()
 	testPersonID := uuid.New()
 	testPerson := models.Person{
+		ID: testPersonID,
 		Name: models.Name{
 			GivenName:       "Testy",
 			FamilyName:      "McTesterson",

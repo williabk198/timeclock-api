@@ -186,18 +186,21 @@ func Test_adminService_GetAllPersons(t *testing.T) {
 
 	testPersons := []models.Person{
 		{
+			ID:          uuid.New(),
 			Name:        models.Name{GivenName: "Testy", FamilyName: "McTesterson", FamilyNameFirst: models.FirstNameGiven},
 			DateOfBirth: time.Unix(0, 0),
 			Gender:      models.GenderNonBinary,
 			Pronouns:    models.Pronouns{Subject: "they", Object: "them"},
 		},
 		{
+			ID:          uuid.New(),
 			Name:        models.Name{GivenName: "Brandon", FamilyName: "Williams", FamilyNameFirst: models.FirstNameGiven},
 			DateOfBirth: time.Date(1992, 1, 27, 0, 0, 0, 0, time.UTC),
 			Gender:      models.GenderMale,
 			Pronouns:    models.Pronouns{Subject: "he", Object: "him"},
 		},
 		{
+			ID:          uuid.New(),
 			Name:        models.Name{GivenName: "Testita", FamilyName: "Tester", FamilyNameFirst: models.FirstNameGiven},
 			DateOfBirth: time.Date(1950, 1, 1, 0, 0, 0, 0, time.UTC),
 			Gender:      models.GenderFemale,
@@ -206,8 +209,8 @@ func Test_adminService_GetAllPersons(t *testing.T) {
 	}
 
 	testPersonStore := &mockPersonStore{}
-	testPersonStore.On("GetAllPaginated", mock.Anything, 0, 2).Return(testPersons[:2], error(nil))
-	testPersonStore.On("GetAllPaginated", mock.Anything, 0, 0).Return([]models.Person{}, assert.AnError)
+	testPersonStore.On("GetAllPaginated", mock.Anything, uint(0), uint(2)).Return(testPersons[:2], error(nil))
+	testPersonStore.On("GetAllPaginated", mock.Anything, uint(0), uint(0)).Return([]models.Person(nil), assert.AnError)
 
 	tests := []struct {
 		name      string

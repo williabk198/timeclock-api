@@ -43,22 +43,8 @@ func (ps personStore) Delete(ctx context.Context, id uuid.UUID) (item models.Per
 		return models.Person{}, err
 	}
 
-	var rawPronounVal string
-	var person models.Person
 	row := ps.dbConn.QueryRowContext(ctx, query, params...)
-	if err := row.Scan(
-		&id, &person.Name.GivenName, &person.Name.FamilyName, &person.Name.FamilyNameFirst,
-		&person.DateOfBirth, &person.Gender, &rawPronounVal,
-	); err != nil {
-		return models.Person{}, err
-	}
-
-	person.Pronouns, err = utils.ParsePronouns(rawPronounVal)
-	if err != nil {
-		return models.Person{}, nil
-	}
-
-	return person, nil
+	return ps.personFromRow(row)
 }
 
 // GetAllPaginated implements Store.
@@ -72,23 +58,8 @@ func (ps personStore) GetSpecific(ctx context.Context, id uuid.UUID) (item model
 	if err != nil {
 		return models.Person{}, err
 	}
-
-	var rawPronounVal string
 	row := ps.dbConn.QueryRowContext(ctx, query, params...)
-	if err := row.Scan(
-		&id, &item.Name.GivenName, &item.Name.FamilyName, &item.Name.FamilyNameFirst,
-		&item.DateOfBirth, &item.Gender, &rawPronounVal,
-	); err != nil {
-		return models.Person{}, err
-	}
-
-	pronouns, err := utils.ParsePronouns(rawPronounVal)
-	if err != nil {
-		return models.Person{}, err
-	}
-	item.Pronouns = pronouns
-
-	return item, nil
+	return ps.personFromRow(row)
 }
 
 // Update implements Store.
@@ -103,6 +74,53 @@ func (ps personStore) Update(ctx context.Context, id uuid.UUID, item models.Pers
 	}
 
 	return nil
+}
+
+func (ps personStore) personFromRow(row *sql.Row) (models.Person, error) {
+	var rawPronounVal string
+	var item models.Person
+	if err := row.Scan(
+		&item.ID, &item.Name.GivenName, &item.Name.FamilyName, &item.Name.FamilyNameFirst,
+		&item.DateOfBirth, &item.Gender, &rawPronounVal,
+	); err != nil {
+		return models.Person{}, err
+	}
+
+	pronouns, err := utils.ParsePronouns(rawPronounVal)
+	if err != nil {
+		return models.Person{}, err
+	}
+	item.Pronouns = pronouns
+
+	return item, nil
+}
+
+func (ps personStore) personSliceFromRows(rows *sql.Rows) ([]models.Person, error) {
+	result := make([]models.Person, 0)
+	for rows.Next() {
+		var rawPronounVal string
+		var item models.Person
+		if err := rows.Scan(
+			&item.ID, &item.Name.GivenName, &item.Name.FamilyName, &item.Name.FamilyNameFirst,
+			&item.DateOfBirth, &item.Gender, &rawPronounVal,
+		); err != nil {
+			return nil, err
+		}
+
+		pronouns, err := utils.ParsePronouns(rawPronounVal)
+		if err != nil {
+			return nil, err
+		}
+		item.Pronouns = pronouns
+
+		result = append(result, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func NewPersonStore(dbConn *sql.DB) PersonStore {
