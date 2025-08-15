@@ -59,6 +59,11 @@ func (ape adminPersonEndpoints) Delete(ctx context.Context, idStr string) (Perso
 	}, nil
 }
 
+// GetAll implements PersonEndpoints.
+func (ape adminPersonEndpoints) GetAll(ctx context.Context, reqData GetPaginatedRequestData) ([]PersonData, error) {
+	panic("unimplemented")
+}
+
 // GetSpecific implements PersonEndpoints.
 func (ape adminPersonEndpoints) GetSpecific(ctx context.Context, idStr string) (PersonData, error) {
 	id, err := uuid.Parse(idStr)

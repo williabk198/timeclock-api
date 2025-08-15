@@ -3,9 +3,12 @@ package models
 import (
 	"fmt"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Person struct {
+	ID          uuid.UUID `jagsqlb:"id;omit"`
 	Name        Name      `jagsqlb:";inline"`
 	DateOfBirth time.Time `jagsqlb:"dob"`
 	Gender      Gender    `jagsqlb:"gender"`
