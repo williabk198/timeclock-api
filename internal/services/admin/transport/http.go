@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/williabk198/timeclock/internal/services/admin/endpoints"
@@ -19,21 +20,28 @@ func NewHttpHandler(adminEndpoints endpoints.Endpoints) http.Handler {
 		ErrorHandler: errorHandler,
 	}
 
-	rootRouter.Handle("/person", httputil.BuildRouteHandler(
+	rootRouter.Handle("/persons", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		adminEndpoints.Person().GetAll,
+		decodeFetchAllRequestData,
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodGet)
+
+	rootRouter.Handle("/persons", httputil.BuildRouteHandler(
 		routeHandleBuilder,
 		adminEndpoints.Person().Add,
 		decodeCreateItemRequestData,
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodPost)
 
-	rootRouter.Handle("/person/{id}", httputil.BuildRouteHandler(
+	rootRouter.Handle("/persons/{id}", httputil.BuildRouteHandler(
 		routeHandleBuilder,
 		adminEndpoints.Person().GetSpecific,
 		decodeFetchItemRequestData("id"),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodGet)
 
-	rootRouter.Handle("/person/{id}", httputil.BuildRouteHandler(
+	rootRouter.Handle("/persons/{id}", httputil.BuildRouteHandler(
 		routeHandleBuilder,
 		adminEndpoints.Person().Update,
 		decodeUpdateItemRequestData[endpoints.PersonData]("id"),
@@ -61,6 +69,40 @@ func decodeCreateItemRequestData[T any](ctx context.Context, r *http.Request) (r
 		return reqData, fmt.Errorf("failed to parse data from request body: %w", err)
 	}
 	return reqData, nil
+}
+
+func decodeFetchAllRequestData(ctx context.Context, r *http.Request) (endpoints.GetPaginatedRequestData, error) {
+	var err error
+	queryParams := r.URL.Query()
+
+	var offset int
+	if offsetStr := queryParams.Get("offset"); offsetStr != "" {
+		offset, err = strconv.Atoi(offsetStr)
+		if err != nil {
+			return endpoints.GetPaginatedRequestData{}, err
+		}
+	}
+
+	if offset < 0 {
+		return endpoints.GetPaginatedRequestData{}, fmt.Errorf("invalid offset value; must be greater than 0")
+	}
+
+	limit := 500 // If there isn't a limit provided, use 500 as the default value
+	if limitStr := queryParams.Get("limit"); limitStr != "" {
+		limit, err = strconv.Atoi(limitStr)
+		if err != nil {
+			return endpoints.GetPaginatedRequestData{}, err
+		}
+	}
+
+	if limit < 0 {
+		return endpoints.GetPaginatedRequestData{}, fmt.Errorf("invalid limit value; must be greater than 0")
+	}
+
+	return endpoints.GetPaginatedRequestData{
+		Offset: uint(offset),
+		Limit:  uint(limit),
+	}, nil
 }
 
 func decodeFetchItemRequestData(key string) func(context.Context, *http.Request) (string, error) {
