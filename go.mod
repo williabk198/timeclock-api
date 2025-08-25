@@ -8,7 +8,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/lib/pq v1.10.9
 	github.com/stretchr/testify v1.10.0
-	github.com/williabk198/jagsqlb v0.0.0-20250812191504-b9aabb5770c7
+	github.com/williabk198/jagsqlb v0.1.0
 )
 
 require (

@@ -32,6 +32,8 @@ github.com/williabk198/jagsqlb v0.0.0-20250811213653-b93db181cb85 h1:ohDx1tu6ulu
 github.com/williabk198/jagsqlb v0.0.0-20250811213653-b93db181cb85/go.mod h1:GRMd3IP+CHQDPFoW9mcm6kpSyKqmnhLfitCTHtJAs1k=
 github.com/williabk198/jagsqlb v0.0.0-20250812191504-b9aabb5770c7 h1:xkrBnd8gVXT7GsgcZirYYg5BRx/epXLd+bBTS8BucYs=
 github.com/williabk198/jagsqlb v0.0.0-20250812191504-b9aabb5770c7/go.mod h1:GRMd3IP+CHQDPFoW9mcm6kpSyKqmnhLfitCTHtJAs1k=
+github.com/williabk198/jagsqlb v0.1.0 h1:IP7pRASysXJxk0VN9HQtcESNVRUH7oD+nz8kZXWswJ4=
+github.com/williabk198/jagsqlb v0.1.0/go.mod h1:GRMd3IP+CHQDPFoW9mcm6kpSyKqmnhLfitCTHtJAs1k=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c h1:Hei/4ADfdWqJk1ZMxUNpqntNwaWcugrBjAiHlqqRiVk=
