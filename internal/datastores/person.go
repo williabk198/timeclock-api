@@ -13,12 +13,17 @@ import (
 
 type PersonStore interface {
 	SqlDatastore[models.Person, uuid.UUID]
+	GetSpecificContactAddresses(ctx context.Context, id uuid.UUID) ([]models.ContactAddress, error)
+	GetSpecificContactEmails(ctx context.Context, id uuid.UUID) ([]models.ContactEmail, error)
+	GetSpecificContactPhones(ctx context.Context, id uuid.UUID) ([]models.ContactPhone, error)
 }
 
 type personStore struct {
 	dbConn     *sql.DB
 	sqlBuilder jagsqlb.SqlBuilder
-	tableName  string
+	tableName  string // TODO: Remove
+
+	tableNameMap map[string]string
 }
 
 // Add implements Store.
@@ -71,6 +76,21 @@ func (ps personStore) GetSpecific(ctx context.Context, id uuid.UUID) (item model
 	}
 	row := ps.dbConn.QueryRowContext(ctx, query, params...)
 	return ps.personFromRow(row)
+}
+
+// GetSpecificContactAddresses implements PersonStore.
+func (ps personStore) GetSpecificContactAddresses(ctx context.Context, id uuid.UUID) ([]models.ContactAddress, error) {
+	panic("unimplemented")
+}
+
+// GetSpecificContacts implements PersonStore.
+func (ps personStore) GetSpecificContactEmails(ctx context.Context, id uuid.UUID) ([]models.ContactEmail, error) {
+	panic("unimplemented")
+}
+
+// GetSpecificContactPhones implements PersonStore.
+func (ps personStore) GetSpecificContactPhones(ctx context.Context, id uuid.UUID) ([]models.ContactPhone, error) {
+	panic("unimplemented")
 }
 
 // Update implements Store.
@@ -138,6 +158,12 @@ func NewPersonStore(dbConn *sql.DB) PersonStore {
 	return personStore{
 		dbConn:     dbConn,
 		sqlBuilder: jagsqlb.NewSqlBuilder(),
-		tableName:  "person.persons",
+		tableName:  "person.persons", // TODO: Remove
+		tableNameMap: map[string]string{
+			"persons":   "person.persons",
+			"addresses": "person.addresses",
+			"emails":    "person.emails",
+			"phones":    "person.phones",
+		},
 	}
 }
