@@ -80,7 +80,18 @@ func (ps personStore) GetSpecific(ctx context.Context, id uuid.UUID) (item model
 
 // GetSpecificContactAddresses implements PersonStore.
 func (ps personStore) GetSpecificContactAddresses(ctx context.Context, id uuid.UUID) ([]models.ContactAddress, error) {
-	panic("unimplemented")
+	query, params, err := ps.sqlBuilder.Select(ps.tableNameMap["addresses"], "*").Where(condition.Equals("person_id", id)).Build()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := ps.dbConn.QueryContext(ctx, query, params...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return ps.personAddressFromRows(rows)
 }
 
 // GetSpecificContacts implements PersonStore.
@@ -152,6 +163,27 @@ func (ps personStore) personSliceFromRows(rows *sql.Rows) ([]models.Person, erro
 	}
 
 	return result, nil
+}
+
+func (ps personStore) personAddressFromRows(rows *sql.Rows) ([]models.ContactAddress, error) {
+	results := make([]models.ContactAddress, 0)
+
+	for rows.Next() {
+		var item models.ContactAddress
+		if err := rows.Scan(
+			&item.ID, &item.PersonID, &item.Street1, &item.Street2, &item.Locality, &item.Region,
+			&item.PostalCode, &item.Country, &item.Type, &item.Primary,
+		); err != nil {
+			return nil, err
+		}
+		results = append(results, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return results, nil
 }
 
 func NewPersonStore(dbConn *sql.DB) PersonStore {
