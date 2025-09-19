@@ -795,7 +795,7 @@ func Test_personStore_GetSpecificContactAddresses(t *testing.T) {
 						testAddressID1, testPersonID, "123 Test Dr", "APT 1", "Testerville", "Testton", "12345-6789", "U.S.", "physical", true,
 					},
 					[]driver.Value{
-						testAddressID2, testPersonID, "P.O Box 123", "", "Testerville", "Testton", "12344-5567", "U.S.", "mailing", true,
+						testAddressID2, testPersonID, "P.O. Box 123", "", "Testerville", "Testton", "12344-5567", "U.S.", "mailing", true,
 					},
 				),
 			},
@@ -816,7 +816,7 @@ func Test_personStore_GetSpecificContactAddresses(t *testing.T) {
 					ID:         testAddressID2,
 					PersonID:   testPersonID,
 					Street1:    "P.O. Box 123",
-					Locality:   "Testervile",
+					Locality:   "Testerville",
 					Region:     "Testton",
 					PostalCode: "12344-5567",
 					Country:    "U.S.",
