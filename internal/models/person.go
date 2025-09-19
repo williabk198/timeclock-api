@@ -58,8 +58,8 @@ type ContactAddress struct {
 	PersonID   uuid.UUID `jagsqlb:"person_id"`
 	Street1    string    `jagsqlb:"street1" json:"street1"`
 	Street2    string    `jagsqlb:"street2" json:"street2"`
-	City       string    `jagsqlb:"city" json:"locality"`
-	Locality   string    `jagsqlb:"locality" json:"region"` // Locality is the State, Province, Prefecture, etc... that the City is located in
+	Locality   string    `jagsqlb:"city" json:"locality"`
+	Region     string    `jagsqlb:"locality" json:"region"` // Locality is the State, Province, Prefecture, etc... that the City is located in
 	PostalCode string    `jagsqlb:"postal_code" json:"postalCode"`
 	Country    string    `jagsqlb:"country" json:"country"`
 	Type       string    `jagsqlb:"kind" json:"type"` // Type holds what kind of address this value represents: Mailing, Physical, Billing, etc...
