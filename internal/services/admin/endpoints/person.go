@@ -101,6 +101,11 @@ func (ape adminPersonEndpoints) GetSpecific(ctx context.Context, idStr string) (
 	}, nil
 }
 
+// GetSpecificContact implements PersonEndpoints.
+func (ape adminPersonEndpoints) GetSpecificContacts(ctx context.Context, id string) (PersonContactData, error) {
+	panic("unimplemented")
+}
+
 // Update implements PersonEndpoints.
 func (ape adminPersonEndpoints) Update(ctx context.Context, updateReqData UpdateRequestData[PersonData]) (PersonData, error) {
 	id, err := uuid.Parse(updateReqData.ID)

@@ -12,6 +12,7 @@ type Service interface {
 	AddPerson(context.Context, models.Person) (uuid.UUID, error)
 	DeletePerson(context.Context, uuid.UUID) (models.Person, error)
 	GetAllPersons(ctx context.Context, offset uint, limit uint) ([]models.Person, error)
+	GetPersonContacts(context.Context, uuid.UUID) (models.Contacts, error)
 	GetPerson(context.Context, uuid.UUID) (models.Person, error)
 	UpdatePerson(context.Context, uuid.UUID, models.Person) error
 }
@@ -38,6 +39,11 @@ func (as adminService) GetAllPersons(ctx context.Context, offset uint, limit uin
 // GetPerson implements Service.
 func (as adminService) GetPerson(ctx context.Context, id uuid.UUID) (models.Person, error) {
 	return as.personStore.GetSpecific(ctx, id)
+}
+
+// GetPersonContacts implements Service.
+func (as adminService) GetPersonContacts(context.Context, uuid.UUID) (models.Contacts, error) {
+	panic("unimplemented")
 }
 
 // UpdatePerson implements Service.

@@ -317,6 +317,189 @@ func Test_adminService_GetPerson(t *testing.T) {
 	}
 }
 
+func Test_adminService_GetPersonContacts(t *testing.T) {
+	type args struct {
+		ctx      context.Context
+		personID uuid.UUID
+	}
+
+	type wants struct {
+		callAssertions map[string]int
+		returnVal      models.Contacts
+	}
+
+	testPersonID := uuid.New()
+	testPersonAddressID := uuid.New()
+	testPersonEmailID := uuid.New()
+	testPersonPhoneID := uuid.New()
+	testBadPersonAddressID := uuid.New()
+	testBadPersonEmailID := uuid.New()
+	testBadPersonPhoneID := uuid.New()
+
+	testPersonAddresses := []models.ContactAddress{
+		{
+			ID:         testPersonAddressID,
+			PersonID:   testPersonID,
+			Street1:    "123 Test Dr",
+			City:       "Testville",
+			Locality:   "Testeria",
+			PostalCode: "12345-6789",
+			Country:    "Testopia",
+			Type:       "physical",
+			Primary:    true,
+		},
+	}
+	testPersonEmails := []models.ContactEmail{
+		{
+			ID:       testPersonEmailID,
+			PersonID: testPersonID,
+			Username: "test123",
+			Provider: "example.com",
+			Primary:  true,
+		},
+	}
+	testPersonPhones := []models.ContactPhone{
+		{
+			ID:          testPersonPhoneID,
+			PersonID:    testPersonID,
+			CountryCode: 1,
+			PhoneNumber: "(315)559-1190",
+			Type:        "home",
+			Primary:     true,
+		},
+	}
+
+	mockPersonStore := &mockPersonStore{}
+	mockPersonStore.On("GetSpecificContactAddresses", mock.Anything, testPersonID).Return(
+		testPersonAddresses, error(nil),
+	)
+	mockPersonStore.On("GetSpecificContactAddresses", mock.Anything, testBadPersonAddressID).Return(
+		[]models.ContactAddress(nil), assert.AnError,
+	)
+	mockPersonStore.On("GetSpecificContactAddresses", mock.Anything, testBadPersonEmailID).Return(
+		testPersonAddresses, error(nil),
+	)
+	mockPersonStore.On("GetSpecificContactAddresses", mock.Anything, testBadPersonPhoneID).Return(
+		testPersonAddresses, error(nil),
+	)
+
+	mockPersonStore.On("GetSpecificContactEmails", mock.Anything, testPersonID).Return(
+		testPersonEmails, error(nil),
+	)
+	mockPersonStore.On("GetSpecificContactEmails", mock.Anything, testBadPersonEmailID).Return(
+		[]models.ContactEmail(nil), assert.AnError,
+	)
+	mockPersonStore.On("GetSpecificContactEmails", mock.Anything, testBadPersonPhoneID).Return(
+		testPersonEmails, error(nil),
+	)
+
+	mockPersonStore.On("GetSpecificContactPhones", mock.Anything, testPersonID).Return(
+		testPersonPhones, error(nil),
+	)
+	mockPersonStore.On("GetSpecificContactPhones", mock.Anything, testBadPersonPhoneID).Return(
+		[]models.ContactPhone(nil), assert.AnError,
+	)
+
+	tests := []struct {
+		name      string
+		as        adminService
+		args      args
+		wants     wants
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			as: adminService{
+				personStore: mockPersonStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testPersonID,
+			},
+			wants: wants{
+				callAssertions: map[string]int{
+					"GetSpecificContactAddresses": 1,
+					"GetSpecificContactEmails":    1,
+					"GetSpecificContactPhones":    1,
+				},
+				returnVal: models.Contacts{
+					Addresses: testPersonAddresses,
+					Email:     testPersonEmails,
+					Phone:     testPersonPhones,
+				},
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Get Addresses",
+			as: adminService{
+				personStore: mockPersonStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testBadPersonAddressID,
+			},
+			wants: wants{
+				callAssertions: map[string]int{
+					"GetSpecificContactAddresses": 1,
+					"GetSpecificContactEmails":    0,
+					"GetSpecificContactPhones":    0,
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Get Emails",
+			as: adminService{
+				personStore: mockPersonStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testBadPersonEmailID,
+			},
+			wants: wants{
+				callAssertions: map[string]int{
+					"GetSpecificContactAddresses": 1,
+					"GetSpecificContactEmails":    1,
+					"GetSpecificContactPhones":    0,
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Get Phone",
+			as: adminService{
+				personStore: mockPersonStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testBadPersonPhoneID,
+			},
+			wants: wants{
+				callAssertions: map[string]int{
+					"GetSpecificContactAddresses": 1,
+					"GetSpecificContactEmails":    1,
+					"GetSpecificContactPhones":    1,
+				},
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.as.GetPersonContacts(tt.args.ctx, tt.args.personID)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.wants.returnVal, got)
+
+			// Since we are calling multiple functions from a mocked instance, we want to ensure that each mocked function
+			// gets called as we expect it.
+			for k, v := range tt.wants.callAssertions {
+				mockPersonStore.AssertNumberOfCalls(t, k, v)
+			}
+		})
+	}
+}
+
 func Test_adminService_UpdatePerson(t *testing.T) {
 	type args struct {
 		ctx  context.Context
@@ -406,4 +589,16 @@ func (mps *mockPersonStore) GetSpecific(ctx context.Context, id uuid.UUID) (item
 func (mps *mockPersonStore) Update(ctx context.Context, id uuid.UUID, item models.Person) (err error) {
 	args := mps.Called(ctx, id, item)
 	return args.Error(0)
+}
+func (mps *mockPersonStore) GetSpecificContactAddresses(ctx context.Context, id uuid.UUID) ([]models.ContactAddress, error) {
+	args := mps.Called(ctx, id)
+	return args.Get(0).([]models.ContactAddress), args.Error(1)
+}
+func (mps *mockPersonStore) GetSpecificContactEmails(ctx context.Context, id uuid.UUID) ([]models.ContactEmail, error) {
+	args := mps.Called(ctx, id)
+	return args.Get(0).([]models.ContactEmail), args.Error(1)
+}
+func (mps *mockPersonStore) GetSpecificContactPhones(ctx context.Context, id uuid.UUID) ([]models.ContactPhone, error) {
+	args := mps.Called(ctx, id)
+	return args.Get(0).([]models.ContactPhone), args.Error(1)
 }

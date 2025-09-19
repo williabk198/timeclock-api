@@ -52,3 +52,47 @@ func (p Pronouns) String() string {
 func (p Pronouns) MarshalQuery() (string, error) {
 	return p.String(), nil
 }
+
+type ContactAddress struct {
+	ID         uuid.UUID `jagsqlb:"id"`
+	PersonID   uuid.UUID `jagsqlb:"person_id"`
+	Street1    string    `jagsqlb:"street1" json:"street1"`
+	Street2    string    `jagsqlb:"street2" json:"street2"`
+	City       string    `jagsqlb:"city" json:"locality"`
+	Locality   string    `jagsqlb:"locality" json:"region"` // Locality is the State, Province, Prefecture, etc... that the City is located in
+	PostalCode string    `jagsqlb:"postal_code" json:"postalCode"`
+	Country    string    `jagsqlb:"country" json:"country"`
+	Type       string    `jagsqlb:"kind" json:"type"` // Type holds what kind of address this value represents: Mailing, Physical, Billing, etc...
+	Primary    bool      `jagsqlb:"primary" json:"primary"`
+}
+
+type ContactEmail struct {
+	ID       uuid.UUID `jagsqlb:"id"`
+	PersonID uuid.UUID `jagsqlb:"person_id"`
+	Username string    `jagsqlb:"username"`
+	Provider string    `jagsqlb:"provider"`
+	Primary  bool      `jagsqlb:"primary" json:"primary"`
+}
+
+func (ce ContactEmail) String() string {
+	return fmt.Sprintf("%s@%s", ce.Username, ce.Provider)
+}
+
+type ContactPhone struct {
+	ID          uuid.UUID `jagsqlb:"id"`
+	PersonID    uuid.UUID `jagsqlb:"person_id"`
+	CountryCode int       `jagsqlb:"country_code"`
+	PhoneNumber string    `jagsqlb:"phone_number"`
+	Type        string    `jagsqlb:"kind" json:"type"` // Type holds what kind of phone number this value represents: Home, Cell, Work, etc...
+	Primary     bool      `jagsqlb:"primary" json:"primary"`
+}
+
+func (cp ContactPhone) String() string {
+	return fmt.Sprintf("+%d %s", cp.CountryCode, cp.PhoneNumber)
+}
+
+type Contacts struct {
+	Addresses []ContactAddress
+	Email     []ContactEmail
+	Phone     []ContactPhone
+}
