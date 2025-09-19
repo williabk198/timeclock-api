@@ -1020,7 +1020,7 @@ func Test_personStore_GetSpecificContactPhones(t *testing.T) {
 		returnErr error
 	}
 
-	phoneColumns := []string{"id", "person_id", "username", "provider", "primary"}
+	phoneColumns := []string{"id", "person_id", "country_code", "phone_number", "kind", "primary"}
 	testSqlBuilder := jagsqlb.NewSqlBuilder()
 	mockSession, mockDb, err := sqlmock.New()
 	if err != nil {
@@ -1035,7 +1035,7 @@ func Test_personStore_GetSpecificContactPhones(t *testing.T) {
 		dbConn:     mockSession,
 		sqlBuilder: testSqlBuilder,
 		tableNameMap: map[string]string{
-			"phone": "person.phones",
+			"phones": "person.phones",
 		},
 	}
 
@@ -1055,7 +1055,7 @@ func Test_personStore_GetSpecificContactPhones(t *testing.T) {
 				id:  testPersonID,
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `SELECT * FROM "person"."emails" WHERE "person_id" = $1`,
+				rawQuery:  `SELECT * FROM "person"."phones" WHERE "person_id" = $1`,
 				arguments: []driver.Value{testPersonID.String()},
 				result: sqlmock.NewRows(phoneColumns).AddRows(
 					[]driver.Value{
