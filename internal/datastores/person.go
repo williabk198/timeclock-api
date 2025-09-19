@@ -96,12 +96,32 @@ func (ps personStore) GetSpecificContactAddresses(ctx context.Context, id uuid.U
 
 // GetSpecificContacts implements PersonStore.
 func (ps personStore) GetSpecificContactEmails(ctx context.Context, id uuid.UUID) ([]models.ContactEmail, error) {
-	panic("unimplemented")
+	query, params, err := ps.sqlBuilder.Select(ps.tableNameMap["emails"], "*").Where(condition.Equals("person_id", id)).Build()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := ps.dbConn.QueryContext(ctx, query, params...)
+	if err != nil {
+		return nil, err
+	}
+
+	return ps.personEmailFromRows(rows)
 }
 
 // GetSpecificContactPhones implements PersonStore.
 func (ps personStore) GetSpecificContactPhones(ctx context.Context, id uuid.UUID) ([]models.ContactPhone, error) {
-	panic("unimplemented")
+	query, params, err := ps.sqlBuilder.Select(ps.tableNameMap["phones"], "*").Where(condition.Equals("person_id", id)).Build()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := ps.dbConn.QueryContext(ctx, query, params...)
+	if err != nil {
+		return nil, err
+	}
+
+	return ps.personPhoneFromRows(rows)
 }
 
 // Update implements Store.
@@ -173,6 +193,46 @@ func (ps personStore) personAddressFromRows(rows *sql.Rows) ([]models.ContactAdd
 		if err := rows.Scan(
 			&item.ID, &item.PersonID, &item.Street1, &item.Street2, &item.Locality, &item.Region,
 			&item.PostalCode, &item.Country, &item.Type, &item.Primary,
+		); err != nil {
+			return nil, err
+		}
+		results = append(results, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
+func (ps personStore) personEmailFromRows(rows *sql.Rows) ([]models.ContactEmail, error) {
+	results := make([]models.ContactEmail, 0)
+
+	for rows.Next() {
+		var item models.ContactEmail
+		if err := rows.Scan(
+			&item.ID, &item.PersonID, &item.Username, &item.Provider, &item.Primary,
+		); err != nil {
+			return nil, err
+		}
+		results = append(results, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
+func (ps personStore) personPhoneFromRows(rows *sql.Rows) ([]models.ContactPhone, error) {
+	results := make([]models.ContactPhone, 0)
+
+	for rows.Next() {
+		var item models.ContactPhone
+		if err := rows.Scan(
+			&item.ID, &item.PersonID, &item.CountryCode, &item.PhoneNumber, &item.Type, &item.Primary,
 		); err != nil {
 			return nil, err
 		}
