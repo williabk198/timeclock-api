@@ -440,10 +440,10 @@ func Test_adminService_GetPersonContacts(t *testing.T) {
 				personID: testBadPersonAddressID,
 			},
 			wants: wants{
-				callAssertions: map[string]int{
-					"GetSpecificContactAddresses": 1,
-					"GetSpecificContactEmails":    0,
-					"GetSpecificContactPhones":    0,
+				callAssertions: map[string]int{ // TODO: look into better ways for handling call counts that doesn't accumulate with each test case
+					"GetSpecificContactAddresses": 2,
+					"GetSpecificContactEmails":    1,
+					"GetSpecificContactPhones":    1,
 				},
 			},
 			assertion: assert.Error,
@@ -459,9 +459,9 @@ func Test_adminService_GetPersonContacts(t *testing.T) {
 			},
 			wants: wants{
 				callAssertions: map[string]int{
-					"GetSpecificContactAddresses": 1,
-					"GetSpecificContactEmails":    1,
-					"GetSpecificContactPhones":    0,
+					"GetSpecificContactAddresses": 3,
+					"GetSpecificContactEmails":    2,
+					"GetSpecificContactPhones":    1,
 				},
 			},
 			assertion: assert.Error,
@@ -477,9 +477,9 @@ func Test_adminService_GetPersonContacts(t *testing.T) {
 			},
 			wants: wants{
 				callAssertions: map[string]int{
-					"GetSpecificContactAddresses": 1,
-					"GetSpecificContactEmails":    1,
-					"GetSpecificContactPhones":    1,
+					"GetSpecificContactAddresses": 4,
+					"GetSpecificContactEmails":    3,
+					"GetSpecificContactPhones":    2,
 				},
 			},
 			assertion: assert.Error,
