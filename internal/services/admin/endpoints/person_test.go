@@ -517,8 +517,8 @@ func Test_adminPersonEndpoints_GetSpecificContactAddresses(t *testing.T) {
 	}
 
 	testAdminService := &mockAdminService{}
-	testAdminService.On("GetPersonContactAddress", mock.Anything, testPersonID).Return(testAddresses, error(nil))
-	testAdminService.On("GetPersonContactAddress", mock.Anything, testDoesNotExistID).Return([]models.ContactAddress(nil), assert.AnError)
+	testAdminService.On("GetPersonContactAddresses", mock.Anything, testPersonID).Return(testAddresses, error(nil))
+	testAdminService.On("GetPersonContactAddresses", mock.Anything, testDoesNotExistID).Return([]models.ContactAddress(nil), assert.AnError)
 
 	tests := []struct {
 		name      string
@@ -649,6 +649,7 @@ func Test_adminPersonEndpoints_GetSpecificContactEmails(t *testing.T) {
 					Primary: testEmails[1].Primary,
 				},
 			},
+			assertion: assert.NoError,
 		},
 		{
 			name: "Error; Bad ID",
@@ -700,8 +701,8 @@ func Test_adminPersonEndpoints_GetSpecificContactPhones(t *testing.T) {
 	}
 
 	testAdminService := &mockAdminService{}
-	testAdminService.On("GetPersonContacts", mock.Anything, testPersonID).Return(testPhones, error(nil))
-	testAdminService.On("GetPersonContacts", mock.Anything, testDoesNotExistID).Return([]models.ContactPhone{}, assert.AnError)
+	testAdminService.On("GetPersonContactPhones", mock.Anything, testPersonID).Return(testPhones, error(nil))
+	testAdminService.On("GetPersonContactPhones", mock.Anything, testDoesNotExistID).Return([]models.ContactPhone{}, assert.AnError)
 
 	tests := []struct {
 		name      string
