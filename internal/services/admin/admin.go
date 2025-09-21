@@ -13,6 +13,9 @@ type Service interface {
 	DeletePerson(context.Context, uuid.UUID) (models.Person, error)
 	GetAllPersons(ctx context.Context, offset uint, limit uint) ([]models.Person, error)
 	GetPersonContacts(context.Context, uuid.UUID) (models.Contacts, error)
+	GetPersonContactAddresses(context.Context, uuid.UUID) ([]models.ContactAddress, error)
+	GetPersonContactEmails(context.Context, uuid.UUID) ([]models.ContactEmail, error)
+	GetPersonContactPhones(context.Context, uuid.UUID) ([]models.ContactPhone, error)
 	GetPerson(context.Context, uuid.UUID) (models.Person, error)
 	UpdatePerson(context.Context, uuid.UUID, models.Person) error
 }
@@ -65,6 +68,21 @@ func (as adminService) GetPersonContacts(ctx context.Context, uuid uuid.UUID) (m
 		Email:     emails,
 		Phone:     phones,
 	}, nil
+}
+
+// GetPersonContactAddresses implements Service.
+func (as adminService) GetPersonContactAddresses(context.Context, uuid.UUID) ([]models.ContactAddress, error) {
+	panic("unimplemented")
+}
+
+// GetPersonContactEmails implements Service.
+func (as adminService) GetPersonContactEmails(context.Context, uuid.UUID) ([]models.ContactEmail, error) {
+	panic("unimplemented")
+}
+
+// GetPersonContactPhones implements Service.
+func (as adminService) GetPersonContactPhones(context.Context, uuid.UUID) ([]models.ContactPhone, error) {
+	panic("unimplemented")
 }
 
 // UpdatePerson implements Service.

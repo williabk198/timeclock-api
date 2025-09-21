@@ -363,7 +363,7 @@ func Test_adminService_GetPersonContacts(t *testing.T) {
 			ID:          testPersonPhoneID,
 			PersonID:    testPersonID,
 			CountryCode: 1,
-			PhoneNumber: "(315)559-1190",
+			PhoneNumber: "(555)555-5555",
 			Type:        "home",
 			Primary:     true,
 		},
@@ -496,6 +496,212 @@ func Test_adminService_GetPersonContacts(t *testing.T) {
 			for k, v := range tt.wants.callAssertions {
 				mockPersonStore.AssertNumberOfCalls(t, k, v)
 			}
+		})
+	}
+}
+
+func Test_adminService_GetPersonContactAddresses(t *testing.T) {
+	type args struct {
+		ctx      context.Context
+		personID uuid.UUID
+	}
+
+	testPersonID := uuid.New()
+	testAddressID := uuid.New()
+	testDoesNotExistID := uuid.New()
+
+	testPersonAddresses := []models.ContactAddress{
+		{
+			ID:         testAddressID,
+			PersonID:   testPersonID,
+			Street1:    "123 Test Dr",
+			Locality:   "Testville",
+			Region:     "Testeria",
+			PostalCode: "12345-6789",
+			Country:    "Testopia",
+			Type:       "physical",
+			Primary:    true,
+		},
+	}
+
+	mockPersonStore := &mockPersonStore{}
+	mockPersonStore.On("GetSpecificContactAddresses", mock.Anything, testPersonID).Return(
+		testPersonAddresses, error(nil),
+	)
+	mockPersonStore.On("GetSpecificContactAddresses", mock.Anything, testDoesNotExistID).Return(
+		[]models.ContactAddress(nil), assert.AnError,
+	)
+
+	tests := []struct {
+		name      string
+		as        adminService
+		args      args
+		want      []models.ContactAddress
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			as: adminService{
+				personStore: mockPersonStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testPersonID,
+			},
+			want:      testPersonAddresses,
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Invalid ID",
+			as: adminService{
+				personStore: mockPersonStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testDoesNotExistID,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.as.GetPersonContactAddresses(tt.args.ctx, tt.args.personID)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_adminService_GetPersonContactEmails(t *testing.T) {
+	type args struct {
+		ctx      context.Context
+		personID uuid.UUID
+	}
+
+	testPersonID := uuid.New()
+	testEmailID := uuid.New()
+	testDoesNotExistID := uuid.New()
+	testPersonEmails := []models.ContactEmail{
+		{
+			ID:       testEmailID,
+			PersonID: testPersonID,
+			Username: "test123",
+			Provider: "example.com",
+			Primary:  true,
+		},
+	}
+
+	mockPersonStore := &mockPersonStore{}
+	mockPersonStore.On("GetSpecificContactEmails", mock.Anything, testPersonID).Return(
+		testPersonEmails, error(nil),
+	)
+	mockPersonStore.On("GetSpecificContactEmails", mock.Anything, testDoesNotExistID).Return(
+		[]models.ContactEmail(nil), assert.AnError,
+	)
+
+	tests := []struct {
+		name      string
+		as        adminService
+		args      args
+		want      []models.ContactEmail
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			as: adminService{
+				personStore: mockPersonStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testPersonID,
+			},
+			want:      testPersonEmails,
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Invalid ID",
+			as: adminService{
+				personStore: mockPersonStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testDoesNotExistID,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.as.GetPersonContactEmails(tt.args.ctx, tt.args.personID)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_adminService_GetPersonContactPhones(t *testing.T) {
+	type args struct {
+		ctx      context.Context
+		personID uuid.UUID
+	}
+
+	testPersonID := uuid.New()
+	testPhoneID := uuid.New()
+	testDoesNotExistID := uuid.New()
+	testPersonPhones := []models.ContactPhone{
+		{
+			ID:          testPhoneID,
+			PersonID:    testPersonID,
+			CountryCode: 1,
+			PhoneNumber: "(555)555-5555",
+			Type:        "home",
+			Primary:     true,
+		},
+	}
+	mockPersonStore := &mockPersonStore{}
+	mockPersonStore.On("GetSpecificContactPhones", mock.Anything, testPersonID).Return(
+		testPersonPhones, error(nil),
+	)
+	mockPersonStore.On("GetSpecificContactPhones", mock.Anything, testDoesNotExistID).Return(
+		[]models.ContactPhone(nil), assert.AnError,
+	)
+
+	tests := []struct {
+		name      string
+		as        adminService
+		args      args
+		want      []models.ContactPhone
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			as: adminService{
+				personStore: mockPersonStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testPersonID,
+			},
+			want:      testPersonPhones,
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Invalid ID",
+			as: adminService{
+				personStore: mockPersonStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testDoesNotExistID,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.as.GetPersonContactPhones(tt.args.ctx, tt.args.personID)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
