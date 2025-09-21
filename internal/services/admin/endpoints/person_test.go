@@ -417,7 +417,19 @@ func Test_adminPersonEndpoints_GetSpecificContacts(t *testing.T) {
 				id:  testPersonID.String(),
 			},
 			want: PersonContactData{
-				Addresses: []models.ContactAddress{testAddress},
+				Addresses: []PersonAddressData{
+					{
+						ID:         testAddress.ID.String(),
+						Street1:    testAddress.Street1,
+						Street2:    testAddress.Street2,
+						Locality:   testAddress.Locality,
+						Region:     testAddress.Region,
+						PostalCode: testAddress.PostalCode,
+						Country:    testAddress.Country,
+						Type:       testAddress.Type,
+						Primary:    testAddress.Primary,
+					},
+				},
 				Emails: []PersonEmailData{
 					{
 						ID:      testEmail.ID.String(),
