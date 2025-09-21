@@ -102,8 +102,18 @@ func (ape adminPersonEndpoints) GetSpecific(ctx context.Context, idStr string) (
 }
 
 // GetSpecificContact implements PersonEndpoints.
-func (ape adminPersonEndpoints) GetSpecificContacts(ctx context.Context, id string) (PersonContactData, error) {
-	panic("unimplemented")
+func (ape adminPersonEndpoints) GetSpecificContacts(ctx context.Context, idStr string) (PersonContactData, error) {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return PersonContactData{}, err
+	}
+
+	contactData, err := ape.adminService.GetPersonContacts(ctx, id)
+	if err != nil {
+		return PersonContactData{}, err
+	}
+
+	return ape.convertContactsModelToPersonContactData(contactData), nil
 }
 
 // Update implements PersonEndpoints.
@@ -131,4 +141,49 @@ func (ape adminPersonEndpoints) Update(ctx context.Context, updateReqData Update
 	}
 
 	return updateReqData.Data, nil
+}
+
+func (ape adminPersonEndpoints) convertContactsModelToPersonContactData(contacts models.Contacts) PersonContactData {
+	// Potential performance improvement, if needed: Use wait groups and wrap each for loop in a go routine
+
+	adressess := make([]PersonAddressData, len(contacts.Addresses))
+	for i, a := range contacts.Addresses {
+		adressess[i] = PersonAddressData{
+			ID:         a.ID.String(),
+			Street1:    a.Street1,
+			Street2:    a.Street2,
+			Locality:   a.Locality,
+			Region:     a.Region,
+			PostalCode: a.PostalCode,
+			Country:    a.Country,
+			Type:       a.Type,
+			Primary:    a.Primary,
+		}
+	}
+
+	emails := make([]PersonEmailData, len(contacts.Email))
+	for i, e := range contacts.Email {
+		emails[i] = PersonEmailData{
+			ID:      e.ID.String(),
+			Email:   e.String(),
+			Primary: e.Primary,
+		}
+	}
+
+	phones := make([]PersonPhoneData, len(contacts.Phone))
+	for i, p := range contacts.Phone {
+		phones[i] = PersonPhoneData{
+			ID:          p.ID.String(),
+			CountryCode: p.CountryCode,
+			PhoneNumber: p.PhoneNumber,
+			Type:        p.Type,
+			Primary:     p.Primary,
+		}
+	}
+
+	return PersonContactData{
+		Addresses:    adressess,
+		Emails:       emails,
+		PhoneNumbers: phones,
+	}
 }
