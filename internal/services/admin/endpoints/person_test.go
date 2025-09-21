@@ -357,8 +357,8 @@ func Test_adminPersonEndpoints_GetSpecific(t *testing.T) {
 
 func Test_adminPersonEndpoints_GetSpecificContacts(t *testing.T) {
 	type args struct {
-		ctx context.Context
-		id  string
+		ctx   context.Context
+		idStr string
 	}
 
 	testDoesNotExistID := uuid.New()
@@ -399,6 +399,7 @@ func Test_adminPersonEndpoints_GetSpecificContacts(t *testing.T) {
 
 	testAdminService := &mockAdminService{}
 	testAdminService.On("GetPersonContacts", mock.Anything, testPersonID).Return(testContacts, error(nil))
+	testAdminService.On("GetPersonContacts", mock.Anything, testDoesNotExistID).Return(models.Contacts{}, assert.AnError)
 
 	tests := []struct {
 		name      string
@@ -413,8 +414,8 @@ func Test_adminPersonEndpoints_GetSpecificContacts(t *testing.T) {
 				adminService: testAdminService,
 			},
 			args: args{
-				ctx: context.Background(),
-				id:  testPersonID.String(),
+				ctx:   context.Background(),
+				idStr: testPersonID.String(),
 			},
 			want: PersonContactData{
 				Addresses: []PersonAddressData{
@@ -455,8 +456,8 @@ func Test_adminPersonEndpoints_GetSpecificContacts(t *testing.T) {
 				adminService: testAdminService,
 			},
 			args: args{
-				ctx: context.Background(),
-				id:  "bad_val",
+				ctx:   context.Background(),
+				idStr: "bad_val",
 			},
 			assertion: assert.Error,
 		},
@@ -466,15 +467,15 @@ func Test_adminPersonEndpoints_GetSpecificContacts(t *testing.T) {
 				adminService: testAdminService,
 			},
 			args: args{
-				ctx: context.Background(),
-				id:  testDoesNotExistID.String(),
+				ctx:   context.Background(),
+				idStr: testDoesNotExistID.String(),
 			},
 			assertion: assert.Error,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.ape.GetSpecificContacts(tt.args.ctx, tt.args.id)
+			got, err := tt.ape.GetSpecificContacts(tt.args.ctx, tt.args.idStr)
 			tt.assertion(t, err)
 			assert.Equal(t, tt.want, got)
 		})
