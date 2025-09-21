@@ -12,9 +12,9 @@ type PersonData struct {
 }
 
 type PersonContactData struct {
-	Addresses    []models.ContactAddress `json:"addresses"`
-	Emails       []PersonEmailData       `json:"emails"`
-	PhoneNumbers []PersonPhoneData       `json:"phoneNumbers"`
+	Addresses    []PersonAddressData `json:"addresses"`
+	Emails       []PersonEmailData   `json:"emails"`
+	PhoneNumbers []PersonPhoneData   `json:"phoneNumbers"`
 }
 
 type PersonAddressData struct {
