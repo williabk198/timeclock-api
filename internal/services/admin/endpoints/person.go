@@ -103,6 +103,8 @@ func (ape adminPersonEndpoints) GetSpecific(ctx context.Context, idStr string) (
 
 // GetSpecificContact implements PersonEndpoints.
 func (ape adminPersonEndpoints) GetSpecificContacts(ctx context.Context, idStr string) (PersonContactData, error) {
+	// TODO: Change this function to use adminService.GetPersonContactAddress, adminService.GetPersonContactEmails, and adminService.GetPersonContactPhones
+
 	id, err := uuid.Parse(idStr)
 	if err != nil {
 		return PersonContactData{}, err
@@ -114,6 +116,21 @@ func (ape adminPersonEndpoints) GetSpecificContacts(ctx context.Context, idStr s
 	}
 
 	return ape.convertContactsModelToPersonContactData(contactData), nil
+}
+
+// GetSpecificContactAddresses implements PersonEndpoints.
+func (ape adminPersonEndpoints) GetSpecificContactAddresses(ctx context.Context, id string) ([]PersonAddressData, error) {
+	panic("unimplemented")
+}
+
+// GetSpecificContactEmails implements PersonEndpoints.
+func (ape adminPersonEndpoints) GetSpecificContactEmails(ctx context.Context, id string) ([]PersonEmailData, error) {
+	panic("unimplemented")
+}
+
+// GetSpecificContactPhones implements PersonEndpoints.
+func (ape adminPersonEndpoints) GetSpecificContactPhones(ctx context.Context, id string) ([]PersonPhoneData, error) {
+	panic("unimplemented")
 }
 
 // Update implements PersonEndpoints.

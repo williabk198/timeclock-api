@@ -17,6 +17,9 @@ type PersonEndpoints interface {
 	Delete(ctx context.Context, id string) (PersonData, error)
 	GetSpecific(ctx context.Context, id string) (PersonData, error)
 	GetSpecificContacts(ctx context.Context, id string) (PersonContactData, error)
+	GetSpecificContactAddresses(ctx context.Context, id string) ([]PersonAddressData, error)
+	GetSpecificContactEmails(ctx context.Context, id string) ([]PersonEmailData, error)
+	GetSpecificContactPhones(ctx context.Context, id string) ([]PersonPhoneData, error)
 	GetAll(ctx context.Context, reqData GetPaginatedRequestData) ([]PersonData, error)
 	Update(ctx context.Context, urd UpdateRequestData[PersonData]) (PersonData, error)
 }

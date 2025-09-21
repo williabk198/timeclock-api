@@ -482,6 +482,282 @@ func Test_adminPersonEndpoints_GetSpecificContacts(t *testing.T) {
 	}
 }
 
+func Test_adminPersonEndpoints_GetSpecificContactAddresses(t *testing.T) {
+	type args struct {
+		ctx   context.Context
+		idStr string
+	}
+
+	testDoesNotExistID := uuid.New()
+	testPersonID := uuid.New()
+
+	testAddresses := []models.ContactAddress{
+		{
+			ID:         uuid.New(),
+			PersonID:   testPersonID,
+			Street1:    "123 Test Dr",
+			Locality:   "Testville",
+			Region:     "Testeria",
+			PostalCode: "12345-6789",
+			Country:    "Testopia",
+			Type:       "physical",
+			Primary:    true,
+		},
+		{
+			ID:         uuid.New(),
+			PersonID:   testPersonID,
+			Street1:    "P.O. Box 9876",
+			Locality:   "Testville",
+			Region:     "Testeria",
+			PostalCode: "12345-7890",
+			Country:    "Testopia",
+			Type:       "mailing",
+			Primary:    true,
+		},
+	}
+
+	testAdminService := &mockAdminService{}
+	testAdminService.On("GetPersonContactAddress", mock.Anything, testPersonID).Return(testAddresses, error(nil))
+	testAdminService.On("GetPersonContactAddress", mock.Anything, testDoesNotExistID).Return([]models.ContactAddress(nil), assert.AnError)
+
+	tests := []struct {
+		name      string
+		ape       adminPersonEndpoints
+		args      args
+		want      []PersonAddressData
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			ape: adminPersonEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx:   context.Background(),
+				idStr: testPersonID.String(),
+			},
+			want: []PersonAddressData{
+				{
+					ID:         testAddresses[0].ID.String(),
+					Street1:    testAddresses[0].Street1,
+					Street2:    testAddresses[0].Street2,
+					Locality:   testAddresses[0].Locality,
+					Region:     testAddresses[0].Region,
+					PostalCode: testAddresses[0].PostalCode,
+					Country:    testAddresses[0].Country,
+					Type:       testAddresses[0].Type,
+					Primary:    testAddresses[0].Primary,
+				},
+				{
+					ID:         testAddresses[1].ID.String(),
+					Street1:    testAddresses[1].Street1,
+					Street2:    testAddresses[1].Street2,
+					Locality:   testAddresses[1].Locality,
+					Region:     testAddresses[1].Region,
+					PostalCode: testAddresses[1].PostalCode,
+					Country:    testAddresses[1].Country,
+					Type:       testAddresses[1].Type,
+					Primary:    testAddresses[1].Primary,
+				},
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Bad ID",
+			ape: adminPersonEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx:   context.Background(),
+				idStr: "bad_val",
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Service",
+			ape: adminPersonEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx:   context.Background(),
+				idStr: testDoesNotExistID.String(),
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.ape.GetSpecificContactAddresses(tt.args.ctx, tt.args.idStr)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_adminPersonEndpoints_GetSpecificContactEmails(t *testing.T) {
+	type args struct {
+		ctx   context.Context
+		idStr string
+	}
+
+	testDoesNotExistID := uuid.New()
+	testPersonID := uuid.New()
+	testEmails := []models.ContactEmail{
+		{
+			ID:       uuid.New(),
+			PersonID: testPersonID,
+			Username: "test123",
+			Provider: "example.com",
+			Primary:  true,
+		},
+		{
+			ID:       uuid.New(),
+			PersonID: testPersonID,
+			Username: "test123",
+			Provider: "example.org",
+			Primary:  false,
+		},
+	}
+
+	testAdminService := &mockAdminService{}
+	testAdminService.On("GetPersonContactEmails", mock.Anything, testPersonID).Return(testEmails, error(nil))
+	testAdminService.On("GetPersonContactEmails", mock.Anything, testDoesNotExistID).Return([]models.ContactEmail(nil), assert.AnError)
+
+	tests := []struct {
+		name      string
+		ape       adminPersonEndpoints
+		args      args
+		want      []PersonEmailData
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			ape:  adminPersonEndpoints{adminService: testAdminService},
+			args: args{
+				ctx:   context.Background(),
+				idStr: testPersonID.String(),
+			},
+			want: []PersonEmailData{
+				{
+					ID:      testEmails[0].ID.String(),
+					Email:   testEmails[0].String(),
+					Primary: testEmails[0].Primary,
+				},
+				{
+					ID:      testEmails[1].ID.String(),
+					Email:   testEmails[1].String(),
+					Primary: testEmails[1].Primary,
+				},
+			},
+		},
+		{
+			name: "Error; Bad ID",
+			ape: adminPersonEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx:   context.Background(),
+				idStr: "bad_val",
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Service",
+			ape:  adminPersonEndpoints{adminService: testAdminService},
+			args: args{
+				ctx:   context.Background(),
+				idStr: testDoesNotExistID.String(),
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.ape.GetSpecificContactEmails(tt.args.ctx, tt.args.idStr)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_adminPersonEndpoints_GetSpecificContactPhones(t *testing.T) {
+	type args struct {
+		ctx   context.Context
+		idStr string
+	}
+
+	testDoesNotExistID := uuid.New()
+	testPersonID := uuid.New()
+	testPhones := []models.ContactPhone{
+		{
+			ID:          uuid.New(),
+			PersonID:    testPersonID,
+			CountryCode: 1,
+			PhoneNumber: "555 555-5555",
+			Type:        "home",
+			Primary:     true,
+		},
+	}
+
+	testAdminService := &mockAdminService{}
+	testAdminService.On("GetPersonContacts", mock.Anything, testPersonID).Return(testPhones, error(nil))
+	testAdminService.On("GetPersonContacts", mock.Anything, testDoesNotExistID).Return([]models.ContactPhone{}, assert.AnError)
+
+	tests := []struct {
+		name      string
+		ape       adminPersonEndpoints
+		args      args
+		want      []PersonPhoneData
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			ape:  adminPersonEndpoints{adminService: testAdminService},
+			args: args{
+				ctx:   context.Background(),
+				idStr: testPersonID.String(),
+			},
+			want: []PersonPhoneData{
+				{
+					ID:          testPhones[0].ID.String(),
+					CountryCode: testPhones[0].CountryCode,
+					PhoneNumber: testPhones[0].PhoneNumber,
+					Type:        testPhones[0].Type,
+					Primary:     testPhones[0].Primary,
+				},
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Bad ID",
+			ape: adminPersonEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx:   context.Background(),
+				idStr: "bad_val",
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Service",
+			ape:  adminPersonEndpoints{adminService: testAdminService},
+			args: args{
+				ctx:   context.Background(),
+				idStr: testDoesNotExistID.String(),
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.ape.GetSpecificContactPhones(tt.args.ctx, tt.args.idStr)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func Test_adminPersonEndpoints_Update(t *testing.T) {
 	type args struct {
 		ctx context.Context
@@ -608,6 +884,24 @@ func (mas *mockAdminService) GetPerson(ctx context.Context, id uuid.UUID) (model
 func (mas *mockAdminService) GetPersonContacts(ctx context.Context, id uuid.UUID) (models.Contacts, error) {
 	args := mas.Called(ctx, id)
 	return args.Get(0).(models.Contacts), args.Error(1)
+}
+
+// GetPersonContactAddresses implements Service.
+func (mas *mockAdminService) GetPersonContactAddresses(ctx context.Context, id uuid.UUID) ([]models.ContactAddress, error) {
+	args := mas.Called(ctx, id)
+	return args.Get(0).([]models.ContactAddress), args.Error(1)
+}
+
+// GetPersonContactEmails implements Service.
+func (mas *mockAdminService) GetPersonContactEmails(ctx context.Context, id uuid.UUID) ([]models.ContactEmail, error) {
+	args := mas.Called(ctx, id)
+	return args.Get(0).([]models.ContactEmail), args.Error(1)
+}
+
+// GetPersonContactPhones implements Service.
+func (mas *mockAdminService) GetPersonContactPhones(ctx context.Context, id uuid.UUID) ([]models.ContactPhone, error) {
+	args := mas.Called(ctx, id)
+	return args.Get(0).([]models.ContactPhone), args.Error(1)
 }
 
 func (mas *mockAdminService) UpdatePerson(ctx context.Context, id uuid.UUID, data models.Person) error {
