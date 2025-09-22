@@ -57,6 +57,27 @@ func NewHttpHandler(adminEndpoints endpoints.Endpoints) http.Handler {
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodGet)
 
+	personRouter.Handle("/{id}/contacts/addresses", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		adminEndpoints.Person().GetSpecificContactAddresses,
+		decodeFetchItemRequestData("id"),
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodGet)
+
+	personRouter.Handle("/{id}/contacts/emails", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		adminEndpoints.Person().GetSpecificContactEmails,
+		decodeFetchItemRequestData("id"),
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodGet)
+
+	personRouter.Handle("/{id}/contacts/phones", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		adminEndpoints.Person().GetSpecificContactPhones,
+		decodeFetchItemRequestData("id"),
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodGet)
+
 	return rootRouter
 }
 

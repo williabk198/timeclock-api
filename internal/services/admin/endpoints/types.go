@@ -40,7 +40,7 @@ type PersonPhoneData struct {
 	CountryCode int    `json:"countryCode"`
 	PhoneNumber string `json:"phoneNumber"`
 	Type        string `json:"type"`
-	Primary     bool   `json:"kind"`
+	Primary     bool   `json:"primary"`
 }
 
 type EmployeeData struct {
