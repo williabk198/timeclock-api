@@ -48,11 +48,11 @@ ALTER TABLE ONLY person.emails
 ALTER TABLE ONLY person.phones
     ADD CONSTRAINT phones_pkey PRIMARY KEY (id);
 
-CREATE UNIQUE INDEX addresses_person_id_kind_primary_idx ON person.addresses USING btree (person_id, kind, "primary") WHERE "primary";
+CREATE UNIQUE INDEX addresses_person_id_kind_primary_idx ON person.addresses USING btree (person_id, "primary") WHERE "primary";
 
 CREATE UNIQUE INDEX emails_person_id_primary_idx ON person.emails USING btree (person_id, "primary") WHERE "primary";
 
-CREATE UNIQUE INDEX phones_person_id_kind_primary_idx ON person.phones USING btree (person_id, kind, "primary") WHERE "primary";
+CREATE UNIQUE INDEX phones_person_id_kind_primary_idx ON person.phones USING btree (person_id, "primary") WHERE "primary";
 
 ALTER TABLE ONLY person.addresses
     ADD CONSTRAINT addresses_person_id_fkey FOREIGN KEY (person_id) REFERENCES person.persons(id);
