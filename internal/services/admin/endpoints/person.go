@@ -119,18 +119,48 @@ func (ape adminPersonEndpoints) GetSpecificContacts(ctx context.Context, idStr s
 }
 
 // GetSpecificContactAddresses implements PersonEndpoints.
-func (ape adminPersonEndpoints) GetSpecificContactAddresses(ctx context.Context, id string) ([]PersonAddressData, error) {
-	panic("unimplemented")
+func (ape adminPersonEndpoints) GetSpecificContactAddresses(ctx context.Context, idStr string) ([]PersonAddressData, error) {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return nil, err
+	}
+
+	addresses, err := ape.adminService.GetPersonContactAddresses(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return ape.convertContactAddressSliceToPersonAddressDataSlice(addresses), nil
 }
 
 // GetSpecificContactEmails implements PersonEndpoints.
-func (ape adminPersonEndpoints) GetSpecificContactEmails(ctx context.Context, id string) ([]PersonEmailData, error) {
-	panic("unimplemented")
+func (ape adminPersonEndpoints) GetSpecificContactEmails(ctx context.Context, idStr string) ([]PersonEmailData, error) {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return nil, err
+	}
+
+	emails, err := ape.adminService.GetPersonContactEmails(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return ape.convertContactEmailSliceToPersonEmailDataSlice(emails), nil
 }
 
 // GetSpecificContactPhones implements PersonEndpoints.
-func (ape adminPersonEndpoints) GetSpecificContactPhones(ctx context.Context, id string) ([]PersonPhoneData, error) {
-	panic("unimplemented")
+func (ape adminPersonEndpoints) GetSpecificContactPhones(ctx context.Context, idStr string) ([]PersonPhoneData, error) {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return nil, err
+	}
+
+	phones, err := ape.adminService.GetPersonContactPhones(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return ape.convertContactPhoneSliceToPersonPhoneDataSlice(phones), nil
 }
 
 // Update implements PersonEndpoints.
@@ -160,8 +190,52 @@ func (ape adminPersonEndpoints) Update(ctx context.Context, updateReqData Update
 	return updateReqData.Data, nil
 }
 
+func (ape adminPersonEndpoints) convertContactAddressSliceToPersonAddressDataSlice(addresses []models.ContactAddress) []PersonAddressData {
+	result := make([]PersonAddressData, len(addresses))
+	for i, a := range addresses {
+		result[i] = PersonAddressData{
+			ID:         a.ID.String(),
+			Street1:    a.Street1,
+			Street2:    a.Street2,
+			Locality:   a.Locality,
+			Region:     a.Region,
+			PostalCode: a.PostalCode,
+			Country:    a.Country,
+			Type:       a.Type,
+			Primary:    a.Primary,
+		}
+	}
+	return result
+}
+
+func (ape adminPersonEndpoints) convertContactEmailSliceToPersonEmailDataSlice(emails []models.ContactEmail) []PersonEmailData {
+	result := make([]PersonEmailData, len(emails))
+	for i, e := range emails {
+		result[i] = PersonEmailData{
+			ID:      e.ID.String(),
+			Email:   e.String(),
+			Primary: e.Primary,
+		}
+	}
+	return result
+}
+
+func (ape adminPersonEndpoints) convertContactPhoneSliceToPersonPhoneDataSlice(phones []models.ContactPhone) []PersonPhoneData {
+	result := make([]PersonPhoneData, len(phones))
+	for i, p := range phones {
+		result[i] = PersonPhoneData{
+			ID:          p.ID.String(),
+			CountryCode: p.CountryCode,
+			PhoneNumber: p.PhoneNumber,
+			Type:        p.Type,
+			Primary:     p.Primary,
+		}
+	}
+	return result
+}
+
 func (ape adminPersonEndpoints) convertContactsModelToPersonContactData(contacts models.Contacts) PersonContactData {
-	// Potential performance improvement, if needed: Use wait groups and wrap each for loop in a go routine
+	// TODO: Remove this function
 
 	adressess := make([]PersonAddressData, len(contacts.Addresses))
 	for i, a := range contacts.Addresses {

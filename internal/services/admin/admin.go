@@ -71,18 +71,18 @@ func (as adminService) GetPersonContacts(ctx context.Context, uuid uuid.UUID) (m
 }
 
 // GetPersonContactAddresses implements Service.
-func (as adminService) GetPersonContactAddresses(context.Context, uuid.UUID) ([]models.ContactAddress, error) {
-	panic("unimplemented")
+func (as adminService) GetPersonContactAddresses(ctx context.Context, id uuid.UUID) ([]models.ContactAddress, error) {
+	return as.personStore.GetSpecificContactAddresses(ctx, id)
 }
 
 // GetPersonContactEmails implements Service.
-func (as adminService) GetPersonContactEmails(context.Context, uuid.UUID) ([]models.ContactEmail, error) {
-	panic("unimplemented")
+func (as adminService) GetPersonContactEmails(ctx context.Context, id uuid.UUID) ([]models.ContactEmail, error) {
+	return as.personStore.GetSpecificContactEmails(ctx, id)
 }
 
 // GetPersonContactPhones implements Service.
-func (as adminService) GetPersonContactPhones(context.Context, uuid.UUID) ([]models.ContactPhone, error) {
-	panic("unimplemented")
+func (as adminService) GetPersonContactPhones(ctx context.Context, id uuid.UUID) ([]models.ContactPhone, error) {
+	return as.personStore.GetSpecificContactPhones(ctx, id)
 }
 
 // UpdatePerson implements Service.
