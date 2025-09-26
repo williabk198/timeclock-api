@@ -10,18 +10,22 @@ import (
 
 type Endpoints interface {
 	Person() PersonEndpoints
+	Contact() ContactEndpoints
 }
 
 type PersonEndpoints interface {
 	Add(ctx context.Context, person PersonData) (PersonData, error)
 	Delete(ctx context.Context, id string) (PersonData, error)
 	GetSpecific(ctx context.Context, id string) (PersonData, error)
-	GetSpecificContacts(ctx context.Context, id string) (PersonContactData, error)
-	GetSpecificContactAddresses(ctx context.Context, id string) ([]PersonAddressData, error)
-	GetSpecificContactEmails(ctx context.Context, id string) ([]PersonEmailData, error)
-	GetSpecificContactPhones(ctx context.Context, id string) ([]PersonPhoneData, error)
 	GetAll(ctx context.Context, reqData GetPaginatedRequestData) ([]PersonData, error)
 	Update(ctx context.Context, urd UpdateRequestData[PersonData]) (PersonData, error)
+}
+
+type ContactEndpoints interface {
+	GetPersonContacts(ctx context.Context, personID string) (PersonContactData, error)
+	GetPersonContactAddresses(ctx context.Context, personID string) ([]PersonAddressData, error)
+	GetPersonContactEmails(ctx context.Context, personID string) ([]PersonEmailData, error)
+	GetPersonContactPhones(ctx context.Context, personID string) ([]PersonPhoneData, error)
 }
 
 type adminEndpoints struct {
@@ -31,6 +35,12 @@ type adminEndpoints struct {
 // Person implements Endpoints.
 func (a adminEndpoints) Person() PersonEndpoints {
 	return adminPersonEndpoints{
+		adminService: a.adminService,
+	}
+}
+
+func (a adminEndpoints) Contact() ContactEndpoints {
+	return adminContactEndpoints{
 		adminService: a.adminService,
 	}
 }
