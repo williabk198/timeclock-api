@@ -22,14 +22,14 @@ func NewHttpHandler(adminEndpoints endpoints.Endpoints) http.Handler {
 
 	personRouter := rootRouter.PathPrefix("/persons").Subrouter()
 
-	personRouter.Handle("/", httputil.BuildRouteHandler(
+	personRouter.Handle("", httputil.BuildRouteHandler(
 		routeHandleBuilder,
 		adminEndpoints.Person().GetAll,
 		decodeFetchAllRequestData,
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodGet)
 
-	personRouter.Handle("/persons", httputil.BuildRouteHandler(
+	personRouter.Handle("", httputil.BuildRouteHandler(
 		routeHandleBuilder,
 		adminEndpoints.Person().Add,
 		decodeCreateItemRequestData,
@@ -52,28 +52,28 @@ func NewHttpHandler(adminEndpoints endpoints.Endpoints) http.Handler {
 
 	personRouter.Handle("/{id}/contacts", httputil.BuildRouteHandler(
 		routeHandleBuilder,
-		adminEndpoints.Person().GetSpecificContacts,
+		adminEndpoints.Contact().GetPersonContacts,
 		decodeFetchItemRequestData("id"),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodGet)
 
 	personRouter.Handle("/{id}/contacts/addresses", httputil.BuildRouteHandler(
 		routeHandleBuilder,
-		adminEndpoints.Person().GetSpecificContactAddresses,
+		adminEndpoints.Contact().GetPersonContactAddresses,
 		decodeFetchItemRequestData("id"),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodGet)
 
 	personRouter.Handle("/{id}/contacts/emails", httputil.BuildRouteHandler(
 		routeHandleBuilder,
-		adminEndpoints.Person().GetSpecificContactEmails,
+		adminEndpoints.Contact().GetPersonContactEmails,
 		decodeFetchItemRequestData("id"),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodGet)
 
 	personRouter.Handle("/{id}/contacts/phones", httputil.BuildRouteHandler(
 		routeHandleBuilder,
-		adminEndpoints.Person().GetSpecificContactPhones,
+		adminEndpoints.Contact().GetPersonContactPhones,
 		decodeFetchItemRequestData("id"),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodGet)
