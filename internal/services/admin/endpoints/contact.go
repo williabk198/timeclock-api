@@ -12,7 +12,12 @@ type adminContactEndpoints struct {
 	adminService admin.Service
 }
 
-func (ape adminContactEndpoints) GetPersonContacts(ctx context.Context, idStr string) (PersonContactData, error) {
+// AddContactEmailForPerson implements ContactEndpoints.
+func (ace adminContactEndpoints) AddContactEmailForPerson(ctx context.Context, reqData AddSubItemRequestData[PersonEmailData]) (PersonEmailData, error) {
+	panic("unimplemented")
+}
+
+func (ace adminContactEndpoints) GetPersonContacts(ctx context.Context, idStr string) (PersonContactData, error) {
 	// TODO: Change this function to use adminService.GetPersonContactAddress, adminService.GetPersonContactEmails, and adminService.GetPersonContactPhones
 
 	id, err := uuid.Parse(idStr)
@@ -20,57 +25,57 @@ func (ape adminContactEndpoints) GetPersonContacts(ctx context.Context, idStr st
 		return PersonContactData{}, err
 	}
 
-	contactData, err := ape.adminService.GetPersonContacts(ctx, id)
+	contactData, err := ace.adminService.GetPersonContacts(ctx, id)
 	if err != nil {
 		return PersonContactData{}, err
 	}
 
-	return ape.convertContactsModelToPersonContactData(contactData), nil
+	return ace.convertContactsModelToPersonContactData(contactData), nil
 }
 
-func (ape adminContactEndpoints) GetPersonContactAddresses(ctx context.Context, idStr string) ([]PersonAddressData, error) {
+func (ace adminContactEndpoints) GetPersonContactAddresses(ctx context.Context, idStr string) ([]PersonAddressData, error) {
 	id, err := uuid.Parse(idStr)
 	if err != nil {
 		return nil, err
 	}
 
-	addresses, err := ape.adminService.GetPersonContactAddresses(ctx, id)
+	addresses, err := ace.adminService.GetPersonContactAddresses(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	return ape.convertContactAddressSliceToPersonAddressDataSlice(addresses), nil
+	return ace.convertContactAddressSliceToPersonAddressDataSlice(addresses), nil
 }
 
-func (ape adminContactEndpoints) GetPersonContactEmails(ctx context.Context, idStr string) ([]PersonEmailData, error) {
+func (ace adminContactEndpoints) GetPersonContactEmails(ctx context.Context, idStr string) ([]PersonEmailData, error) {
 	id, err := uuid.Parse(idStr)
 	if err != nil {
 		return nil, err
 	}
 
-	emails, err := ape.adminService.GetPersonContactEmails(ctx, id)
+	emails, err := ace.adminService.GetPersonContactEmails(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	return ape.convertContactEmailSliceToPersonEmailDataSlice(emails), nil
+	return ace.convertContactEmailSliceToPersonEmailDataSlice(emails), nil
 }
 
-func (ape adminContactEndpoints) GetPersonContactPhones(ctx context.Context, idStr string) ([]PersonPhoneData, error) {
+func (ace adminContactEndpoints) GetPersonContactPhones(ctx context.Context, idStr string) ([]PersonPhoneData, error) {
 	id, err := uuid.Parse(idStr)
 	if err != nil {
 		return nil, err
 	}
 
-	phones, err := ape.adminService.GetPersonContactPhones(ctx, id)
+	phones, err := ace.adminService.GetPersonContactPhones(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	return ape.convertContactPhoneSliceToPersonPhoneDataSlice(phones), nil
+	return ace.convertContactPhoneSliceToPersonPhoneDataSlice(phones), nil
 }
 
-func (ape adminContactEndpoints) convertContactAddressSliceToPersonAddressDataSlice(addresses []models.ContactAddress) []PersonAddressData {
+func (ace adminContactEndpoints) convertContactAddressSliceToPersonAddressDataSlice(addresses []models.ContactAddress) []PersonAddressData {
 	result := make([]PersonAddressData, len(addresses))
 	for i, a := range addresses {
 		result[i] = PersonAddressData{
@@ -88,7 +93,7 @@ func (ape adminContactEndpoints) convertContactAddressSliceToPersonAddressDataSl
 	return result
 }
 
-func (ape adminContactEndpoints) convertContactEmailSliceToPersonEmailDataSlice(emails []models.ContactEmail) []PersonEmailData {
+func (ace adminContactEndpoints) convertContactEmailSliceToPersonEmailDataSlice(emails []models.ContactEmail) []PersonEmailData {
 	result := make([]PersonEmailData, len(emails))
 	for i, e := range emails {
 		result[i] = PersonEmailData{
@@ -100,7 +105,7 @@ func (ape adminContactEndpoints) convertContactEmailSliceToPersonEmailDataSlice(
 	return result
 }
 
-func (ape adminContactEndpoints) convertContactPhoneSliceToPersonPhoneDataSlice(phones []models.ContactPhone) []PersonPhoneData {
+func (ace adminContactEndpoints) convertContactPhoneSliceToPersonPhoneDataSlice(phones []models.ContactPhone) []PersonPhoneData {
 	result := make([]PersonPhoneData, len(phones))
 	for i, p := range phones {
 		result[i] = PersonPhoneData{
@@ -114,7 +119,7 @@ func (ape adminContactEndpoints) convertContactPhoneSliceToPersonPhoneDataSlice(
 	return result
 }
 
-func (ape adminContactEndpoints) convertContactsModelToPersonContactData(contacts models.Contacts) PersonContactData {
+func (ace adminContactEndpoints) convertContactsModelToPersonContactData(contacts models.Contacts) PersonContactData {
 	// TODO: Remove this function
 
 	adressess := make([]PersonAddressData, len(contacts.Addresses))

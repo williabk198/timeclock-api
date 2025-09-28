@@ -22,6 +22,7 @@ type PersonEndpoints interface {
 }
 
 type ContactEndpoints interface {
+	AddContactEmailForPerson(ctx context.Context, reqData AddSubItemRequestData[PersonEmailData]) (PersonEmailData, error)
 	GetPersonContacts(ctx context.Context, personID string) (PersonContactData, error)
 	GetPersonContactAddresses(ctx context.Context, personID string) ([]PersonAddressData, error)
 	GetPersonContactEmails(ctx context.Context, personID string) ([]PersonEmailData, error)
@@ -49,6 +50,11 @@ func NewAdminEndpointHandlers(dbSession *sql.DB) Endpoints {
 	return adminEndpoints{
 		adminService: admin.NewService(datastores.NewPersonStore(dbSession)),
 	}
+}
+
+type AddSubItemRequestData[T any] struct {
+	ParentID string
+	Data     T
 }
 
 type UpdateRequestData[T any] struct {
