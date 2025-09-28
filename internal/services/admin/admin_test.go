@@ -114,6 +114,73 @@ func Test_authService_AddPerson(t *testing.T) {
 	}
 }
 
+func Test_adminService_AddPersonContactEmail(t *testing.T) {
+	type args struct {
+		ctx   context.Context
+		email models.ContactEmail
+	}
+	type wants struct {
+		id uuid.UUID
+	}
+
+	testEmailID := uuid.New()
+	testPersonEmail := models.ContactEmail{
+		PersonID: uuid.New(),
+		Username: "test",
+		Provider: "example.com",
+		Primary:  true,
+	}
+	testErrorPersonEmail := models.ContactEmail{
+		PersonID: uuid.New(),
+		Username: "test",
+		Provider: "invalid",
+	}
+
+	testPersonStore := &mockPersonStore{}
+	testPersonStore.On("AddSpecificContactEmail", mock.Anything, testPersonEmail).Return(testEmailID, error(nil))
+	testPersonStore.On("Add", mock.Anything, testErrorPersonEmail).Return(uuid.Nil, assert.AnError)
+
+	tests := []struct {
+		name      string
+		as        adminService
+		args      args
+		wants     wants
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			as: adminService{
+				personStore: testPersonStore,
+			},
+			args: args{
+				ctx:   context.Background(),
+				email: testPersonEmail,
+			},
+			wants:     wants{id: testEmailID},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error",
+			as: adminService{
+				personStore: testPersonStore,
+			},
+			args: args{
+				ctx:   context.Background(),
+				email: testErrorPersonEmail,
+			},
+			wants:     wants{id: uuid.Nil},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.as.AddPersonContactEmail(tt.args.ctx, tt.args.email)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.wants.id, got)
+		})
+	}
+}
+
 func Test_adminService_DeletePerson(t *testing.T) {
 	type args struct {
 		ctx context.Context
@@ -774,6 +841,10 @@ type mockPersonStore struct {
 
 func (mps *mockPersonStore) Add(ctx context.Context, item models.Person) (id uuid.UUID, err error) {
 	args := mps.Called(ctx, item)
+	return args.Get(0).(uuid.UUID), args.Error(1)
+}
+func (mps *mockPersonStore) AddSpecificContactEmail(ctx context.Context, email models.ContactEmail) (uuid.UUID, error) {
+	args := mps.Called(ctx, email)
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }
 func (mps *mockPersonStore) Delete(ctx context.Context, id uuid.UUID) (item models.Person, err error) {

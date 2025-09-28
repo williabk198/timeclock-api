@@ -10,6 +10,7 @@ import (
 
 type Service interface {
 	AddPerson(context.Context, models.Person) (uuid.UUID, error)
+	AddPersonContactEmail(context.Context, models.ContactEmail) (uuid.UUID, error)
 	DeletePerson(context.Context, uuid.UUID) (models.Person, error)
 	GetAllPersons(ctx context.Context, offset uint, limit uint) ([]models.Person, error)
 	GetPersonContacts(context.Context, uuid.UUID) (models.Contacts, error)
@@ -22,6 +23,11 @@ type Service interface {
 
 type adminService struct {
 	personStore datastores.PersonStore
+}
+
+// AddPersonContactEmail implements Service.
+func (as adminService) AddPersonContactEmail(ctx context.Context, email models.ContactEmail) (uuid.UUID, error) {
+	panic("unimplemented")
 }
 
 // AddPunch implements Service.

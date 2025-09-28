@@ -13,6 +13,7 @@ import (
 
 type PersonStore interface {
 	SqlDatastore[models.Person, uuid.UUID]
+	AddSpecificContactEmail(ctx context.Context, email models.ContactEmail) (uuid.UUID, error)
 	GetSpecificContactAddresses(ctx context.Context, id uuid.UUID) ([]models.ContactAddress, error)
 	GetSpecificContactEmails(ctx context.Context, id uuid.UUID) ([]models.ContactEmail, error)
 	GetSpecificContactPhones(ctx context.Context, id uuid.UUID) ([]models.ContactPhone, error)
@@ -39,6 +40,11 @@ func (ps personStore) Add(ctx context.Context, item models.Person) (id uuid.UUID
 	}
 
 	return id, nil
+}
+
+// AddSpecificContactEmail implements PersonStore.
+func (ps personStore) AddSpecificContactEmail(ctx context.Context, email models.ContactEmail) (uuid.UUID, error) {
+	panic("unimplemented")
 }
 
 // Delete implements Store.

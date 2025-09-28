@@ -10,6 +10,149 @@ import (
 	"github.com/williabk198/timeclock/internal/models"
 )
 
+func Test_adminContactEndpoints_AddContactEmailForPerson(t *testing.T) {
+	type args struct {
+		ctx     context.Context
+		reqData AddSubItemRequestData[PersonEmailData]
+	}
+
+	testValidPersonID := uuid.New()
+	testNotFoundPersonID := uuid.New()
+	testEmailID := uuid.New()
+
+	testValidEmailData := PersonEmailData{
+		Email:   "test@example.com",
+		Primary: true,
+	}
+	testValidEmailDB := models.ContactEmail{
+		PersonID: testValidPersonID,
+		Username: "test",
+		Provider: "example.com",
+		Primary:  true,
+	}
+
+	testInvalidEmailData1 := PersonEmailData{
+		Email: "@example.com",
+	}
+	testInvalidEmailData2 := PersonEmailData{
+		Email: "user@",
+	}
+	testInvalidEmailData3 := PersonEmailData{
+		Email: "user@example",
+	}
+
+	testAdminService := &mockAdminService{}
+	testAdminService.On("AddPersonContactEmail", mock.Anything, testValidPersonID, testValidEmailDB).Return(testEmailID, error(nil))
+	testAdminService.On("AddPersonContactEmail", mock.Anything, testNotFoundPersonID, testValidEmailDB).Return(uuid.Nil, assert.AnError)
+
+	tests := []struct {
+		name      string
+		ace       adminContactEndpoints
+		args      args
+		want      PersonEmailData
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			ace: adminContactEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: AddSubItemRequestData[PersonEmailData]{
+					ParentID: testValidPersonID.String(),
+					Data:     testValidEmailData,
+				},
+			},
+			want: PersonEmailData{
+				ID:      testEmailID.String(),
+				Email:   testValidEmailData.Email,
+				Primary: testValidEmailData.Primary,
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Person DNE",
+			ace: adminContactEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: AddSubItemRequestData[PersonEmailData]{
+					ParentID: testNotFoundPersonID.String(),
+					Data:     testValidEmailData,
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Person ID",
+		},
+		{
+			name: "Error; No Email Given",
+			ace: adminContactEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: AddSubItemRequestData[PersonEmailData]{
+					ParentID: testValidPersonID.String(),
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Email; No Username",
+			ace: adminContactEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: AddSubItemRequestData[PersonEmailData]{
+					ParentID: testValidPersonID.String(),
+					Data:     testInvalidEmailData1,
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Email; No Domain",
+			ace: adminContactEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: AddSubItemRequestData[PersonEmailData]{
+					ParentID: testValidPersonID.String(),
+					Data:     testInvalidEmailData2,
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Email; Missing Top-level Domain",
+			ace: adminContactEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: AddSubItemRequestData[PersonEmailData]{
+					ParentID: testValidPersonID.String(),
+					Data:     testInvalidEmailData3,
+				},
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.ace.AddContactEmailForPerson(tt.args.ctx, tt.args.reqData)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func Test_adminContactEndpoint_GetPersonContacts(t *testing.T) {
 	type args struct {
 		ctx   context.Context

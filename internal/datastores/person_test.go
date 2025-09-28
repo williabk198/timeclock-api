@@ -135,6 +135,120 @@ func Test_personStore_Add(t *testing.T) {
 	}
 }
 
+func Test_personStore_AddSpecificContactEmail(t *testing.T) {
+	type args struct {
+		ctx   context.Context
+		email models.ContactEmail
+	}
+	type wantQuery struct {
+		rawQuery  string
+		arguments []driver.Value
+		result    *sqlmock.Rows
+		returnErr error
+	}
+
+	testSqlBuilder := jagsqlb.NewSqlBuilder()
+	mockSession, mockDb, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testPersonID := uuid.New()
+	newEmailID := uuid.New()
+
+	tests := []struct {
+		name      string
+		ps        personStore
+		args      args
+		wantQuery *wantQuery
+		wantID    uuid.UUID
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			ps: personStore{
+				dbConn:       mockSession,
+				sqlBuilder:   testSqlBuilder,
+				tableNameMap: map[string]string{"contact": "person.contacts"},
+			},
+			args: args{
+				ctx: context.Background(),
+				email: models.ContactEmail{
+					PersonID: testPersonID,
+					Username: "test",
+					Provider: "example.com",
+					Primary:  true,
+				},
+			},
+			wantQuery: &wantQuery{
+				rawQuery:  `INSERT INTO "person"."contacts"("perosn_id", "username", "provider", "primary") VALUES ($1, $2, $3, $4) RETURNING "id";`,
+				arguments: []driver.Value{testPersonID.String(), "test", "example.com", true},
+				result:    sqlmock.NewRows([]string{"id"}).AddRow(newEmailID),
+			},
+			wantID:    newEmailID,
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Query Builder",
+			ps: personStore{
+				dbConn:       mockSession,
+				sqlBuilder:   testSqlBuilder,
+				tableNameMap: map[string]string{"contact": ".bad_val"},
+			},
+			args: args{
+				ctx:   context.Background(),
+				email: models.ContactEmail{},
+			},
+			wantID:    uuid.Nil,
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Query Execution",
+			ps: personStore{
+				dbConn:       mockSession,
+				sqlBuilder:   testSqlBuilder,
+				tableNameMap: map[string]string{"contact": "person.contacts"},
+			},
+			args: args{
+				ctx: context.Background(),
+				email: models.ContactEmail{
+					PersonID: testPersonID,
+					Username: "test",
+					Provider: "example.com",
+					Primary:  true,
+				},
+			},
+			wantQuery: &wantQuery{
+				rawQuery:  `INSERT INTO "person"."contacts"("perosn_id", "username", "provider", "primary") VALUES ($1, $2, $3, $4) RETURNING "id";`,
+				arguments: []driver.Value{testPersonID.String(), "test", "example.com", true},
+				result:    sqlmock.NewRows(nil),
+				returnErr: assert.AnError,
+			},
+			wantID:    uuid.Nil,
+			assertion: assert.NoError,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantQuery != nil {
+				mockDb.ExpectQuery(regexp.QuoteMeta(tt.wantQuery.rawQuery)).
+					WithArgs(tt.wantQuery.arguments...).WillReturnRows(
+					tt.wantQuery.result,
+				).WillReturnError(tt.wantQuery.returnErr)
+			}
+
+			got, err := tt.ps.AddSpecificContactEmail(tt.args.ctx, tt.args.email)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.wantID, got)
+
+			// Check to see if the expectations of the query were met
+			if err := mockDb.ExpectationsWereMet(); err != nil {
+				t.Errorf("sql expectations were not met: %v", err)
+			}
+		})
+	}
+}
+
 func Test_personStore_Delete(t *testing.T) {
 	type args struct {
 		ctx context.Context
