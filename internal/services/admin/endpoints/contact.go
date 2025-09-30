@@ -2,6 +2,8 @@ package endpoints
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/williabk198/timeclock/internal/models"
@@ -14,7 +16,31 @@ type adminContactEndpoints struct {
 
 // AddContactEmailForPerson implements ContactEndpoints.
 func (ace adminContactEndpoints) AddContactEmailForPerson(ctx context.Context, reqData AddSubItemRequestData[PersonEmailData]) (PersonEmailData, error) {
-	panic("unimplemented")
+	personID, err := uuid.Parse(reqData.ParentID)
+	if err != nil {
+		return PersonEmailData{}, err
+	}
+
+	// Oversimplifed email validation. This will eventually need to be more robust.
+	splitEmail := strings.Split(reqData.Data.Email, "@")
+	if len(splitEmail) != 2 || splitEmail[0] == "" || splitEmail[1] == "" || !strings.Contains(splitEmail[1], ".") ||
+		splitEmail[1][0] == '.' || splitEmail[1][len(splitEmail)-1] == '.' {
+
+		return PersonEmailData{}, fmt.Errorf("provided email address was ill formated")
+	}
+
+	emailID, err := ace.adminService.AddPersonContactEmail(ctx, models.ContactEmail{
+		PersonID: personID,
+		Username: splitEmail[0],
+		Provider: splitEmail[1],
+		Primary:  reqData.Data.Primary,
+	})
+	if err != nil {
+		return PersonEmailData{}, err
+	}
+
+	reqData.Data.ID = emailID.String()
+	return reqData.Data, nil
 }
 
 func (ace adminContactEndpoints) GetPersonContacts(ctx context.Context, idStr string) (PersonContactData, error) {
