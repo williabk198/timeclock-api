@@ -27,7 +27,7 @@ type adminService struct {
 
 // AddPersonContactEmail implements Service.
 func (as adminService) AddPersonContactEmail(ctx context.Context, email models.ContactEmail) (uuid.UUID, error) {
-	panic("unimplemented")
+	return as.personStore.AddSpecificContactEmail(ctx, email)
 }
 
 // AddPunch implements Service.

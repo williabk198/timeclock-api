@@ -31,6 +31,13 @@ func Test_adminContactEndpoints_AddContactEmailForPerson(t *testing.T) {
 		Primary:  true,
 	}
 
+	testInvalidEmailDB := models.ContactEmail{
+		PersonID: testNotFoundPersonID,
+		Username: "test",
+		Provider: "example.com",
+		Primary:  true,
+	}
+
 	testInvalidEmailData1 := PersonEmailData{
 		Email: "@example.com",
 	}
@@ -42,8 +49,8 @@ func Test_adminContactEndpoints_AddContactEmailForPerson(t *testing.T) {
 	}
 
 	testAdminService := &mockAdminService{}
-	testAdminService.On("AddPersonContactEmail", mock.Anything, testValidPersonID, testValidEmailDB).Return(testEmailID, error(nil))
-	testAdminService.On("AddPersonContactEmail", mock.Anything, testNotFoundPersonID, testValidEmailDB).Return(uuid.Nil, assert.AnError)
+	testAdminService.On("AddPersonContactEmail", mock.Anything, testValidEmailDB).Return(testEmailID, error(nil))
+	testAdminService.On("AddPersonContactEmail", mock.Anything, testInvalidEmailDB).Return(uuid.Nil, assert.AnError)
 
 	tests := []struct {
 		name      string
@@ -87,6 +94,17 @@ func Test_adminContactEndpoints_AddContactEmailForPerson(t *testing.T) {
 		},
 		{
 			name: "Error; Invalid Person ID",
+			ace: adminContactEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: AddSubItemRequestData[PersonEmailData]{
+					ParentID: "ivalid_id",
+					Data:     testValidEmailData,
+				},
+			},
+			assertion: assert.Error,
 		},
 		{
 			name: "Error; No Email Given",

@@ -54,7 +54,7 @@ func (p Pronouns) MarshalQuery() (string, error) {
 }
 
 type ContactAddress struct {
-	ID         uuid.UUID `jagsqlb:"id"`
+	ID         uuid.UUID `jagsqlb:"id;omit"`
 	PersonID   uuid.UUID `jagsqlb:"person_id"`
 	Street1    string    `jagsqlb:"street1" json:"street1"`
 	Street2    string    `jagsqlb:"street2" json:"street2"`
@@ -67,7 +67,7 @@ type ContactAddress struct {
 }
 
 type ContactEmail struct {
-	ID       uuid.UUID `jagsqlb:"id"`
+	ID       uuid.UUID `jagsqlb:"id;omit"`
 	PersonID uuid.UUID `jagsqlb:"person_id"`
 	Username string    `jagsqlb:"username"`
 	Provider string    `jagsqlb:"provider"`
@@ -79,7 +79,7 @@ func (ce ContactEmail) String() string {
 }
 
 type ContactPhone struct {
-	ID          uuid.UUID `jagsqlb:"id"`
+	ID          uuid.UUID `jagsqlb:"id;omit"`
 	PersonID    uuid.UUID `jagsqlb:"person_id"`
 	CountryCode int       `jagsqlb:"country_code"`
 	PhoneNumber string    `jagsqlb:"phone_number"`

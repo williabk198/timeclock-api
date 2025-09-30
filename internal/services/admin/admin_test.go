@@ -138,7 +138,7 @@ func Test_adminService_AddPersonContactEmail(t *testing.T) {
 
 	testPersonStore := &mockPersonStore{}
 	testPersonStore.On("AddSpecificContactEmail", mock.Anything, testPersonEmail).Return(testEmailID, error(nil))
-	testPersonStore.On("Add", mock.Anything, testErrorPersonEmail).Return(uuid.Nil, assert.AnError)
+	testPersonStore.On("AddSpecificContactEmail", mock.Anything, testErrorPersonEmail).Return(uuid.Nil, assert.AnError)
 
 	tests := []struct {
 		name      string

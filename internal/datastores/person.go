@@ -43,8 +43,18 @@ func (ps personStore) Add(ctx context.Context, item models.Person) (id uuid.UUID
 }
 
 // AddSpecificContactEmail implements PersonStore.
-func (ps personStore) AddSpecificContactEmail(ctx context.Context, email models.ContactEmail) (uuid.UUID, error) {
-	panic("unimplemented")
+func (ps personStore) AddSpecificContactEmail(ctx context.Context, email models.ContactEmail) (id uuid.UUID, err error) {
+	query, params, err := ps.sqlBuilder.Insert(ps.tableNameMap["emails"]).Data(email).Returning("id").Build()
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	row := ps.dbConn.QueryRowContext(ctx, query, params...)
+	if err := row.Scan(&id); err != nil {
+		return uuid.Nil, err
+	}
+
+	return id, nil
 }
 
 // Delete implements Store.

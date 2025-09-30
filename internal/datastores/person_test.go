@@ -169,7 +169,7 @@ func Test_personStore_AddSpecificContactEmail(t *testing.T) {
 			ps: personStore{
 				dbConn:       mockSession,
 				sqlBuilder:   testSqlBuilder,
-				tableNameMap: map[string]string{"contact": "person.contacts"},
+				tableNameMap: map[string]string{"emails": "person.emails"},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -181,7 +181,7 @@ func Test_personStore_AddSpecificContactEmail(t *testing.T) {
 				},
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `INSERT INTO "person"."contacts"("perosn_id", "username", "provider", "primary") VALUES ($1, $2, $3, $4) RETURNING "id";`,
+				rawQuery:  `INSERT INTO "person"."emails" ("person_id", "username", "provider", "primary") VALUES ($1, $2, $3, $4) RETURNING "id";`,
 				arguments: []driver.Value{testPersonID.String(), "test", "example.com", true},
 				result:    sqlmock.NewRows([]string{"id"}).AddRow(newEmailID),
 			},
@@ -193,7 +193,7 @@ func Test_personStore_AddSpecificContactEmail(t *testing.T) {
 			ps: personStore{
 				dbConn:       mockSession,
 				sqlBuilder:   testSqlBuilder,
-				tableNameMap: map[string]string{"contact": ".bad_val"},
+				tableNameMap: map[string]string{"emails": ".bad_val"},
 			},
 			args: args{
 				ctx:   context.Background(),
@@ -207,7 +207,7 @@ func Test_personStore_AddSpecificContactEmail(t *testing.T) {
 			ps: personStore{
 				dbConn:       mockSession,
 				sqlBuilder:   testSqlBuilder,
-				tableNameMap: map[string]string{"contact": "person.contacts"},
+				tableNameMap: map[string]string{"emails": "person.emails"},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -219,13 +219,13 @@ func Test_personStore_AddSpecificContactEmail(t *testing.T) {
 				},
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `INSERT INTO "person"."contacts"("perosn_id", "username", "provider", "primary") VALUES ($1, $2, $3, $4) RETURNING "id";`,
+				rawQuery:  `INSERT INTO "person"."emails" ("person_id", "username", "provider", "primary") VALUES ($1, $2, $3, $4) RETURNING "id";`,
 				arguments: []driver.Value{testPersonID.String(), "test", "example.com", true},
 				result:    sqlmock.NewRows(nil),
 				returnErr: assert.AnError,
 			},
 			wantID:    uuid.Nil,
-			assertion: assert.NoError,
+			assertion: assert.Error,
 		},
 	}
 	for _, tt := range tests {
