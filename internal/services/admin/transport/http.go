@@ -71,6 +71,13 @@ func NewHttpHandler(adminEndpoints endpoints.Endpoints) http.Handler {
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodGet)
 
+	personRouter.Handle("/{id}/contacts/emails", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		adminEndpoints.Contact().AddContactEmailForPerson,
+		decodeAddSubItemRequestData[endpoints.PersonEmailData]("id"),
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodPost)
+
 	personRouter.Handle("/{id}/contacts/phones", httputil.BuildRouteHandler(
 		routeHandleBuilder,
 		adminEndpoints.Contact().GetPersonContactPhones,
@@ -152,6 +159,20 @@ func decodeUpdateItemRequestData[T any](key string) httputil.RequestDecoderFunc[
 		return endpoints.UpdateRequestData[T]{
 			ID:   id,
 			Data: data,
+		}, nil
+	}
+}
+
+func decodeAddSubItemRequestData[T any](idKey string) httputil.RequestDecoderFunc[endpoints.AddSubItemRequestData[T]] {
+	return func(ctx context.Context, r *http.Request) (endpoints.AddSubItemRequestData[T], error) {
+		parentId := mux.Vars(r)[idKey]
+		var reqData T
+		if err := json.NewDecoder(r.Body).Decode(&reqData); err != nil {
+			return endpoints.AddSubItemRequestData[T]{}, fmt.Errorf("failed to parse data from request body: %w", err)
+		}
+		return endpoints.AddSubItemRequestData[T]{
+			ParentID: parentId,
+			Data:     reqData,
 		}, nil
 	}
 }
