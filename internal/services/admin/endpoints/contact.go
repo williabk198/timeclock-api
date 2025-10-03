@@ -14,6 +14,11 @@ type adminContactEndpoints struct {
 	adminService admin.Service
 }
 
+// AddContactAddressForPerson implements ContactEndpoints.
+func (ace adminContactEndpoints) AddContactAddressForPerson(ctx context.Context, reqData AddSubItemRequestData[PersonAddressData]) (PersonEmailData, error) {
+	panic("unimplemented")
+}
+
 // AddContactEmailForPerson implements ContactEndpoints.
 func (ace adminContactEndpoints) AddContactEmailForPerson(ctx context.Context, reqData AddSubItemRequestData[PersonEmailData]) (PersonEmailData, error) {
 	personID, err := uuid.Parse(reqData.ParentID)
@@ -41,6 +46,11 @@ func (ace adminContactEndpoints) AddContactEmailForPerson(ctx context.Context, r
 
 	reqData.Data.ID = emailID.String()
 	return reqData.Data, nil
+}
+
+// AddContactPhoneForPerson implements ContactEndpoints.
+func (ace adminContactEndpoints) AddContactPhoneForPerson(ctx context.Context, reqData AddSubItemRequestData[PersonPhoneData]) (PersonPhoneData, error) {
+	panic("unimplemented")
 }
 
 func (ace adminContactEndpoints) GetPersonContacts(ctx context.Context, idStr string) (PersonContactData, error) {
@@ -112,7 +122,7 @@ func (ace adminContactEndpoints) convertContactAddressSliceToPersonAddressDataSl
 			Region:     a.Region,
 			PostalCode: a.PostalCode,
 			Country:    a.Country,
-			Type:       a.Type,
+			Type:       string(a.Type),
 			Primary:    a.Primary,
 		}
 	}
@@ -138,7 +148,7 @@ func (ace adminContactEndpoints) convertContactPhoneSliceToPersonPhoneDataSlice(
 			ID:          p.ID.String(),
 			CountryCode: p.CountryCode,
 			PhoneNumber: p.PhoneNumber,
-			Type:        p.Type,
+			Type:        string(p.Type),
 			Primary:     p.Primary,
 		}
 	}
@@ -158,7 +168,7 @@ func (ace adminContactEndpoints) convertContactsModelToPersonContactData(contact
 			Region:     a.Region,
 			PostalCode: a.PostalCode,
 			Country:    a.Country,
-			Type:       a.Type,
+			Type:       string(a.Type),
 			Primary:    a.Primary,
 		}
 	}
@@ -178,7 +188,7 @@ func (ace adminContactEndpoints) convertContactsModelToPersonContactData(contact
 			ID:          p.ID.String(),
 			CountryCode: p.CountryCode,
 			PhoneNumber: p.PhoneNumber,
-			Type:        p.Type,
+			Type:        string(p.Type),
 			Primary:     p.Primary,
 		}
 	}

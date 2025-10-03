@@ -53,17 +53,31 @@ func (p Pronouns) MarshalQuery() (string, error) {
 	return p.String(), nil
 }
 
+type AddressType string
+
+const (
+	AddressTypePhysical AddressType = "physical"
+	AddressTypeMailing  AddressType = "mailing"
+)
+
+type PhoneType string
+
+const (
+	PhoneTypeHome PhoneType = "home"
+	PhoneTypeCell PhoneType = "cell"
+)
+
 type ContactAddress struct {
-	ID         uuid.UUID `jagsqlb:"id;omit"`
-	PersonID   uuid.UUID `jagsqlb:"person_id"`
-	Street1    string    `jagsqlb:"street1" json:"street1"`
-	Street2    string    `jagsqlb:"street2" json:"street2"`
-	Locality   string    `jagsqlb:"city" json:"locality"`
-	Region     string    `jagsqlb:"locality" json:"region"` // Locality is the State, Province, Prefecture, etc... that the City is located in
-	PostalCode string    `jagsqlb:"postal_code" json:"postalCode"`
-	Country    string    `jagsqlb:"country" json:"country"`
-	Type       string    `jagsqlb:"kind" json:"type"` // Type holds what kind of address this value represents: Mailing, Physical, Billing, etc...
-	Primary    bool      `jagsqlb:"primary" json:"primary"`
+	ID         uuid.UUID   `jagsqlb:"id;omit"`
+	PersonID   uuid.UUID   `jagsqlb:"person_id"`
+	Street1    string      `jagsqlb:"street1" json:"street1"`
+	Street2    string      `jagsqlb:"street2" json:"street2"`
+	Locality   string      `jagsqlb:"city" json:"locality"`
+	Region     string      `jagsqlb:"locality" json:"region"` // Locality is the State, Province, Prefecture, etc... that the City is located in
+	PostalCode string      `jagsqlb:"postal_code" json:"postalCode"`
+	Country    string      `jagsqlb:"country" json:"country"`
+	Type       AddressType `jagsqlb:"kind" json:"type"` // Type holds what kind of address this value represents: Mailing, Physical, Billing, etc...
+	Primary    bool        `jagsqlb:"primary" json:"primary"`
 }
 
 type ContactEmail struct {
@@ -83,7 +97,7 @@ type ContactPhone struct {
 	PersonID    uuid.UUID `jagsqlb:"person_id"`
 	CountryCode int       `jagsqlb:"country_code"`
 	PhoneNumber string    `jagsqlb:"phone_number"`
-	Type        string    `jagsqlb:"kind" json:"type"` // Type holds what kind of phone number this value represents: Home, Cell, Work, etc...
+	Type        PhoneType `jagsqlb:"kind" json:"type"` // Type holds what kind of phone number this value represents: Home, Cell, Work, etc...
 	Primary     bool      `jagsqlb:"primary" json:"primary"`
 }
 
