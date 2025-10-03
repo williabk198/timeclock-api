@@ -10,6 +10,242 @@ import (
 	"github.com/williabk198/timeclock/internal/models"
 )
 
+func Test_adminContactEndpoints_AddContactAddressForPerson(t *testing.T) {
+	type args struct {
+		ctx     context.Context
+		reqData AddSubItemRequestData[PersonAddressData]
+	}
+
+	testValidPersonID := uuid.New()
+	testNotFoundPersonID := uuid.New()
+	testAddressID := uuid.New()
+
+	testValidAddressData := PersonAddressData{
+		Street1:    "123 Test Dr",
+		Street2:    "",
+		Locality:   "Testerville",
+		Region:     "Testia",
+		PostalCode: "12345-6789",
+		Country:    "Testopia",
+		Type:       "mailing",
+		Primary:    true,
+	}
+	testValidAddressDB := models.ContactAddress{
+		PersonID:   testValidPersonID,
+		Street1:    "123 Test Dr",
+		Street2:    "",
+		Locality:   "Testerville",
+		Region:     "Testia",
+		PostalCode: "12345-6789",
+		Country:    "Testopia",
+		Type:       models.AddressTypeMailing,
+		Primary:    true,
+	}
+
+	testInvalidAddressDB := models.ContactAddress{
+		PersonID: testNotFoundPersonID,
+	}
+
+	testAdminService := &mockAdminService{}
+	testAdminService.On("AddPersonContactEmail", mock.Anything, testValidAddressDB).Return(testAddressID, error(nil))
+	testAdminService.On("AddPersonContactEmail", mock.Anything, testInvalidAddressDB).Return(uuid.Nil, assert.AnError)
+
+	tests := []struct {
+		name      string
+		ace       adminContactEndpoints
+		args      args
+		want      PersonAddressData
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			ace: adminContactEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: AddSubItemRequestData[PersonAddressData]{
+					ParentID: testValidPersonID.String(),
+					Data:     testValidAddressData,
+				},
+			},
+			want: PersonAddressData{
+				ID:         testAddressID.String(),
+				Street1:    testValidAddressData.Street1,
+				Street2:    testValidAddressData.Street2,
+				Locality:   testValidAddressData.Locality,
+				Region:     testValidAddressData.Region,
+				PostalCode: testValidAddressData.PostalCode,
+				Country:    testValidAddressData.Country,
+				Type:       testValidAddressData.Type,
+				Primary:    testValidAddressData.Primary,
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Person DNE",
+			ace: adminContactEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: AddSubItemRequestData[PersonAddressData]{
+					ParentID: testNotFoundPersonID.String(),
+					Data:     testValidAddressData,
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Person ID",
+			ace: adminContactEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: AddSubItemRequestData[PersonAddressData]{
+					ParentID: "ivalid_id",
+					Data:     testValidAddressData,
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Address; Missing Street 1",
+			ace: adminContactEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: AddSubItemRequestData[PersonAddressData]{
+					ParentID: testValidPersonID.String(),
+					Data: PersonAddressData{
+						Locality:   "Testetville",
+						Region:     "Testaria",
+						PostalCode: "12345-6789",
+						Country:    "Testopia",
+						Type:       "mailing",
+						Primary:    true,
+					},
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Address; Missing Locality",
+			ace: adminContactEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: AddSubItemRequestData[PersonAddressData]{
+					ParentID: testValidPersonID.String(),
+					Data: PersonAddressData{
+						Locality:   "Testetville",
+						Region:     "Testaria",
+						PostalCode: "12345-6789",
+						Country:    "Testopia",
+						Type:       "mailing",
+						Primary:    true,
+					},
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Address; Missing Region",
+			ace: adminContactEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: AddSubItemRequestData[PersonAddressData]{
+					ParentID: testValidPersonID.String(),
+					Data: PersonAddressData{
+						Street1:    "123 Test Dr",
+						Locality:   "Testetville",
+						PostalCode: "12345-6789",
+						Country:    "Testopia",
+						Type:       "mailing",
+						Primary:    true,
+					},
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Address; Missing Postal Code",
+			ace: adminContactEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: AddSubItemRequestData[PersonAddressData]{
+					ParentID: testValidPersonID.String(),
+					Data: PersonAddressData{
+						Street1:  "123 Test Dr",
+						Locality: "Testetville",
+						Region:   "Testaria",
+						Country:  "Testopia",
+						Type:     "mailing",
+						Primary:  true,
+					},
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Address; Missing Country",
+			ace: adminContactEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: AddSubItemRequestData[PersonAddressData]{
+					ParentID: testValidPersonID.String(),
+					Data: PersonAddressData{
+						Street1:    "123 Test Dr",
+						Locality:   "Testetville",
+						Region:     "Testaria",
+						PostalCode: "12345-6789",
+						Type:       "mailing",
+						Primary:    true,
+					},
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Address; Missing Type",
+			ace: adminContactEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: AddSubItemRequestData[PersonAddressData]{
+					ParentID: testValidPersonID.String(),
+					Data: PersonAddressData{
+						Street1:    "123 Test Dr",
+						Locality:   "Testetville",
+						Region:     "Testaria",
+						PostalCode: "12345-6789",
+						Country:    "Testopia",
+						Primary:    true,
+					},
+				},
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.ace.AddContactAddressForPerson(tt.args.ctx, tt.args.reqData)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func Test_adminContactEndpoints_AddContactEmailForPerson(t *testing.T) {
 	type args struct {
 		ctx     context.Context
@@ -171,6 +407,117 @@ func Test_adminContactEndpoints_AddContactEmailForPerson(t *testing.T) {
 	}
 }
 
+func Test_adminContactEndpoints_AddContactPhoneForPerson(t *testing.T) {
+	type args struct {
+		ctx     context.Context
+		reqData AddSubItemRequestData[PersonPhoneData]
+	}
+
+	testValidPersonID := uuid.New()
+	testNotFoundPersonID := uuid.New()
+	testPhoneID := uuid.New()
+
+	testValidPhoneData := PersonPhoneData{
+		CountryCode: 1,
+		PhoneNumber: "(555)555-5555",
+		Type:        "home",
+		Primary:     true,
+	}
+	testValidPhoneDB := models.ContactPhone{
+		PersonID:    testValidPersonID,
+		CountryCode: 1,
+		PhoneNumber: "(555)555-5555",
+		Type:        models.PhoneTypeHome,
+		Primary:     true,
+	}
+
+	testInvalidPhoneDB := models.ContactPhone{
+		PersonID: testNotFoundPersonID,
+		Primary:  true,
+	}
+
+	testAdminService := &mockAdminService{}
+	testAdminService.On("AddPersonContactPhone", mock.Anything, testValidPhoneDB).Return(testPhoneID, error(nil))
+	testAdminService.On("AddPersonContactPhone", mock.Anything, testInvalidPhoneDB).Return(uuid.Nil, assert.AnError)
+
+	tests := []struct {
+		name      string
+		ace       adminContactEndpoints
+		args      args
+		want      PersonPhoneData
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			ace: adminContactEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: AddSubItemRequestData[PersonPhoneData]{
+					ParentID: testValidPersonID.String(),
+					Data:     testValidPhoneData,
+				},
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Person DNE",
+			ace: adminContactEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: AddSubItemRequestData[PersonPhoneData]{
+					ParentID: testNotFoundPersonID.String(),
+					Data:     testValidPhoneData,
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Person ID",
+			ace: adminContactEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: AddSubItemRequestData[PersonPhoneData]{
+					ParentID: "invalid_id",
+					Data:     testValidPhoneData,
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Phone; Bad Country Code",
+			ace: adminContactEndpoints{
+				adminService: testAdminService,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: AddSubItemRequestData[PersonPhoneData]{
+					ParentID: testValidPersonID.String(),
+					Data: PersonPhoneData{
+						CountryCode: -1,
+						PhoneNumber: "555-555-5555",
+						Type:        "home",
+						Primary:     false,
+					},
+				},
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.ace.AddContactPhoneForPerson(tt.args.ctx, tt.args.reqData)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func Test_adminContactEndpoint_GetPersonContacts(t *testing.T) {
 	type args struct {
 		ctx   context.Context
@@ -243,7 +590,7 @@ func Test_adminContactEndpoint_GetPersonContacts(t *testing.T) {
 						Region:     testAddress.Region,
 						PostalCode: testAddress.PostalCode,
 						Country:    testAddress.Country,
-						Type:       testAddress.Type,
+						Type:       string(testAddress.Type),
 						Primary:    testAddress.Primary,
 					},
 				},
@@ -259,7 +606,7 @@ func Test_adminContactEndpoint_GetPersonContacts(t *testing.T) {
 						ID:          testPhone.ID.String(),
 						CountryCode: testPhone.CountryCode,
 						PhoneNumber: testPhone.PhoneNumber,
-						Type:        testPhone.Type,
+						Type:        string(testPhone.Type),
 						Primary:     testPhone.Primary,
 					},
 				},
@@ -361,7 +708,7 @@ func Test_adminContactEndpoint_GetPersonContactAddresses(t *testing.T) {
 					Region:     testAddresses[0].Region,
 					PostalCode: testAddresses[0].PostalCode,
 					Country:    testAddresses[0].Country,
-					Type:       testAddresses[0].Type,
+					Type:       string(testAddresses[0].Type),
 					Primary:    testAddresses[0].Primary,
 				},
 				{
@@ -372,7 +719,7 @@ func Test_adminContactEndpoint_GetPersonContactAddresses(t *testing.T) {
 					Region:     testAddresses[1].Region,
 					PostalCode: testAddresses[1].PostalCode,
 					Country:    testAddresses[1].Country,
-					Type:       testAddresses[1].Type,
+					Type:       string(testAddresses[1].Type),
 					Primary:    testAddresses[1].Primary,
 				},
 			},
@@ -539,7 +886,7 @@ func Test_adminContactEndpoint_GetPersonContactPhones(t *testing.T) {
 					ID:          testPhones[0].ID.String(),
 					CountryCode: testPhones[0].CountryCode,
 					PhoneNumber: testPhones[0].PhoneNumber,
-					Type:        testPhones[0].Type,
+					Type:        string(testPhones[0].Type),
 					Primary:     testPhones[0].Primary,
 				},
 			},

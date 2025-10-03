@@ -10,7 +10,9 @@ import (
 
 type Service interface {
 	AddPerson(context.Context, models.Person) (uuid.UUID, error)
+	AddPersonContactAddress(context.Context, models.ContactAddress) (uuid.UUID, error)
 	AddPersonContactEmail(context.Context, models.ContactEmail) (uuid.UUID, error)
+	AddPersonContactPhone(context.Context, models.ContactPhone) (uuid.UUID, error)
 	DeletePerson(context.Context, uuid.UUID) (models.Person, error)
 	GetAllPersons(ctx context.Context, offset uint, limit uint) ([]models.Person, error)
 	GetPersonContacts(context.Context, uuid.UUID) (models.Contacts, error)
@@ -25,9 +27,19 @@ type adminService struct {
 	personStore datastores.PersonStore
 }
 
+// AddPersonContactAddress implements Service.
+func (as adminService) AddPersonContactAddress(ctx context.Context, address models.ContactAddress) (uuid.UUID, error) {
+	panic("unimplemented")
+}
+
 // AddPersonContactEmail implements Service.
 func (as adminService) AddPersonContactEmail(ctx context.Context, email models.ContactEmail) (uuid.UUID, error) {
 	return as.personStore.AddSpecificContactEmail(ctx, email)
+}
+
+// AddPersonContactPhone implements Service.
+func (as adminService) AddPersonContactPhone(ctx context.Context, address models.ContactPhone) (uuid.UUID, error) {
+	panic("unimplemented")
 }
 
 // AddPunch implements Service.

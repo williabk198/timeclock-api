@@ -13,7 +13,9 @@ import (
 
 type PersonStore interface {
 	SqlDatastore[models.Person, uuid.UUID]
+	AddSpecificContactAddress(ctx context.Context, address models.ContactAddress) (uuid.UUID, error)
 	AddSpecificContactEmail(ctx context.Context, email models.ContactEmail) (uuid.UUID, error)
+	AddSpecificContactPhone(ctx context.Context, phone models.ContactPhone) (uuid.UUID, error)
 	GetSpecificContactAddresses(ctx context.Context, id uuid.UUID) ([]models.ContactAddress, error)
 	GetSpecificContactEmails(ctx context.Context, id uuid.UUID) ([]models.ContactEmail, error)
 	GetSpecificContactPhones(ctx context.Context, id uuid.UUID) ([]models.ContactPhone, error)
@@ -42,6 +44,11 @@ func (ps personStore) Add(ctx context.Context, item models.Person) (id uuid.UUID
 	return id, nil
 }
 
+// AddSpecificContactAddress implements PersonStore.
+func (ps personStore) AddSpecificContactAddress(ctx context.Context, address models.ContactAddress) (uuid.UUID, error) {
+	panic("unimplemented")
+}
+
 // AddSpecificContactEmail implements PersonStore.
 func (ps personStore) AddSpecificContactEmail(ctx context.Context, email models.ContactEmail) (id uuid.UUID, err error) {
 	query, params, err := ps.sqlBuilder.Insert(ps.tableNameMap["emails"]).Data(email).Returning("id").Build()
@@ -55,6 +62,11 @@ func (ps personStore) AddSpecificContactEmail(ctx context.Context, email models.
 	}
 
 	return id, nil
+}
+
+// AddSpecificContactPhone implements PersonStore.
+func (ps personStore) AddSpecificContactPhone(ctx context.Context, phone models.ContactPhone) (uuid.UUID, error) {
+	panic("unimplemented")
 }
 
 // Delete implements Store.

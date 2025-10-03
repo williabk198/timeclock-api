@@ -463,8 +463,18 @@ func (mas *mockAdminService) AddPerson(ctx context.Context, person models.Person
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }
 
+func (mas *mockAdminService) AddPersonContactAddress(ctx context.Context, address models.ContactAddress) (uuid.UUID, error) {
+	args := mas.Called(ctx, address)
+	return args.Get(0).(uuid.UUID), args.Error(1)
+}
+
 func (mas *mockAdminService) AddPersonContactEmail(ctx context.Context, email models.ContactEmail) (uuid.UUID, error) {
 	args := mas.Called(ctx, email)
+	return args.Get(0).(uuid.UUID), args.Error(1)
+}
+
+func (mas *mockAdminService) AddPersonContactPhone(ctx context.Context, phone models.ContactPhone) (uuid.UUID, error) {
+	args := mas.Called(ctx, phone)
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }
 

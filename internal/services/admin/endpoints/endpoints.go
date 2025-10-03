@@ -22,7 +22,9 @@ type PersonEndpoints interface {
 }
 
 type ContactEndpoints interface {
+	AddContactAddressForPerson(ctx context.Context, reqData AddSubItemRequestData[PersonAddressData]) (PersonEmailData, error)
 	AddContactEmailForPerson(ctx context.Context, reqData AddSubItemRequestData[PersonEmailData]) (PersonEmailData, error)
+	AddContactPhoneForPerson(ctx context.Context, reqData AddSubItemRequestData[PersonPhoneData]) (PersonPhoneData, error)
 	GetPersonContacts(ctx context.Context, personID string) (PersonContactData, error)
 	GetPersonContactAddresses(ctx context.Context, personID string) ([]PersonAddressData, error)
 	GetPersonContactEmails(ctx context.Context, personID string) ([]PersonEmailData, error)

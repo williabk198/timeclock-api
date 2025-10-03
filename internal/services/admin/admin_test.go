@@ -114,6 +114,73 @@ func Test_authService_AddPerson(t *testing.T) {
 	}
 }
 
+func Test_adminService_AddPersonContactAddress(t *testing.T) {
+	type args struct {
+		ctx     context.Context
+		address models.ContactAddress
+	}
+	testAddressID := uuid.New()
+	testPersonAddress := models.ContactAddress{
+		PersonID:   uuid.New(),
+		Street1:    "123 Test Dr",
+		Street2:    "",
+		Locality:   "Testerville",
+		Region:     "Testaria",
+		PostalCode: "12345-6789",
+		Country:    "Testopia",
+		Type:       models.AddressTypePhysical,
+		Primary:    true,
+	}
+	testErrorPersonAddress := models.ContactAddress{
+		PersonID: uuid.New(),
+		Street1:  "123 Test Dr",
+		Street2:  "erronious_val",
+	}
+
+	testPersonStore := &mockPersonStore{}
+	testPersonStore.On("AddSpecificContactAddress", mock.Anything, testPersonAddress).Return(testAddressID, error(nil))
+	testPersonStore.On("AddSpecificContactAddress", mock.Anything, testErrorPersonAddress).Return(uuid.Nil, assert.AnError)
+
+	tests := []struct {
+		name      string
+		as        adminService
+		args      args
+		want      uuid.UUID
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			as: adminService{
+				personStore: testPersonStore,
+			},
+			args: args{
+				ctx:     context.Background(),
+				address: testPersonAddress,
+			},
+			want:      testAddressID,
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error",
+			as: adminService{
+				personStore: testPersonStore,
+			},
+			args: args{
+				ctx:     context.Background(),
+				address: testErrorPersonAddress,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.as.AddPersonContactAddress(tt.args.ctx, tt.args.address)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func Test_adminService_AddPersonContactEmail(t *testing.T) {
 	type args struct {
 		ctx   context.Context
@@ -177,6 +244,69 @@ func Test_adminService_AddPersonContactEmail(t *testing.T) {
 			got, err := tt.as.AddPersonContactEmail(tt.args.ctx, tt.args.email)
 			tt.assertion(t, err)
 			assert.Equal(t, tt.wants.id, got)
+		})
+	}
+}
+
+func Test_adminService_AddPersonContactPhone(t *testing.T) {
+	type args struct {
+		ctx   context.Context
+		phone models.ContactPhone
+	}
+
+	testPhoneID := uuid.New()
+	testPersonPhone := models.ContactPhone{
+		PersonID:    uuid.New(),
+		CountryCode: 1,
+		PhoneNumber: "555 555 5555",
+		Type:        models.PhoneTypeHome,
+		Primary:     true,
+	}
+	testErrorPersonPhone := models.ContactPhone{
+		PersonID:    uuid.New(),
+		CountryCode: -77,
+	}
+
+	testPersonStore := &mockPersonStore{}
+	testPersonStore.On("AddSpecificContactPhone", mock.Anything, testPersonPhone).Return(testPhoneID, error(nil))
+	testPersonStore.On("AddSpecificContactPhone", mock.Anything, testErrorPersonPhone).Return(uuid.Nil, assert.AnError)
+
+	tests := []struct {
+		name      string
+		as        adminService
+		args      args
+		want      uuid.UUID
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			as: adminService{
+				personStore: testPersonStore,
+			},
+			args: args{
+				ctx:   context.Background(),
+				phone: testPersonPhone,
+			},
+			want:      testPhoneID,
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error",
+			as: adminService{
+				personStore: testPersonStore,
+			},
+			args: args{
+				ctx:   context.Background(),
+				phone: testErrorPersonPhone,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.as.AddPersonContactPhone(tt.args.ctx, tt.args.phone)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
@@ -843,8 +973,16 @@ func (mps *mockPersonStore) Add(ctx context.Context, item models.Person) (id uui
 	args := mps.Called(ctx, item)
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }
+func (mps *mockPersonStore) AddSpecificContactAddress(ctx context.Context, address models.ContactAddress) (uuid.UUID, error) {
+	args := mps.Called(ctx, address)
+	return args.Get(0).(uuid.UUID), args.Error(1)
+}
 func (mps *mockPersonStore) AddSpecificContactEmail(ctx context.Context, email models.ContactEmail) (uuid.UUID, error) {
 	args := mps.Called(ctx, email)
+	return args.Get(0).(uuid.UUID), args.Error(1)
+}
+func (mps *mockPersonStore) AddSpecificContactPhone(ctx context.Context, phone models.ContactPhone) (uuid.UUID, error) {
+	args := mps.Called(ctx, phone)
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }
 func (mps *mockPersonStore) Delete(ctx context.Context, id uuid.UUID) (item models.Person, err error) {
