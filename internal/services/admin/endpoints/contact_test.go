@@ -432,8 +432,11 @@ func Test_adminContactEndpoints_AddContactPhoneForPerson(t *testing.T) {
 	}
 
 	testInvalidPhoneDB := models.ContactPhone{
-		PersonID: testNotFoundPersonID,
-		Primary:  true,
+		PersonID:    testNotFoundPersonID,
+		CountryCode: 1,
+		PhoneNumber: "(555)555-5555",
+		Type:        models.PhoneTypeHome,
+		Primary:     true,
 	}
 
 	testAdminService := &mockAdminService{}
@@ -458,6 +461,13 @@ func Test_adminContactEndpoints_AddContactPhoneForPerson(t *testing.T) {
 					ParentID: testValidPersonID.String(),
 					Data:     testValidPhoneData,
 				},
+			},
+			want: PersonPhoneData{
+				ID:          testPhoneID.String(),
+				CountryCode: testValidPhoneData.CountryCode,
+				PhoneNumber: testValidPhoneData.PhoneNumber,
+				Type:        string(testValidPhoneData.Type),
+				Primary:     testValidPhoneData.Primary,
 			},
 			assertion: assert.NoError,
 		},
