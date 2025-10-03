@@ -45,8 +45,18 @@ func (ps personStore) Add(ctx context.Context, item models.Person) (id uuid.UUID
 }
 
 // AddSpecificContactAddress implements PersonStore.
-func (ps personStore) AddSpecificContactAddress(ctx context.Context, address models.ContactAddress) (uuid.UUID, error) {
-	panic("unimplemented")
+func (ps personStore) AddSpecificContactAddress(ctx context.Context, address models.ContactAddress) (id uuid.UUID, err error) {
+	query, params, err := ps.sqlBuilder.Insert(ps.tableNameMap["addresses"]).Data(address).Returning("id").Build()
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	row := ps.dbConn.QueryRowContext(ctx, query, params...)
+	if err := row.Scan(&id); err != nil {
+		return uuid.Nil, err
+	}
+
+	return id, nil
 }
 
 // AddSpecificContactEmail implements PersonStore.
@@ -65,8 +75,18 @@ func (ps personStore) AddSpecificContactEmail(ctx context.Context, email models.
 }
 
 // AddSpecificContactPhone implements PersonStore.
-func (ps personStore) AddSpecificContactPhone(ctx context.Context, phone models.ContactPhone) (uuid.UUID, error) {
-	panic("unimplemented")
+func (ps personStore) AddSpecificContactPhone(ctx context.Context, phone models.ContactPhone) (id uuid.UUID, err error) {
+	query, params, err := ps.sqlBuilder.Insert(ps.tableNameMap["phones"]).Data(phone).Returning("id").Build()
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	row := ps.dbConn.QueryRowContext(ctx, query, params...)
+	if err := row.Scan(&id); err != nil {
+		return uuid.Nil, err
+	}
+
+	return id, nil
 }
 
 // Delete implements Store.

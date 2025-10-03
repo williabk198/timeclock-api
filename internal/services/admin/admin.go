@@ -29,7 +29,7 @@ type adminService struct {
 
 // AddPersonContactAddress implements Service.
 func (as adminService) AddPersonContactAddress(ctx context.Context, address models.ContactAddress) (uuid.UUID, error) {
-	panic("unimplemented")
+	return as.personStore.AddSpecificContactAddress(ctx, address)
 }
 
 // AddPersonContactEmail implements Service.
@@ -38,8 +38,8 @@ func (as adminService) AddPersonContactEmail(ctx context.Context, email models.C
 }
 
 // AddPersonContactPhone implements Service.
-func (as adminService) AddPersonContactPhone(ctx context.Context, address models.ContactPhone) (uuid.UUID, error) {
-	panic("unimplemented")
+func (as adminService) AddPersonContactPhone(ctx context.Context, phone models.ContactPhone) (uuid.UUID, error) {
+	return as.personStore.AddSpecificContactPhone(ctx, phone)
 }
 
 // AddPunch implements Service.

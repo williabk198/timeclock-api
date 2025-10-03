@@ -15,8 +15,35 @@ type adminContactEndpoints struct {
 }
 
 // AddContactAddressForPerson implements ContactEndpoints.
-func (ace adminContactEndpoints) AddContactAddressForPerson(ctx context.Context, reqData AddSubItemRequestData[PersonAddressData]) (PersonEmailData, error) {
-	panic("unimplemented")
+func (ace adminContactEndpoints) AddContactAddressForPerson(ctx context.Context, reqData AddSubItemRequestData[PersonAddressData]) (PersonAddressData, error) {
+	personID, err := uuid.Parse(reqData.ParentID)
+	if err != nil {
+		return PersonAddressData{}, err
+	}
+
+	if reqData.Data.Street1 == "" || reqData.Data.Locality == "" || reqData.Data.Region == "" ||
+		reqData.Data.PostalCode == "" || reqData.Data.Country == "" || reqData.Data.Type == "" {
+
+		return PersonAddressData{}, fmt.Errorf("provided address data was ill formated")
+	}
+
+	addressID, err := ace.adminService.AddPersonContactAddress(ctx, models.ContactAddress{
+		PersonID:   personID,
+		Street1:    reqData.Data.Street1,
+		Street2:    reqData.Data.Street2,
+		Locality:   reqData.Data.Locality,
+		Region:     reqData.Data.Region,
+		PostalCode: reqData.Data.PostalCode,
+		Country:    reqData.Data.Country,
+		Type:       models.AddressType(reqData.Data.Type),
+		Primary:    reqData.Data.Primary,
+	})
+	if err != nil {
+		return PersonAddressData{}, err
+	}
+
+	reqData.Data.ID = addressID.String()
+	return reqData.Data, nil
 }
 
 // AddContactEmailForPerson implements ContactEndpoints.
@@ -50,7 +77,26 @@ func (ace adminContactEndpoints) AddContactEmailForPerson(ctx context.Context, r
 
 // AddContactPhoneForPerson implements ContactEndpoints.
 func (ace adminContactEndpoints) AddContactPhoneForPerson(ctx context.Context, reqData AddSubItemRequestData[PersonPhoneData]) (PersonPhoneData, error) {
-	panic("unimplemented")
+	personID, err := uuid.Parse(reqData.ParentID)
+	if err != nil {
+		return PersonPhoneData{}, err
+	}
+
+	// Oversimplified validation. This will eventually need to be more robust.
+	if reqData.Data.CountryCode < 1 {
+		return PersonPhoneData{}, err
+	}
+
+	phoneID, err := ace.adminService.AddPersonContactPhone(ctx, models.ContactPhone{
+		PersonID:    personID,
+		CountryCode: reqData.Data.CountryCode,
+		PhoneNumber: reqData.Data.PhoneNumber,
+		Type:        models.PhoneType(reqData.Data.Type),
+		Primary:     reqData.Data.Primary,
+	})
+
+	reqData.Data.ID = phoneID.String()
+	return reqData.Data, nil
 }
 
 func (ace adminContactEndpoints) GetPersonContacts(ctx context.Context, idStr string) (PersonContactData, error) {
