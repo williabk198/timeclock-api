@@ -418,7 +418,7 @@ func Test_personStore_AddSpecificContactPhone(t *testing.T) {
 				},
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `INSERT INTO "person"."phones" ("person_id", "country_code", "phone_number", "type", "primary") VALUES ($1, $2, $3, $4, $5) RETURNING "id";`,
+				rawQuery:  `INSERT INTO "person"."phones" ("person_id", "country_code", "phone_number", "kind", "primary") VALUES ($1, $2, $3, $4, $5) RETURNING "id";`,
 				arguments: []driver.Value{testPersonID.String(), 1, "(555) 555-5555", "home", true},
 				result:    sqlmock.NewRows([]string{"id"}).AddRow(newPhoneID),
 			},
@@ -457,7 +457,7 @@ func Test_personStore_AddSpecificContactPhone(t *testing.T) {
 				},
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `INSERT INTO "person"."phones" ("person_id", "country_code", "phone_number", "type", "primary") VALUES ($1, $2, $3, $4, $5) RETURNING "id";`,
+				rawQuery:  `INSERT INTO "person"."phones" ("person_id", "country_code", "phone_number", "kind", "primary") VALUES ($1, $2, $3, $4, $5) RETURNING "id";`,
 				arguments: []driver.Value{testPersonID.String(), 1, "(555) 555-5555", "home", true},
 				result:    sqlmock.NewRows(nil),
 				returnErr: assert.AnError,
