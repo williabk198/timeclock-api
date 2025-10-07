@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"sync"
 
 	"github.com/google/uuid"
 	"github.com/williabk198/timeclock/internal/datastores"
@@ -64,21 +65,38 @@ func (as adminService) GetPerson(ctx context.Context, id uuid.UUID) (models.Pers
 
 // GetPersonContacts implements Service.
 func (as adminService) GetPersonContacts(ctx context.Context, uuid uuid.UUID) (models.Contacts, error) {
-	var result models.Contacts
+	wg := &sync.WaitGroup{}
+	wg.Add(3)
 
-	addresses, err := as.personStore.GetSpecificContactAddresses(ctx, uuid)
-	if err != nil {
-		return result, err
-	}
+	var addresses []models.ContactAddress
+	var addrErr error
+	go func() {
+		defer wg.Done()
+		addresses, addrErr = as.personStore.GetSpecificContactAddresses(ctx, uuid)
+	}()
 
-	emails, err := as.personStore.GetSpecificContactEmails(ctx, uuid)
-	if err != nil {
-		return result, err
-	}
+	var emails []models.ContactEmail
+	var emailErr error
+	go func() {
+		defer wg.Done()
+		emails, emailErr = as.personStore.GetSpecificContactEmails(ctx, uuid)
+	}()
 
-	phones, err := as.personStore.GetSpecificContactPhones(ctx, uuid)
-	if err != nil {
-		return result, err
+	var phones []models.ContactPhone
+	var phoneErr error
+	go func() {
+		defer wg.Done()
+		phones, phoneErr = as.personStore.GetSpecificContactPhones(ctx, uuid)
+	}()
+
+	wg.Wait()
+	switch {
+	case addrErr != nil:
+		return models.Contacts{}, addrErr
+	case emailErr != nil:
+		return models.Contacts{}, emailErr
+	case phoneErr != nil:
+		return models.Contacts{}, phoneErr
 	}
 
 	return models.Contacts{

@@ -583,6 +583,9 @@ func Test_adminService_GetPersonContacts(t *testing.T) {
 	mockPersonStore.On("GetSpecificContactEmails", mock.Anything, testPersonID).Return(
 		testPersonEmails, error(nil),
 	)
+	mockPersonStore.On("GetSpecificContactEmails", mock.Anything, testBadPersonAddressID).Return(
+		testPersonEmails, error(nil),
+	)
 	mockPersonStore.On("GetSpecificContactEmails", mock.Anything, testBadPersonEmailID).Return(
 		[]models.ContactEmail(nil), assert.AnError,
 	)
@@ -591,6 +594,12 @@ func Test_adminService_GetPersonContacts(t *testing.T) {
 	)
 
 	mockPersonStore.On("GetSpecificContactPhones", mock.Anything, testPersonID).Return(
+		testPersonPhones, error(nil),
+	)
+	mockPersonStore.On("GetSpecificContactPhones", mock.Anything, testBadPersonAddressID).Return(
+		[]models.ContactPhone(nil), assert.AnError,
+	)
+	mockPersonStore.On("GetSpecificContactPhones", mock.Anything, testBadPersonEmailID).Return(
 		testPersonPhones, error(nil),
 	)
 	mockPersonStore.On("GetSpecificContactPhones", mock.Anything, testBadPersonPhoneID).Return(
@@ -639,8 +648,8 @@ func Test_adminService_GetPersonContacts(t *testing.T) {
 			wants: wants{
 				callAssertions: map[string]int{ // TODO: look into better ways for handling call counts that doesn't accumulate with each test case
 					"GetSpecificContactAddresses": 2,
-					"GetSpecificContactEmails":    1,
-					"GetSpecificContactPhones":    1,
+					"GetSpecificContactEmails":    2,
+					"GetSpecificContactPhones":    2,
 				},
 			},
 			assertion: assert.Error,
@@ -657,8 +666,8 @@ func Test_adminService_GetPersonContacts(t *testing.T) {
 			wants: wants{
 				callAssertions: map[string]int{
 					"GetSpecificContactAddresses": 3,
-					"GetSpecificContactEmails":    2,
-					"GetSpecificContactPhones":    1,
+					"GetSpecificContactEmails":    3,
+					"GetSpecificContactPhones":    3,
 				},
 			},
 			assertion: assert.Error,
@@ -675,8 +684,8 @@ func Test_adminService_GetPersonContacts(t *testing.T) {
 			wants: wants{
 				callAssertions: map[string]int{
 					"GetSpecificContactAddresses": 4,
-					"GetSpecificContactEmails":    3,
-					"GetSpecificContactPhones":    2,
+					"GetSpecificContactEmails":    4,
+					"GetSpecificContactPhones":    4,
 				},
 			},
 			assertion: assert.Error,
