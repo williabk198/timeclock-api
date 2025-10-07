@@ -100,8 +100,6 @@ func (ace adminContactEndpoints) AddContactPhoneForPerson(ctx context.Context, r
 }
 
 func (ace adminContactEndpoints) GetPersonContacts(ctx context.Context, idStr string) (PersonContactData, error) {
-	// TODO: Change this function to use adminService.GetPersonContactAddress, adminService.GetPersonContactEmails, and adminService.GetPersonContactPhones
-
 	id, err := uuid.Parse(idStr)
 	if err != nil {
 		return PersonContactData{}, err
