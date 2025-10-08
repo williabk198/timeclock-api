@@ -13,12 +13,6 @@ import (
 
 type PersonStore interface {
 	SqlDatastore[models.Person, uuid.UUID]
-	AddSpecificContactAddress(ctx context.Context, address models.ContactAddress) (uuid.UUID, error)
-	AddSpecificContactEmail(ctx context.Context, email models.ContactEmail) (uuid.UUID, error)
-	AddSpecificContactPhone(ctx context.Context, phone models.ContactPhone) (uuid.UUID, error)
-	GetSpecificContactAddresses(ctx context.Context, id uuid.UUID) ([]models.ContactAddress, error)
-	GetSpecificContactEmails(ctx context.Context, id uuid.UUID) ([]models.ContactEmail, error)
-	GetSpecificContactPhones(ctx context.Context, id uuid.UUID) ([]models.ContactPhone, error)
 }
 
 type personStore struct {
@@ -32,51 +26,6 @@ type personStore struct {
 // Add implements Store.
 func (ps personStore) Add(ctx context.Context, item models.Person) (id uuid.UUID, err error) {
 	query, params, err := ps.sqlBuilder.Insert(ps.tableName).Data(item).Returning("id").Build()
-	if err != nil {
-		return uuid.Nil, err
-	}
-
-	row := ps.dbConn.QueryRowContext(ctx, query, params...)
-	if err := row.Scan(&id); err != nil {
-		return uuid.Nil, err
-	}
-
-	return id, nil
-}
-
-// AddSpecificContactAddress implements PersonStore.
-func (ps personStore) AddSpecificContactAddress(ctx context.Context, address models.ContactAddress) (id uuid.UUID, err error) {
-	query, params, err := ps.sqlBuilder.Insert(ps.tableNameMap["addresses"]).Data(address).Returning("id").Build()
-	if err != nil {
-		return uuid.Nil, err
-	}
-
-	row := ps.dbConn.QueryRowContext(ctx, query, params...)
-	if err := row.Scan(&id); err != nil {
-		return uuid.Nil, err
-	}
-
-	return id, nil
-}
-
-// AddSpecificContactEmail implements PersonStore.
-func (ps personStore) AddSpecificContactEmail(ctx context.Context, email models.ContactEmail) (id uuid.UUID, err error) {
-	query, params, err := ps.sqlBuilder.Insert(ps.tableNameMap["emails"]).Data(email).Returning("id").Build()
-	if err != nil {
-		return uuid.Nil, err
-	}
-
-	row := ps.dbConn.QueryRowContext(ctx, query, params...)
-	if err := row.Scan(&id); err != nil {
-		return uuid.Nil, err
-	}
-
-	return id, nil
-}
-
-// AddSpecificContactPhone implements PersonStore.
-func (ps personStore) AddSpecificContactPhone(ctx context.Context, phone models.ContactPhone) (id uuid.UUID, err error) {
-	query, params, err := ps.sqlBuilder.Insert(ps.tableNameMap["phones"]).Data(phone).Returning("id").Build()
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -124,52 +73,6 @@ func (ps personStore) GetSpecific(ctx context.Context, id uuid.UUID) (item model
 	}
 	row := ps.dbConn.QueryRowContext(ctx, query, params...)
 	return ps.personFromRow(row)
-}
-
-// GetSpecificContactAddresses implements PersonStore.
-func (ps personStore) GetSpecificContactAddresses(ctx context.Context, id uuid.UUID) ([]models.ContactAddress, error) {
-	query, params, err := ps.sqlBuilder.Select(ps.tableNameMap["addresses"], "*").Where(condition.Equals("person_id", id)).Build()
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := ps.dbConn.QueryContext(ctx, query, params...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	return ps.personAddressFromRows(rows)
-}
-
-// GetSpecificContacts implements PersonStore.
-func (ps personStore) GetSpecificContactEmails(ctx context.Context, id uuid.UUID) ([]models.ContactEmail, error) {
-	query, params, err := ps.sqlBuilder.Select(ps.tableNameMap["emails"], "*").Where(condition.Equals("person_id", id)).Build()
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := ps.dbConn.QueryContext(ctx, query, params...)
-	if err != nil {
-		return nil, err
-	}
-
-	return ps.personEmailFromRows(rows)
-}
-
-// GetSpecificContactPhones implements PersonStore.
-func (ps personStore) GetSpecificContactPhones(ctx context.Context, id uuid.UUID) ([]models.ContactPhone, error) {
-	query, params, err := ps.sqlBuilder.Select(ps.tableNameMap["phones"], "*").Where(condition.Equals("person_id", id)).Build()
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := ps.dbConn.QueryContext(ctx, query, params...)
-	if err != nil {
-		return nil, err
-	}
-
-	return ps.personPhoneFromRows(rows)
 }
 
 // Update implements Store.
