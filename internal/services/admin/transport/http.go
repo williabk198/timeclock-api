@@ -90,7 +90,7 @@ func NewHttpHandler(adminEndpoints endpoints.Endpoints) http.Handler {
 		adminEndpoints.Contact().AddContactPhoneForPerson,
 		decodeAddSubItemRequestData[endpoints.PersonPhoneData]("id"),
 		encodeResponseBodyJSON,
-	)).Methods(http.MethodGet)
+	)).Methods(http.MethodPost)
 
 	personRouter.Handle("/{id}/contacts/phones", httputil.BuildRouteHandler(
 		routeHandleBuilder,
