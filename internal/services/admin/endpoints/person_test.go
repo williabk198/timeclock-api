@@ -52,10 +52,9 @@ func Test_personEndpoints_Add(t *testing.T) {
 		Pronouns:    models.Pronouns{Subject: "they", Object: "them"},
 	}
 
-	mockAdminService := &mockAdminService{}
-
-	mockAdminService.On("AddPerson", mock.Anything, testGoodPersonDB).Return(testGoodPersonID, error(nil))
-	mockAdminService.On("AddPerson", mock.Anything, testBadPersonDB).Return(uuid.Nil, assert.AnError)
+	mockPersonMicro := &mockPersonMicro{}
+	mockPersonMicro.On("Add", mock.Anything, testGoodPersonDB).Return(testGoodPersonID, error(nil))
+	mockPersonMicro.On("Add", mock.Anything, testBadPersonDB).Return(uuid.Nil, assert.AnError)
 
 	tests := []struct {
 		name      string
@@ -66,7 +65,7 @@ func Test_personEndpoints_Add(t *testing.T) {
 	}{
 		{
 			name: "Success",
-			ape:  adminPersonEndpoints{adminService: mockAdminService},
+			ape:  adminPersonEndpoints{personMicro: mockPersonMicro},
 			args: args{
 				ctx:    context.Background(),
 				person: testGoodPerson,
@@ -86,7 +85,7 @@ func Test_personEndpoints_Add(t *testing.T) {
 		},
 		{
 			name: "Error: Invalid Input",
-			ape:  adminPersonEndpoints{adminService: mockAdminService},
+			ape:  adminPersonEndpoints{personMicro: mockPersonMicro},
 			args: args{
 				ctx:    context.Background(),
 				person: PersonData{Pronouns: "invalid format"},
@@ -96,7 +95,7 @@ func Test_personEndpoints_Add(t *testing.T) {
 		},
 		{
 			name: "Error: Service Error",
-			ape:  adminPersonEndpoints{adminService: mockAdminService},
+			ape:  adminPersonEndpoints{personMicro: mockPersonMicro},
 			args: args{
 				ctx:    context.Background(),
 				person: testBadPerson,
@@ -136,9 +135,9 @@ func Test_adminPersonEndpoints_Delete(t *testing.T) {
 		},
 	}
 
-	testAdminService := &mockAdminService{}
-	testAdminService.On("DeletePerson", mock.Anything, testPersonID).Return(testPerson, error(nil))
-	testAdminService.On("DeletePerson", mock.Anything, testDoesNotExistID).Return(models.Person{}, assert.AnError)
+	testPersonMicro := &mockPersonMicro{}
+	testPersonMicro.On("Delete", mock.Anything, testPersonID).Return(testPerson, error(nil))
+	testPersonMicro.On("Delete", mock.Anything, testDoesNotExistID).Return(models.Person{}, assert.AnError)
 
 	tests := []struct {
 		name      string
@@ -150,7 +149,7 @@ func Test_adminPersonEndpoints_Delete(t *testing.T) {
 		{
 			name: "Success",
 			ape: adminPersonEndpoints{
-				adminService: testAdminService,
+				personMicro: testPersonMicro,
 			},
 			args: args{
 				ctx:   context.Background(),
@@ -168,7 +167,7 @@ func Test_adminPersonEndpoints_Delete(t *testing.T) {
 		{
 			name: "Error",
 			ape: adminPersonEndpoints{
-				adminService: testAdminService,
+				personMicro: testPersonMicro,
 			},
 			args: args{
 				ctx:   context.Background(),
@@ -232,9 +231,9 @@ func Test_adminPersonEndpoints_GetAll(t *testing.T) {
 		},
 	}
 
-	testAdminService := &mockAdminService{}
-	testAdminService.On("GetAllPersons", mock.Anything, uint(1), uint(2)).Return(testPersons[1:3], error(nil))
-	testAdminService.On("GetAllPersons", mock.Anything, uint(0), uint(0)).Return([]models.Person{}, assert.AnError)
+	testPersonMicro := &mockPersonMicro{}
+	testPersonMicro.On("GetAll", mock.Anything, uint(1), uint(2)).Return(testPersons[1:3], error(nil))
+	testPersonMicro.On("GetAll", mock.Anything, uint(0), uint(0)).Return([]models.Person{}, assert.AnError)
 
 	tests := []struct {
 		name      string
@@ -246,7 +245,7 @@ func Test_adminPersonEndpoints_GetAll(t *testing.T) {
 		{
 			name: "Success",
 			ape: adminPersonEndpoints{
-				adminService: testAdminService,
+				personMicro: testPersonMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -261,7 +260,7 @@ func Test_adminPersonEndpoints_GetAll(t *testing.T) {
 		{
 			name: "Error",
 			ape: adminPersonEndpoints{
-				adminService: testAdminService,
+				personMicro: testPersonMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -311,9 +310,9 @@ func Test_adminPersonEndpoints_GetSpecific(t *testing.T) {
 		Pronouns:    testPerson.Pronouns.String(),
 	}
 
-	testAdminService := &mockAdminService{}
-	testAdminService.On("GetPerson", mock.Anything, testPersonID).Return(testPerson, error(nil))
-	testAdminService.On("GetPerson", mock.Anything, testDoesNotExistID).Return(models.Person{}, assert.AnError)
+	testPersonMicro := &mockPersonMicro{}
+	testPersonMicro.On("GetSpecific", mock.Anything, testPersonID).Return(testPerson, error(nil))
+	testPersonMicro.On("GetSpecific", mock.Anything, testDoesNotExistID).Return(models.Person{}, assert.AnError)
 
 	tests := []struct {
 		name      string
@@ -325,7 +324,7 @@ func Test_adminPersonEndpoints_GetSpecific(t *testing.T) {
 		{
 			name: "Success",
 			ape: adminPersonEndpoints{
-				adminService: testAdminService,
+				personMicro: testPersonMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -337,7 +336,7 @@ func Test_adminPersonEndpoints_GetSpecific(t *testing.T) {
 		{
 			name: "Error",
 			ape: adminPersonEndpoints{
-				adminService: testAdminService,
+				personMicro: testPersonMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -391,9 +390,9 @@ func Test_adminPersonEndpoints_Update(t *testing.T) {
 		Name: testBadPerson.Name,
 	}
 
-	testAdminService := &mockAdminService{}
-	testAdminService.On("UpdatePerson", mock.Anything, testPersonID, testPerson).Return(error(nil))
-	testAdminService.On("UpdatePerson", mock.Anything, testPersonID, testBadPerson).Return(assert.AnError)
+	testPersonMicro := &mockPersonMicro{}
+	testPersonMicro.On("Update", mock.Anything, testPersonID, testPerson).Return(error(nil))
+	testPersonMicro.On("Update", mock.Anything, testPersonID, testBadPerson).Return(assert.AnError)
 
 	tests := []struct {
 		name      string
@@ -405,7 +404,7 @@ func Test_adminPersonEndpoints_Update(t *testing.T) {
 		{
 			name: "Success",
 			ape: adminPersonEndpoints{
-				adminService: testAdminService,
+				personMicro: testPersonMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -420,7 +419,7 @@ func Test_adminPersonEndpoints_Update(t *testing.T) {
 		{
 			name: "Error; Bad ID Value",
 			ape: adminPersonEndpoints{
-				adminService: testAdminService,
+				personMicro: testPersonMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -433,7 +432,7 @@ func Test_adminPersonEndpoints_Update(t *testing.T) {
 		{
 			name: "Error; Service",
 			ape: adminPersonEndpoints{
-				adminService: testAdminService,
+				personMicro: testPersonMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -452,71 +451,4 @@ func Test_adminPersonEndpoints_Update(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
-}
-
-type mockAdminService struct {
-	mock.Mock
-}
-
-func (mas *mockAdminService) AddPerson(ctx context.Context, person models.Person) (uuid.UUID, error) {
-	args := mas.Called(ctx, person)
-	return args.Get(0).(uuid.UUID), args.Error(1)
-}
-
-func (mas *mockAdminService) AddPersonContactAddress(ctx context.Context, address models.ContactAddress) (uuid.UUID, error) {
-	args := mas.Called(ctx, address)
-	return args.Get(0).(uuid.UUID), args.Error(1)
-}
-
-func (mas *mockAdminService) AddPersonContactEmail(ctx context.Context, email models.ContactEmail) (uuid.UUID, error) {
-	args := mas.Called(ctx, email)
-	return args.Get(0).(uuid.UUID), args.Error(1)
-}
-
-func (mas *mockAdminService) AddPersonContactPhone(ctx context.Context, phone models.ContactPhone) (uuid.UUID, error) {
-	args := mas.Called(ctx, phone)
-	return args.Get(0).(uuid.UUID), args.Error(1)
-}
-
-func (mas *mockAdminService) DeletePerson(ctx context.Context, id uuid.UUID) (models.Person, error) {
-	args := mas.Called(ctx, id)
-	return args.Get(0).(models.Person), args.Error(1)
-}
-
-func (mas *mockAdminService) GetAllPersons(ctx context.Context, offset, limit uint) ([]models.Person, error) {
-	args := mas.Called(ctx, offset, limit)
-	return args.Get(0).([]models.Person), args.Error(1)
-}
-
-func (mas *mockAdminService) GetPerson(ctx context.Context, id uuid.UUID) (models.Person, error) {
-	args := mas.Called(ctx, id)
-	return args.Get(0).(models.Person), args.Error(1)
-}
-
-func (mas *mockAdminService) GetPersonContacts(ctx context.Context, id uuid.UUID) (models.Contacts, error) {
-	args := mas.Called(ctx, id)
-	return args.Get(0).(models.Contacts), args.Error(1)
-}
-
-// GetPersonContactAddresses implements Service.
-func (mas *mockAdminService) GetPersonContactAddresses(ctx context.Context, id uuid.UUID) ([]models.ContactAddress, error) {
-	args := mas.Called(ctx, id)
-	return args.Get(0).([]models.ContactAddress), args.Error(1)
-}
-
-// GetPersonContactEmails implements Service.
-func (mas *mockAdminService) GetPersonContactEmails(ctx context.Context, id uuid.UUID) ([]models.ContactEmail, error) {
-	args := mas.Called(ctx, id)
-	return args.Get(0).([]models.ContactEmail), args.Error(1)
-}
-
-// GetPersonContactPhones implements Service.
-func (mas *mockAdminService) GetPersonContactPhones(ctx context.Context, id uuid.UUID) ([]models.ContactPhone, error) {
-	args := mas.Called(ctx, id)
-	return args.Get(0).([]models.ContactPhone), args.Error(1)
-}
-
-func (mas *mockAdminService) UpdatePerson(ctx context.Context, id uuid.UUID, data models.Person) error {
-	args := mas.Called(ctx, id, data)
-	return args.Error(0)
 }

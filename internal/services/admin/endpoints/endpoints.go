@@ -38,19 +38,19 @@ type adminEndpoints struct {
 // Person implements Endpoints.
 func (a adminEndpoints) Person() PersonEndpoints {
 	return adminPersonEndpoints{
-		adminService: a.adminService,
+		personMicro: a.adminService.Person(),
 	}
 }
 
 func (a adminEndpoints) Contact() ContactEndpoints {
 	return adminContactEndpoints{
-		adminService: a.adminService,
+		contactMicro: a.adminService.Contact(),
 	}
 }
 
 func NewAdminEndpointHandlers(dbSession *sql.DB) Endpoints {
 	return adminEndpoints{
-		adminService: admin.NewService(datastores.NewPersonStore(dbSession)),
+		adminService: admin.NewService(datastores.NewPersonStore(dbSession), datastores.NewContactStore(dbSession)),
 	}
 }
 

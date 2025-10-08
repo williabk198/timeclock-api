@@ -43,12 +43,20 @@ func Test_adminContactEndpoints_AddContactAddressForPerson(t *testing.T) {
 	}
 
 	testInvalidAddressDB := models.ContactAddress{
-		PersonID: testNotFoundPersonID,
+		PersonID:   testNotFoundPersonID,
+		Street1:    "123 Test Dr",
+		Street2:    "",
+		Locality:   "Testerville",
+		Region:     "Testia",
+		PostalCode: "12345-6789",
+		Country:    "Testopia",
+		Type:       models.AddressTypeMailing,
+		Primary:    true,
 	}
 
-	testAdminService := &mockAdminService{}
-	testAdminService.On("AddPersonContactEmail", mock.Anything, testValidAddressDB).Return(testAddressID, error(nil))
-	testAdminService.On("AddPersonContactEmail", mock.Anything, testInvalidAddressDB).Return(uuid.Nil, assert.AnError)
+	testContactMicro := &mockContactMicro{}
+	testContactMicro.On("AddPersonAddress", mock.Anything, testValidAddressDB).Return(testAddressID, error(nil))
+	testContactMicro.On("AddPersonAddress", mock.Anything, testInvalidAddressDB).Return(uuid.Nil, assert.AnError)
 
 	tests := []struct {
 		name      string
@@ -60,7 +68,7 @@ func Test_adminContactEndpoints_AddContactAddressForPerson(t *testing.T) {
 		{
 			name: "Success",
 			ace: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -85,7 +93,7 @@ func Test_adminContactEndpoints_AddContactAddressForPerson(t *testing.T) {
 		{
 			name: "Error; Person DNE",
 			ace: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -99,7 +107,7 @@ func Test_adminContactEndpoints_AddContactAddressForPerson(t *testing.T) {
 		{
 			name: "Error; Invalid Person ID",
 			ace: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -113,7 +121,7 @@ func Test_adminContactEndpoints_AddContactAddressForPerson(t *testing.T) {
 		{
 			name: "Error; Invalid Address; Missing Street 1",
 			ace: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -134,7 +142,7 @@ func Test_adminContactEndpoints_AddContactAddressForPerson(t *testing.T) {
 		{
 			name: "Error; Invalid Address; Missing Locality",
 			ace: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -155,7 +163,7 @@ func Test_adminContactEndpoints_AddContactAddressForPerson(t *testing.T) {
 		{
 			name: "Error; Invalid Address; Missing Region",
 			ace: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -176,7 +184,7 @@ func Test_adminContactEndpoints_AddContactAddressForPerson(t *testing.T) {
 		{
 			name: "Error; Invalid Address; Missing Postal Code",
 			ace: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -197,7 +205,7 @@ func Test_adminContactEndpoints_AddContactAddressForPerson(t *testing.T) {
 		{
 			name: "Error; Invalid Address; Missing Country",
 			ace: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -218,7 +226,7 @@ func Test_adminContactEndpoints_AddContactAddressForPerson(t *testing.T) {
 		{
 			name: "Error; Invalid Address; Missing Type",
 			ace: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -284,9 +292,9 @@ func Test_adminContactEndpoints_AddContactEmailForPerson(t *testing.T) {
 		Email: "user@example",
 	}
 
-	testAdminService := &mockAdminService{}
-	testAdminService.On("AddPersonContactEmail", mock.Anything, testValidEmailDB).Return(testEmailID, error(nil))
-	testAdminService.On("AddPersonContactEmail", mock.Anything, testInvalidEmailDB).Return(uuid.Nil, assert.AnError)
+	testContactMicro := &mockContactMicro{}
+	testContactMicro.On("AddPersonEmail", mock.Anything, testValidEmailDB).Return(testEmailID, error(nil))
+	testContactMicro.On("AddPersonEmail", mock.Anything, testInvalidEmailDB).Return(uuid.Nil, assert.AnError)
 
 	tests := []struct {
 		name      string
@@ -298,7 +306,7 @@ func Test_adminContactEndpoints_AddContactEmailForPerson(t *testing.T) {
 		{
 			name: "Success",
 			ace: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -317,7 +325,7 @@ func Test_adminContactEndpoints_AddContactEmailForPerson(t *testing.T) {
 		{
 			name: "Error; Person DNE",
 			ace: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -331,7 +339,7 @@ func Test_adminContactEndpoints_AddContactEmailForPerson(t *testing.T) {
 		{
 			name: "Error; Invalid Person ID",
 			ace: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -345,7 +353,7 @@ func Test_adminContactEndpoints_AddContactEmailForPerson(t *testing.T) {
 		{
 			name: "Error; No Email Given",
 			ace: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -358,7 +366,7 @@ func Test_adminContactEndpoints_AddContactEmailForPerson(t *testing.T) {
 		{
 			name: "Error; Invalid Email; No Username",
 			ace: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -372,7 +380,7 @@ func Test_adminContactEndpoints_AddContactEmailForPerson(t *testing.T) {
 		{
 			name: "Error; Invalid Email; No Domain",
 			ace: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -386,7 +394,7 @@ func Test_adminContactEndpoints_AddContactEmailForPerson(t *testing.T) {
 		{
 			name: "Error; Invalid Email; Missing Top-level Domain",
 			ace: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -439,9 +447,9 @@ func Test_adminContactEndpoints_AddContactPhoneForPerson(t *testing.T) {
 		Primary:     true,
 	}
 
-	testAdminService := &mockAdminService{}
-	testAdminService.On("AddPersonContactPhone", mock.Anything, testValidPhoneDB).Return(testPhoneID, error(nil))
-	testAdminService.On("AddPersonContactPhone", mock.Anything, testInvalidPhoneDB).Return(uuid.Nil, assert.AnError)
+	testContactMicro := &mockContactMicro{}
+	testContactMicro.On("AddPersonPhone", mock.Anything, testValidPhoneDB).Return(testPhoneID, error(nil))
+	testContactMicro.On("AddPersonPhone", mock.Anything, testInvalidPhoneDB).Return(uuid.Nil, assert.AnError)
 
 	tests := []struct {
 		name      string
@@ -453,7 +461,7 @@ func Test_adminContactEndpoints_AddContactPhoneForPerson(t *testing.T) {
 		{
 			name: "Success",
 			ace: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -474,7 +482,7 @@ func Test_adminContactEndpoints_AddContactPhoneForPerson(t *testing.T) {
 		{
 			name: "Error; Person DNE",
 			ace: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -488,7 +496,7 @@ func Test_adminContactEndpoints_AddContactPhoneForPerson(t *testing.T) {
 		{
 			name: "Error; Invalid Person ID",
 			ace: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -502,7 +510,7 @@ func Test_adminContactEndpoints_AddContactPhoneForPerson(t *testing.T) {
 		{
 			name: "Error; Invalid Phone; Bad Country Code",
 			ace: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx: context.Background(),
@@ -570,9 +578,9 @@ func Test_adminContactEndpoint_GetPersonContacts(t *testing.T) {
 		Phone:     []models.ContactPhone{testPhone},
 	}
 
-	testAdminService := &mockAdminService{}
-	testAdminService.On("GetPersonContacts", mock.Anything, testPersonID).Return(testContacts, error(nil))
-	testAdminService.On("GetPersonContacts", mock.Anything, testDoesNotExistID).Return(models.Contacts{}, assert.AnError)
+	testContactMicro := &mockContactMicro{}
+	testContactMicro.On("GetAllForPerson", mock.Anything, testPersonID).Return(testContacts, error(nil))
+	testContactMicro.On("GetAllForPerson", mock.Anything, testDoesNotExistID).Return(models.Contacts{}, assert.AnError)
 
 	tests := []struct {
 		name      string
@@ -584,7 +592,7 @@ func Test_adminContactEndpoint_GetPersonContacts(t *testing.T) {
 		{
 			name: "Success",
 			ape: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx:   context.Background(),
@@ -626,7 +634,7 @@ func Test_adminContactEndpoint_GetPersonContacts(t *testing.T) {
 		{
 			name: "Error; Bad ID",
 			ape: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx:   context.Background(),
@@ -637,7 +645,7 @@ func Test_adminContactEndpoint_GetPersonContacts(t *testing.T) {
 		{
 			name: "Error; Service",
 			ape: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx:   context.Background(),
@@ -689,9 +697,9 @@ func Test_adminContactEndpoint_GetPersonContactAddresses(t *testing.T) {
 		},
 	}
 
-	testAdminService := &mockAdminService{}
-	testAdminService.On("GetPersonContactAddresses", mock.Anything, testPersonID).Return(testAddresses, error(nil))
-	testAdminService.On("GetPersonContactAddresses", mock.Anything, testDoesNotExistID).Return([]models.ContactAddress(nil), assert.AnError)
+	testContactMicro := &mockContactMicro{}
+	testContactMicro.On("GetPersonAddresses", mock.Anything, testPersonID).Return(testAddresses, error(nil))
+	testContactMicro.On("GetPersonAddresses", mock.Anything, testDoesNotExistID).Return([]models.ContactAddress(nil), assert.AnError)
 
 	tests := []struct {
 		name      string
@@ -703,7 +711,7 @@ func Test_adminContactEndpoint_GetPersonContactAddresses(t *testing.T) {
 		{
 			name: "Success",
 			ape: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx:   context.Background(),
@@ -738,7 +746,7 @@ func Test_adminContactEndpoint_GetPersonContactAddresses(t *testing.T) {
 		{
 			name: "Error; Bad ID",
 			ape: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx:   context.Background(),
@@ -749,7 +757,7 @@ func Test_adminContactEndpoint_GetPersonContactAddresses(t *testing.T) {
 		{
 			name: "Error; Service",
 			ape: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx:   context.Background(),
@@ -792,9 +800,9 @@ func Test_adminContactEndpoint_GetPersonContactEmails(t *testing.T) {
 		},
 	}
 
-	testAdminService := &mockAdminService{}
-	testAdminService.On("GetPersonContactEmails", mock.Anything, testPersonID).Return(testEmails, error(nil))
-	testAdminService.On("GetPersonContactEmails", mock.Anything, testDoesNotExistID).Return([]models.ContactEmail(nil), assert.AnError)
+	testContactMicro := &mockContactMicro{}
+	testContactMicro.On("GetPersonEmails", mock.Anything, testPersonID).Return(testEmails, error(nil))
+	testContactMicro.On("GetPersonEmails", mock.Anything, testDoesNotExistID).Return([]models.ContactEmail(nil), assert.AnError)
 
 	tests := []struct {
 		name      string
@@ -805,7 +813,7 @@ func Test_adminContactEndpoint_GetPersonContactEmails(t *testing.T) {
 	}{
 		{
 			name: "Success",
-			ape:  adminContactEndpoints{adminService: testAdminService},
+			ape:  adminContactEndpoints{contactMicro: testContactMicro},
 			args: args{
 				ctx:   context.Background(),
 				idStr: testPersonID.String(),
@@ -827,7 +835,7 @@ func Test_adminContactEndpoint_GetPersonContactEmails(t *testing.T) {
 		{
 			name: "Error; Bad ID",
 			ape: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx:   context.Background(),
@@ -837,7 +845,7 @@ func Test_adminContactEndpoint_GetPersonContactEmails(t *testing.T) {
 		},
 		{
 			name: "Error; Service",
-			ape:  adminContactEndpoints{adminService: testAdminService},
+			ape:  adminContactEndpoints{contactMicro: testContactMicro},
 			args: args{
 				ctx:   context.Background(),
 				idStr: testDoesNotExistID.String(),
@@ -873,9 +881,9 @@ func Test_adminContactEndpoint_GetPersonContactPhones(t *testing.T) {
 		},
 	}
 
-	testAdminService := &mockAdminService{}
-	testAdminService.On("GetPersonContactPhones", mock.Anything, testPersonID).Return(testPhones, error(nil))
-	testAdminService.On("GetPersonContactPhones", mock.Anything, testDoesNotExistID).Return([]models.ContactPhone{}, assert.AnError)
+	testContactMicro := &mockContactMicro{}
+	testContactMicro.On("GetPersonPhones", mock.Anything, testPersonID).Return(testPhones, error(nil))
+	testContactMicro.On("GetPersonPhones", mock.Anything, testDoesNotExistID).Return([]models.ContactPhone{}, assert.AnError)
 
 	tests := []struct {
 		name      string
@@ -886,7 +894,7 @@ func Test_adminContactEndpoint_GetPersonContactPhones(t *testing.T) {
 	}{
 		{
 			name: "Success",
-			ape:  adminContactEndpoints{adminService: testAdminService},
+			ape:  adminContactEndpoints{contactMicro: testContactMicro},
 			args: args{
 				ctx:   context.Background(),
 				idStr: testPersonID.String(),
@@ -905,7 +913,7 @@ func Test_adminContactEndpoint_GetPersonContactPhones(t *testing.T) {
 		{
 			name: "Error; Bad ID",
 			ape: adminContactEndpoints{
-				adminService: testAdminService,
+				contactMicro: testContactMicro,
 			},
 			args: args{
 				ctx:   context.Background(),
@@ -915,7 +923,7 @@ func Test_adminContactEndpoint_GetPersonContactPhones(t *testing.T) {
 		},
 		{
 			name: "Error; Service",
-			ape:  adminContactEndpoints{adminService: testAdminService},
+			ape:  adminContactEndpoints{contactMicro: testContactMicro},
 			args: args{
 				ctx:   context.Background(),
 				idStr: testDoesNotExistID.String(),

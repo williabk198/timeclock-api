@@ -12,7 +12,7 @@ import (
 )
 
 type adminPersonEndpoints struct {
-	adminService admin.Service
+	personMicro admin.PersonMicro
 }
 
 // Add implements PersonEndpoints.
@@ -29,7 +29,7 @@ func (ape adminPersonEndpoints) Add(ctx context.Context, person PersonData) (Per
 		Pronouns:    pronouns,
 	}
 
-	id, err := ape.adminService.AddPerson(ctx, dbPerson)
+	id, err := ape.personMicro.Add(ctx, dbPerson)
 	if err != nil {
 		return PersonData{}, fmt.Errorf("failed to add person to database: %w", err)
 	}
@@ -45,7 +45,7 @@ func (ape adminPersonEndpoints) Delete(ctx context.Context, idStr string) (Perso
 		return PersonData{}, err
 	}
 
-	person, err := ape.adminService.DeletePerson(ctx, id)
+	person, err := ape.personMicro.Delete(ctx, id)
 	if err != nil {
 		return PersonData{}, err
 	}
@@ -61,7 +61,7 @@ func (ape adminPersonEndpoints) Delete(ctx context.Context, idStr string) (Perso
 
 // GetAll implements PersonEndpoints.
 func (ape adminPersonEndpoints) GetAll(ctx context.Context, reqData GetPaginatedRequestData) ([]PersonData, error) {
-	persons, err := ape.adminService.GetAllPersons(ctx, reqData.Offset, reqData.Limit)
+	persons, err := ape.personMicro.GetAll(ctx, reqData.Offset, reqData.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ func (ape adminPersonEndpoints) GetSpecific(ctx context.Context, idStr string) (
 		return PersonData{}, err
 	}
 
-	person, err := ape.adminService.GetPerson(ctx, id)
+	person, err := ape.personMicro.GetSpecific(ctx, id)
 	if err != nil {
 		return PersonData{}, err
 	}
@@ -120,7 +120,7 @@ func (ape adminPersonEndpoints) Update(ctx context.Context, updateReqData Update
 		Pronouns:    pronouns,
 	}
 
-	err = ape.adminService.UpdatePerson(ctx, id, updatedVals)
+	err = ape.personMicro.Update(ctx, id, updatedVals)
 	if err != nil {
 		return PersonData{}, err
 	}

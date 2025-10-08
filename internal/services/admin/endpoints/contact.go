@@ -11,7 +11,7 @@ import (
 )
 
 type adminContactEndpoints struct {
-	adminService admin.Service
+	contactMicro admin.ContactMicro
 }
 
 // AddContactAddressForPerson implements ContactEndpoints.
@@ -27,7 +27,7 @@ func (ace adminContactEndpoints) AddContactAddressForPerson(ctx context.Context,
 		return PersonAddressData{}, fmt.Errorf("provided address data was ill formated")
 	}
 
-	addressID, err := ace.adminService.AddPersonContactAddress(ctx, models.ContactAddress{
+	addressID, err := ace.contactMicro.AddPersonAddress(ctx, models.ContactAddress{
 		PersonID:   personID,
 		Street1:    reqData.Data.Street1,
 		Street2:    reqData.Data.Street2,
@@ -61,7 +61,7 @@ func (ace adminContactEndpoints) AddContactEmailForPerson(ctx context.Context, r
 		return PersonEmailData{}, fmt.Errorf("provided email address was ill formated")
 	}
 
-	emailID, err := ace.adminService.AddPersonContactEmail(ctx, models.ContactEmail{
+	emailID, err := ace.contactMicro.AddPersonEmail(ctx, models.ContactEmail{
 		PersonID: personID,
 		Username: splitEmail[0],
 		Provider: splitEmail[1],
@@ -84,16 +84,19 @@ func (ace adminContactEndpoints) AddContactPhoneForPerson(ctx context.Context, r
 
 	// Oversimplified validation. This will eventually need to be more robust.
 	if reqData.Data.CountryCode < 1 {
-		return PersonPhoneData{}, err
+		return PersonPhoneData{}, fmt.Errorf("invalid value for country code")
 	}
 
-	phoneID, err := ace.adminService.AddPersonContactPhone(ctx, models.ContactPhone{
+	phoneID, err := ace.contactMicro.AddPersonPhone(ctx, models.ContactPhone{
 		PersonID:    personID,
 		CountryCode: reqData.Data.CountryCode,
 		PhoneNumber: reqData.Data.PhoneNumber,
 		Type:        models.PhoneType(reqData.Data.Type),
 		Primary:     reqData.Data.Primary,
 	})
+	if err != nil {
+		return PersonPhoneData{}, err
+	}
 
 	reqData.Data.ID = phoneID.String()
 	return reqData.Data, nil
@@ -105,7 +108,7 @@ func (ace adminContactEndpoints) GetPersonContacts(ctx context.Context, idStr st
 		return PersonContactData{}, err
 	}
 
-	contactData, err := ace.adminService.GetPersonContacts(ctx, id)
+	contactData, err := ace.contactMicro.GetAllForPerson(ctx, id)
 	if err != nil {
 		return PersonContactData{}, err
 	}
@@ -119,7 +122,7 @@ func (ace adminContactEndpoints) GetPersonContactAddresses(ctx context.Context, 
 		return nil, err
 	}
 
-	addresses, err := ace.adminService.GetPersonContactAddresses(ctx, id)
+	addresses, err := ace.contactMicro.GetPersonAddresses(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +136,7 @@ func (ace adminContactEndpoints) GetPersonContactEmails(ctx context.Context, idS
 		return nil, err
 	}
 
-	emails, err := ace.adminService.GetPersonContactEmails(ctx, id)
+	emails, err := ace.contactMicro.GetPersonEmails(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +150,7 @@ func (ace adminContactEndpoints) GetPersonContactPhones(ctx context.Context, idS
 		return nil, err
 	}
 
-	phones, err := ace.adminService.GetPersonContactPhones(ctx, id)
+	phones, err := ace.contactMicro.GetPersonPhones(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -200,8 +203,6 @@ func (ace adminContactEndpoints) convertContactPhoneSliceToPersonPhoneDataSlice(
 }
 
 func (ace adminContactEndpoints) convertContactsModelToPersonContactData(contacts models.Contacts) PersonContactData {
-	// TODO: Remove this function
-
 	adressess := make([]PersonAddressData, len(contacts.Addresses))
 	for i, a := range contacts.Addresses {
 		adressess[i] = PersonAddressData{
