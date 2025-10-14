@@ -1023,7 +1023,7 @@ func Test_adminContactEndpoints_UpdatePersonContactAddress(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				reqData: UpdateContactRequestData[PersonAddressData]{
-					PersonID:  testNotFoundAddressID.String(),
+					PersonID:  testNotFoundPersonID.String(),
 					ContactID: testValidAddressID.String(),
 					Data:      testValidAddressData,
 				},
@@ -1203,7 +1203,6 @@ func Test_adminContactEndpoints_UpdatePersonContactEmail(t *testing.T) {
 		Primary: true,
 	}
 	testValidEmailDB := models.ContactEmail{
-		PersonID: testValidPersonID,
 		Username: "test",
 		Provider: "example.com",
 		Primary:  true,
@@ -1244,11 +1243,7 @@ func Test_adminContactEndpoints_UpdatePersonContactEmail(t *testing.T) {
 					Data:      testValidEmailData,
 				},
 			},
-			want: PersonEmailData{
-				ID:      testValidEmailID.String(),
-				Email:   "test@example.com",
-				Primary: true,
-			},
+			want:      testValidEmailData,
 			assertion: assert.NoError,
 		},
 		{
@@ -1382,7 +1377,6 @@ func Test_adminContactEndpoints_UpdatePersonContactPhone(t *testing.T) {
 		Primary:     true,
 	}
 	testValidPhoneDB := models.ContactPhone{
-		PersonID:    testValidPersonID,
 		CountryCode: 1,
 		PhoneNumber: "(555)555-5555",
 		Type:        models.PhoneTypeHome,
@@ -1414,6 +1408,8 @@ func Test_adminContactEndpoints_UpdatePersonContactPhone(t *testing.T) {
 					Data:      testValidPhoneData,
 				},
 			},
+			want:      testValidPhoneData,
+			assertion: assert.NoError,
 		},
 		{
 			name: "Error; Person DNE",
