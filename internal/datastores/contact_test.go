@@ -818,8 +818,8 @@ func Test_contactStore_UpdatePersonAddress(t *testing.T) {
 				},
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `UPDATE "person"."addresses" SET "street1"=$1, "street2"=$2, "locality"=$3, "region"=$4, "postal_code"=$5, "country"=$6 "kind"=$7, "primary"=$8;`,
-				arguments: []driver.Value{"987 Testing Ln", "APT 3", "Testington", "Testoria", "98765-4321", "Testopia", "physical", true},
+				rawQuery:  `UPDATE "person"."addresses" SET "street1"=$1, "street2"=$2, "locality"=$3, "region"=$4, "postal_code"=$5, "country"=$6, "kind"=$7, "primary"=$8 WHERE "id" = $9 AND "person_id" = $10;`,
+				arguments: []driver.Value{"987 Testing Ln", "APT 3", "Testington", "Testoria", "98765-4321", "Testopia", "physical", true, testAddressID.String(), testPersonID.String()},
 				result:    sqlmock.NewResult(0, 1),
 			},
 			assertion: assert.NoError,
@@ -863,7 +863,7 @@ func Test_contactStore_UpdatePersonAddress(t *testing.T) {
 				},
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `UPDATE "person"."addresses" SET "street1"=$1, "street2"=$2, "locality"=$3, "region"=$4, "postal_code"=$5, "country"=$6 "kind"=$7, "primary"=$8 WHERE "id" = $9 AND "person_id" = $10;`,
+				rawQuery:  `UPDATE "person"."addresses" SET "street1"=$1, "street2"=$2, "locality"=$3, "region"=$4, "postal_code"=$5, "country"=$6, "kind"=$7, "primary"=$8 WHERE "id" = $9 AND "person_id" = $10;`,
 				arguments: []driver.Value{"987 Testing Ln", "APT 3", "Testington", "Testoria", "98765-4321", "Testopia", "physical", true, testAddressID.String(), testPersonID.String()},
 				returnErr: assert.AnError,
 			},
@@ -985,6 +985,7 @@ func Test_contactStore_UpdatePersonEmail(t *testing.T) {
 				arguments: []driver.Value{"tester", "test.com", true, testEmailID.String(), testPersonID.String()},
 				returnErr: assert.AnError,
 			},
+			assertion: assert.Error,
 		},
 	}
 	for _, tt := range tests {
@@ -1056,11 +1057,11 @@ func Test_contactStore_UpdatePersonPhone(t *testing.T) {
 				},
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `UPDATE "person"."phones" SET "country_code"=$1, "phone_number"=$2, "kind"=$3, "primary" = $4 WHERE "id" = $5 AND "person_id" = $6`,
+				rawQuery:  `UPDATE "person"."phones" SET "country_code"=$1, "phone_number"=$2, "kind"=$3, "primary"=$4 WHERE "id" = $5 AND "person_id" = $6`,
 				arguments: []driver.Value{1, "(123)456-7890", "home", false, testPhoneID.String(), testPersonID.String()},
 				result:    sqlmock.NewResult(0, 1),
 			},
-			assertion: assert.Error,
+			assertion: assert.NoError,
 		},
 		{
 			name: "Error; SQL Builder",
@@ -1081,7 +1082,7 @@ func Test_contactStore_UpdatePersonPhone(t *testing.T) {
 			cs: contactStore{
 				sqlBuilder:   testSqlBuilder,
 				dbConn:       mockSession,
-				tableNameMap: map[string]string{"addresses": "person.phones"},
+				tableNameMap: map[string]string{"phones": "person.phones"},
 			},
 			args: args{
 				ctx:      context.Background(),
@@ -1095,7 +1096,7 @@ func Test_contactStore_UpdatePersonPhone(t *testing.T) {
 				},
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `UPDATE "person"."phones" SET "country_code"=$1, "phone_number"=$2, "kind"=$3, "primary" = $4 WHERE "id" = $5 AND "person_id" = $6`,
+				rawQuery:  `UPDATE "person"."phones" SET "country_code"=$1, "phone_number"=$2, "kind"=$3, "primary"=$4 WHERE "id" = $5 AND "person_id" = $6`,
 				arguments: []driver.Value{1, "(123)456-7890", "home", false, testPhoneID.String(), testPersonID.String()},
 				returnErr: assert.AnError,
 			},
