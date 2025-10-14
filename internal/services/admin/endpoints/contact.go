@@ -158,6 +158,21 @@ func (ace adminContactEndpoints) GetPersonContactPhones(ctx context.Context, idS
 	return ace.convertContactPhoneSliceToPersonPhoneDataSlice(phones), nil
 }
 
+// UpdatePersonContactAddress implements ContactEndpoints.
+func (ace adminContactEndpoints) UpdatePersonContactAddress(ctx context.Context, reqData UpdateContactRequestData[PersonAddressData]) (PersonAddressData, error) {
+	panic("unimplemented")
+}
+
+// UpdatePersonContactEmail implements ContactEndpoints.
+func (ace adminContactEndpoints) UpdatePersonContactEmail(ctx context.Context, reqData UpdateContactRequestData[PersonEmailData]) (PersonEmailData, error) {
+	panic("unimplemented")
+}
+
+// UpdatePersonContactPhone implements ContactEndpoints.
+func (ace adminContactEndpoints) UpdatePersonContactPhone(ctx context.Context, reqData UpdateContactRequestData[PersonPhoneData]) (PersonPhoneData, error) {
+	panic("unimplemented")
+}
+
 func (ace adminContactEndpoints) convertContactAddressSliceToPersonAddressDataSlice(addresses []models.ContactAddress) []PersonAddressData {
 	result := make([]PersonAddressData, len(addresses))
 	for i, a := range addresses {

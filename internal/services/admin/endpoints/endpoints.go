@@ -29,6 +29,9 @@ type ContactEndpoints interface {
 	GetPersonContactAddresses(ctx context.Context, personID string) ([]PersonAddressData, error)
 	GetPersonContactEmails(ctx context.Context, personID string) ([]PersonEmailData, error)
 	GetPersonContactPhones(ctx context.Context, personID string) ([]PersonPhoneData, error)
+	UpdatePersonContactAddress(ctx context.Context, reqData UpdateContactRequestData[PersonAddressData]) (PersonAddressData, error)
+	UpdatePersonContactEmail(ctx context.Context, reqData UpdateContactRequestData[PersonEmailData]) (PersonEmailData, error)
+	UpdatePersonContactPhone(ctx context.Context, reqData UpdateContactRequestData[PersonPhoneData]) (PersonPhoneData, error)
 }
 
 type adminEndpoints struct {
@@ -64,7 +67,17 @@ type UpdateRequestData[T any] struct {
 	Data T
 }
 
+type UpdateContactRequestData[T ContactConstraint] struct {
+	PersonID  string
+	ContactID string
+	Data      T
+}
+
 type GetPaginatedRequestData struct {
 	Offset uint
 	Limit  uint
+}
+
+type ContactConstraint interface {
+	PersonAddressData | PersonEmailData | PersonPhoneData
 }

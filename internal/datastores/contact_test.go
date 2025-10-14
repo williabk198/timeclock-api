@@ -761,3 +761,362 @@ func Test_contactStore_GetPersonPhones(t *testing.T) {
 		})
 	}
 }
+
+func Test_contactStore_UpdatePersonAddress(t *testing.T) {
+	type args struct {
+		ctx       context.Context
+		personID  uuid.UUID
+		addressID uuid.UUID
+		newVal    models.ContactAddress
+	}
+
+	type wantQuery struct {
+		rawQuery  string
+		arguments []driver.Value
+		result    driver.Result
+		returnErr error
+	}
+
+	testSqlBuilder := jagsqlb.NewSqlBuilder()
+	mockSession, mockDb, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testPersonID := uuid.New()
+	testAddressID := uuid.New()
+
+	tests := []struct {
+		name      string
+		cs        contactStore
+		args      args
+		wantQuery *wantQuery
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			cs: contactStore{
+				sqlBuilder:   testSqlBuilder,
+				dbConn:       mockSession,
+				tableNameMap: map[string]string{"addresses": "person.addresses"},
+			},
+			args: args{
+				ctx:       context.Background(),
+				personID:  testPersonID,
+				addressID: testAddressID,
+				newVal: models.ContactAddress{
+					ID:         testAddressID,
+					PersonID:   testAddressID,
+					Street1:    "987 Testing Ln",
+					Street2:    "APT 3",
+					Locality:   "Testington",
+					Region:     "Testoria",
+					PostalCode: "98765-4321",
+					Country:    "Testopia",
+					Type:       models.AddressTypePhysical,
+					Primary:    true,
+				},
+			},
+			wantQuery: &wantQuery{
+				rawQuery:  `UPDATE "person"."addresses" SET "street1"=$1, "street2"=$2, "locality"=$3, "region"=$4, "postal_code"=$5, "country"=$6 "kind"=$7, "primary"=$8;`,
+				arguments: []driver.Value{"987 Testing Ln", "APT 3", "Testington", "Testoria", "98765-4321", "Testopia", "physical", true},
+				result:    sqlmock.NewResult(0, 1),
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; SQL Builder",
+			cs: contactStore{
+				sqlBuilder:   testSqlBuilder,
+				dbConn:       mockSession,
+				tableNameMap: map[string]string{"addresses": ".bad_val"},
+			},
+			args: args{
+				ctx:       context.Background(),
+				personID:  testPersonID,
+				addressID: testAddressID,
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; SQL Execution",
+			cs: contactStore{
+				sqlBuilder:   testSqlBuilder,
+				dbConn:       mockSession,
+				tableNameMap: map[string]string{"addresses": "person.addresses"},
+			},
+			args: args{
+				ctx:       context.Background(),
+				personID:  testPersonID,
+				addressID: testAddressID,
+				newVal: models.ContactAddress{
+					ID:         testAddressID,
+					PersonID:   testAddressID,
+					Street1:    "987 Testing Ln",
+					Street2:    "APT 3",
+					Locality:   "Testington",
+					Region:     "Testoria",
+					PostalCode: "98765-4321",
+					Country:    "Testopia",
+					Type:       models.AddressTypePhysical,
+					Primary:    true,
+				},
+			},
+			wantQuery: &wantQuery{
+				rawQuery:  `UPDATE "person"."addresses" SET "street1"=$1, "street2"=$2, "locality"=$3, "region"=$4, "postal_code"=$5, "country"=$6 "kind"=$7, "primary"=$8 WHERE "id" = $9 AND "person_id" = $10;`,
+				arguments: []driver.Value{"987 Testing Ln", "APT 3", "Testington", "Testoria", "98765-4321", "Testopia", "physical", true, testAddressID.String(), testPersonID.String()},
+				returnErr: assert.AnError,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantQuery != nil {
+				mockDb.ExpectExec(regexp.QuoteMeta(tt.wantQuery.rawQuery)).
+					WithArgs(tt.wantQuery.arguments...).
+					WillReturnResult(tt.wantQuery.result).
+					WillReturnError(tt.wantQuery.returnErr)
+			}
+
+			tt.assertion(t, tt.cs.UpdatePersonAddress(tt.args.ctx, tt.args.personID, tt.args.addressID, tt.args.newVal))
+
+			// Check to see if the expectations of the query were met
+			if err := mockDb.ExpectationsWereMet(); err != nil {
+				t.Errorf("sql expectations were not met: %v", err)
+			}
+		})
+	}
+}
+
+func Test_contactStore_UpdatePersonEmail(t *testing.T) {
+	type args struct {
+		ctx      context.Context
+		personID uuid.UUID
+		emailID  uuid.UUID
+		newVal   models.ContactEmail
+	}
+
+	type wantQuery struct {
+		rawQuery  string
+		arguments []driver.Value
+		result    driver.Result
+		returnErr error
+	}
+
+	testSqlBuilder := jagsqlb.NewSqlBuilder()
+	mockSession, mockDb, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testPersonID := uuid.New()
+	testEmailID := uuid.New()
+
+	tests := []struct {
+		name      string
+		cs        contactStore
+		args      args
+		wantQuery *wantQuery
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			cs: contactStore{
+				sqlBuilder:   testSqlBuilder,
+				dbConn:       mockSession,
+				tableNameMap: map[string]string{"emails": "person.emails"},
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testPersonID,
+				emailID:  testEmailID,
+				newVal: models.ContactEmail{
+					Username: "tester",
+					Provider: "test.com",
+					Primary:  true,
+				},
+			},
+			wantQuery: &wantQuery{
+				rawQuery:  `UPDATE "person"."emails" SET "username"=$1, "provider"=$2, "primary"=$3 WHERE "id" = $4 AND "person_id" = $5;`,
+				arguments: []driver.Value{"tester", "test.com", true, testEmailID.String(), testPersonID.String()},
+				result:    sqlmock.NewResult(0, 1),
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; SQL Builder",
+			cs: contactStore{
+				sqlBuilder:   testSqlBuilder,
+				dbConn:       mockSession,
+				tableNameMap: map[string]string{"emails": ".bad_val"},
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testPersonID,
+				emailID:  testEmailID,
+				newVal: models.ContactEmail{
+					Username: "tester",
+					Provider: "test.com",
+					Primary:  true,
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; SQL Execution",
+			cs: contactStore{
+				sqlBuilder:   testSqlBuilder,
+				dbConn:       mockSession,
+				tableNameMap: map[string]string{"emails": "person.emails"},
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testPersonID,
+				emailID:  testEmailID,
+				newVal: models.ContactEmail{
+					Username: "tester",
+					Provider: "test.com",
+					Primary:  true,
+				},
+			},
+			wantQuery: &wantQuery{
+				rawQuery:  `UPDATE "person"."emails" SET "username"=$1, "provider"=$2, "primary"=$3 WHERE "id" = $4 AND "person_id" = $5;`,
+				arguments: []driver.Value{"tester", "test.com", true, testEmailID.String(), testPersonID.String()},
+				returnErr: assert.AnError,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantQuery != nil {
+				mockDb.ExpectExec(regexp.QuoteMeta(tt.wantQuery.rawQuery)).
+					WithArgs(tt.wantQuery.arguments...).
+					WillReturnResult(tt.wantQuery.result).
+					WillReturnError(tt.wantQuery.returnErr)
+			}
+
+			tt.assertion(t, tt.cs.UpdatePersonEmail(tt.args.ctx, tt.args.personID, tt.args.emailID, tt.args.newVal))
+
+			// Check to see if the expectations of the query were met
+			if err := mockDb.ExpectationsWereMet(); err != nil {
+				t.Errorf("sql expectations were not met: %v", err)
+			}
+		})
+	}
+}
+
+func Test_contactStore_UpdatePersonPhone(t *testing.T) {
+	type args struct {
+		ctx      context.Context
+		personID uuid.UUID
+		phoneID  uuid.UUID
+		newVal   models.ContactPhone
+	}
+
+	type wantQuery struct {
+		rawQuery  string
+		arguments []driver.Value
+		result    driver.Result
+		returnErr error
+	}
+
+	testSqlBuilder := jagsqlb.NewSqlBuilder()
+	mockSession, mockDb, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testPersonID := uuid.New()
+	testPhoneID := uuid.New()
+
+	tests := []struct {
+		name      string
+		cs        contactStore
+		args      args
+		wantQuery *wantQuery
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			cs: contactStore{
+				sqlBuilder:   testSqlBuilder,
+				dbConn:       mockSession,
+				tableNameMap: map[string]string{"phones": "person.phones"},
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testPersonID,
+				phoneID:  testPhoneID,
+				newVal: models.ContactPhone{
+					CountryCode: 1,
+					PhoneNumber: "(123)456-7890",
+					Type:        models.PhoneTypeHome,
+					Primary:     false,
+				},
+			},
+			wantQuery: &wantQuery{
+				rawQuery:  `UPDATE "person"."phones" SET "country_code"=$1, "phone_number"=$2, "kind"=$3, "primary" = $4 WHERE "id" = $5 AND "person_id" = $6`,
+				arguments: []driver.Value{1, "(123)456-7890", "home", false, testPhoneID.String(), testPersonID.String()},
+				result:    sqlmock.NewResult(0, 1),
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; SQL Builder",
+			cs: contactStore{
+				sqlBuilder:   testSqlBuilder,
+				dbConn:       mockSession,
+				tableNameMap: map[string]string{"addresses": ".bad_val"},
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testPersonID,
+				phoneID:  testPhoneID,
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; SQL Execution",
+			cs: contactStore{
+				sqlBuilder:   testSqlBuilder,
+				dbConn:       mockSession,
+				tableNameMap: map[string]string{"addresses": "person.phones"},
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testPersonID,
+				phoneID:  testPhoneID,
+				newVal: models.ContactPhone{
+					CountryCode: 1,
+					PhoneNumber: "(123)456-7890",
+					Type:        models.PhoneTypeHome,
+					Primary:     false,
+				},
+			},
+			wantQuery: &wantQuery{
+				rawQuery:  `UPDATE "person"."phones" SET "country_code"=$1, "phone_number"=$2, "kind"=$3, "primary" = $4 WHERE "id" = $5 AND "person_id" = $6`,
+				arguments: []driver.Value{1, "(123)456-7890", "home", false, testPhoneID.String(), testPersonID.String()},
+				returnErr: assert.AnError,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantQuery != nil {
+				mockDb.ExpectExec(regexp.QuoteMeta(tt.wantQuery.rawQuery)).
+					WithArgs(tt.wantQuery.arguments...).
+					WillReturnResult(tt.wantQuery.result).
+					WillReturnError(tt.wantQuery.returnErr)
+			}
+
+			tt.assertion(t, tt.cs.UpdatePersonPhone(tt.args.ctx, tt.args.personID, tt.args.phoneID, tt.args.newVal))
+
+			// Check to see if the expectations of the query were met
+			if err := mockDb.ExpectationsWereMet(); err != nil {
+				t.Errorf("sql expectations were not met: %v", err)
+			}
+		})
+	}
+}

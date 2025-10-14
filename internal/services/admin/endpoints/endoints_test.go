@@ -65,6 +65,21 @@ func (mcm *mockContactMicro) GetPersonPhones(ctx context.Context, id uuid.UUID) 
 	return args.Get(0).([]models.ContactPhone), args.Error(1)
 }
 
+func (mcm *mockContactMicro) UpdatePersonAddress(ctx context.Context, personID uuid.UUID, addressID uuid.UUID, newVal models.ContactAddress) error {
+	args := mcm.Called(ctx, personID, addressID, newVal)
+	return args.Error(0)
+}
+
+func (mcm *mockContactMicro) UpdatePersonEmail(ctx context.Context, personID uuid.UUID, emailID uuid.UUID, newVal models.ContactEmail) error {
+	args := mcm.Called(ctx, personID, emailID, newVal)
+	return args.Error(0)
+}
+
+func (mcm *mockContactMicro) UpdatePersonPhone(ctx context.Context, personID uuid.UUID, phoneID uuid.UUID, newVal models.ContactPhone) error {
+	args := mcm.Called(ctx, personID, phoneID, newVal)
+	return args.Error(0)
+}
+
 type mockPersonMicro struct {
 	mock.Mock
 }
