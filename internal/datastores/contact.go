@@ -122,17 +122,56 @@ func (cs contactStore) GetPersonPhones(ctx context.Context, id uuid.UUID) ([]mod
 
 // UpdatePersonAddress implements ContactDatastore.
 func (cs contactStore) UpdatePersonAddress(ctx context.Context, personID uuid.UUID, addressID uuid.UUID, newVal models.ContactAddress) error {
-	panic("unimplemented")
+	query, params, err := cs.sqlBuilder.Update(cs.tableNameMap["addresses"]).SetStruct(newVal).Where(
+		condition.Equals("id", addressID),
+		condition.Equals("person_id", personID),
+	).Build()
+	if err != nil {
+		return err
+	}
+
+	_, err = cs.dbConn.ExecContext(ctx, query, params...)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // UpdatePersonEmail implements ContactDatastore.
 func (cs contactStore) UpdatePersonEmail(ctx context.Context, personID uuid.UUID, emailID uuid.UUID, newVal models.ContactEmail) error {
-	panic("unimplemented")
+	query, params, err := cs.sqlBuilder.Update(cs.tableNameMap["emails"]).SetStruct(newVal).Where(
+		condition.Equals("id", emailID),
+		condition.Equals("person_id", personID),
+	).Build()
+	if err != nil {
+		return err
+	}
+
+	_, err = cs.dbConn.ExecContext(ctx, query, params...)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // UpdatePersonPhone implements ContactDatastore.
 func (cs contactStore) UpdatePersonPhone(ctx context.Context, personID uuid.UUID, phoneID uuid.UUID, newVal models.ContactPhone) error {
-	panic("unimplemented")
+	query, params, err := cs.sqlBuilder.Update(cs.tableNameMap["phones"]).SetStruct(newVal).Where(
+		condition.Equals("id", phoneID),
+		condition.Equals("person_id", personID),
+	).Build()
+	if err != nil {
+		return err
+	}
+
+	_, err = cs.dbConn.ExecContext(ctx, query, params...)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (cs contactStore) personAddressFromRows(rows *sql.Rows) ([]models.ContactAddress, error) {
