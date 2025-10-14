@@ -17,6 +17,9 @@ type ContactDatastore interface {
 	GetPersonAddresses(ctx context.Context, id uuid.UUID) ([]models.ContactAddress, error)
 	GetPersonEmails(ctx context.Context, id uuid.UUID) ([]models.ContactEmail, error)
 	GetPersonPhones(ctx context.Context, id uuid.UUID) ([]models.ContactPhone, error)
+	UpdatePersonAddress(ctx context.Context, personID, addressID uuid.UUID, newVal models.ContactAddress) error
+	UpdatePersonEmail(ctx context.Context, personID, emailID uuid.UUID, newVal models.ContactEmail) error
+	UpdatePersonPhone(ctx context.Context, personID, phoneID uuid.UUID, newVal models.ContactPhone) error
 }
 
 type contactStore struct {
@@ -115,6 +118,21 @@ func (cs contactStore) GetPersonPhones(ctx context.Context, id uuid.UUID) ([]mod
 	}
 
 	return cs.personPhoneFromRows(rows)
+}
+
+// UpdatePersonAddress implements ContactDatastore.
+func (cs contactStore) UpdatePersonAddress(ctx context.Context, personID uuid.UUID, addressID uuid.UUID, newVal models.ContactAddress) error {
+	panic("unimplemented")
+}
+
+// UpdatePersonEmail implements ContactDatastore.
+func (cs contactStore) UpdatePersonEmail(ctx context.Context, personID uuid.UUID, emailID uuid.UUID, newVal models.ContactEmail) error {
+	panic("unimplemented")
+}
+
+// UpdatePersonPhone implements ContactDatastore.
+func (cs contactStore) UpdatePersonPhone(ctx context.Context, personID uuid.UUID, phoneID uuid.UUID, newVal models.ContactPhone) error {
+	panic("unimplemented")
 }
 
 func (cs contactStore) personAddressFromRows(rows *sql.Rows) ([]models.ContactAddress, error) {

@@ -71,6 +71,13 @@ func NewHttpHandler(adminEndpoints endpoints.Endpoints) http.Handler {
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodPost)
 
+	personRouter.Handle("{personID}/contacts/addresses/{id}", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		adminEndpoints.Contact().UpdatePersonContactAddress,
+		decodeUpdateContactRequestData[endpoints.PersonAddressData](),
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodPut)
+
 	personRouter.Handle("/{id}/contacts/emails", httputil.BuildRouteHandler(
 		routeHandleBuilder,
 		adminEndpoints.Contact().GetPersonContactEmails,
@@ -85,6 +92,13 @@ func NewHttpHandler(adminEndpoints endpoints.Endpoints) http.Handler {
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodPost)
 
+	personRouter.Handle("{personID}/contacts/email/{id}", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		adminEndpoints.Contact().UpdatePersonContactEmail,
+		decodeUpdateContactRequestData[endpoints.PersonEmailData](),
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodPut)
+
 	personRouter.Handle("/{id}/contacts/phones", httputil.BuildRouteHandler(
 		routeHandleBuilder,
 		adminEndpoints.Contact().AddContactPhoneForPerson,
@@ -98,6 +112,13 @@ func NewHttpHandler(adminEndpoints endpoints.Endpoints) http.Handler {
 		decodeFetchItemRequestData("id"),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodGet)
+
+	personRouter.Handle("{personID}/contacts/phones/{id}", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		adminEndpoints.Contact().UpdatePersonContactPhone,
+		decodeUpdateContactRequestData[endpoints.PersonPhoneData](),
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodPut)
 
 	return rootRouter
 }
@@ -173,6 +194,23 @@ func decodeUpdateItemRequestData[T any](key string) httputil.RequestDecoderFunc[
 		return endpoints.UpdateRequestData[T]{
 			ID:   id,
 			Data: data,
+		}, nil
+	}
+}
+
+func decodeUpdateContactRequestData[T endpoints.ContactConstraint]() httputil.RequestDecoderFunc[endpoints.UpdateContactRequestData[T]] {
+	return func(ctx context.Context, r *http.Request) (endpoints.UpdateContactRequestData[T], error) {
+		personID := mux.Vars(r)["personID"]
+		contactID := mux.Vars(r)["id"]
+		data, err := decodeCreateItemRequestData[T](ctx, r)
+		if err != nil {
+			return endpoints.UpdateContactRequestData[T]{}, err
+		}
+
+		return endpoints.UpdateContactRequestData[T]{
+			PersonID:  personID,
+			ContactID: contactID,
+			Data:      data,
 		}, nil
 	}
 }

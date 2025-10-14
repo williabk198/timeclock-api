@@ -103,3 +103,18 @@ func (mcs *mockContactStore) GetPersonPhones(ctx context.Context, id uuid.UUID) 
 	args := mcs.Called(ctx, id)
 	return args.Get(0).([]models.ContactPhone), args.Error(1)
 }
+
+func (mcs *mockContactStore) UpdatePersonAddress(ctx context.Context, personID, addressID uuid.UUID, newVal models.ContactAddress) error {
+	args := mcs.Called(ctx, personID, addressID, newVal)
+	return args.Error(0)
+}
+
+func (mcs *mockContactStore) UpdatePersonEmail(ctx context.Context, personID, emailID uuid.UUID, newVal models.ContactEmail) error {
+	args := mcs.Called(ctx, personID, emailID, newVal)
+	return args.Error(0)
+}
+
+func (mcs *mockContactStore) UpdatePersonPhone(ctx context.Context, personID, phoneID uuid.UUID, newVal models.ContactPhone) error {
+	args := mcs.Called(ctx, personID, phoneID, newVal)
+	return args.Error(0)
+}

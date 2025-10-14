@@ -17,6 +17,9 @@ type ContactMicro interface {
 	GetPersonAddresses(ctx context.Context, personID uuid.UUID) ([]models.ContactAddress, error)
 	GetPersonEmails(ctx context.Context, personID uuid.UUID) ([]models.ContactEmail, error)
 	GetPersonPhones(ctx context.Context, personID uuid.UUID) ([]models.ContactPhone, error)
+	UpdatePersonAddress(ctx context.Context, personID, addressID uuid.UUID, newVal models.ContactAddress) error
+	UpdatePersonEmail(ctx context.Context, personID, emailID uuid.UUID, newVal models.ContactEmail) error
+	UpdatePersonPhone(ctx context.Context, personID, phoneID uuid.UUID, newVal models.ContactPhone) error
 }
 
 type contactMicroImpl struct {
@@ -87,4 +90,16 @@ func (cmi contactMicroImpl) GetPersonEmails(ctx context.Context, personID uuid.U
 
 func (cmi contactMicroImpl) GetPersonPhones(ctx context.Context, personID uuid.UUID) ([]models.ContactPhone, error) {
 	return cmi.contactStore.GetPersonPhones(ctx, personID)
+}
+
+func (cmi contactMicroImpl) UpdatePersonAddress(ctx context.Context, personID uuid.UUID, addressID uuid.UUID, newVal models.ContactAddress) error {
+	panic("unimplemented")
+}
+
+func (cmi contactMicroImpl) UpdatePersonEmail(ctx context.Context, personID uuid.UUID, emailID uuid.UUID, newVal models.ContactEmail) error {
+	panic("unimplemented")
+}
+
+func (cmi contactMicroImpl) UpdatePersonPhone(ctx context.Context, personID uuid.UUID, phoneID uuid.UUID, newVal models.ContactPhone) error {
+	panic("unimplemented")
 }

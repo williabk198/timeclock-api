@@ -69,7 +69,7 @@ const (
 
 type ContactAddress struct {
 	ID         uuid.UUID   `jagsqlb:"id;omit"`
-	PersonID   uuid.UUID   `jagsqlb:"person_id"`
+	PersonID   uuid.UUID   `jagsqlb:"person_id;omit-update"`
 	Street1    string      `jagsqlb:"street1" json:"street1"`
 	Street2    string      `jagsqlb:"street2" json:"street2"`
 	Locality   string      `jagsqlb:"locality" json:"locality"`
@@ -82,7 +82,7 @@ type ContactAddress struct {
 
 type ContactEmail struct {
 	ID       uuid.UUID `jagsqlb:"id;omit"`
-	PersonID uuid.UUID `jagsqlb:"person_id"`
+	PersonID uuid.UUID `jagsqlb:"person_id;omit-update"`
 	Username string    `jagsqlb:"username"`
 	Provider string    `jagsqlb:"provider"`
 	Primary  bool      `jagsqlb:"primary" json:"primary"`
@@ -94,7 +94,7 @@ func (ce ContactEmail) String() string {
 
 type ContactPhone struct {
 	ID          uuid.UUID `jagsqlb:"id;omit"`
-	PersonID    uuid.UUID `jagsqlb:"person_id"`
+	PersonID    uuid.UUID `jagsqlb:"person_id;omit-update"`
 	CountryCode int       `jagsqlb:"country_code"`
 	PhoneNumber string    `jagsqlb:"phone_number"`
 	Type        PhoneType `jagsqlb:"kind" json:"type"` // Type holds what kind of phone number this value represents: Home, Cell, Work, etc...

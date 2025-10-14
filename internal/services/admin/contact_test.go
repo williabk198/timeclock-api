@@ -599,3 +599,239 @@ func Test_contactMicroImpl_GetPersonContactPhones(t *testing.T) {
 		})
 	}
 }
+
+func Test_contactMicroImpl_UpdatePersonAddress(t *testing.T) {
+	type args struct {
+		ctx       context.Context
+		personID  uuid.UUID
+		addressID uuid.UUID
+		newVal    models.ContactAddress
+	}
+	testPersonID := uuid.New()
+	testNotFoundPersonID := uuid.New()
+
+	testAddressID := uuid.New()
+	testNotFoundAddressID := uuid.New()
+
+	testNewAddresValue := models.ContactAddress{
+		Street1:    "123 Test Dr",
+		Locality:   "Testville",
+		Region:     "Testeria",
+		PostalCode: "12345-6789",
+		Country:    "Testopia",
+		Type:       models.AddressTypeMailing,
+		Primary:    true,
+	}
+
+	testContactStore := &mockContactStore{}
+	testContactStore.On("UpdatePersonAddress", mock.Anything, testPersonID, testAddressID, testNewAddresValue).Return(error(nil))
+	testContactStore.On("UpdatePersonAddress", mock.Anything, testNotFoundPersonID, testAddressID, testNewAddresValue).Return(assert.AnError)
+	testContactStore.On("UpdatePersonAddress", mock.Anything, testPersonID, testNotFoundAddressID, testNewAddresValue).Return(assert.AnError)
+
+	tests := []struct {
+		name      string
+		cmi       contactMicroImpl
+		args      args
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			cmi: contactMicroImpl{
+				contactStore: testContactStore,
+			},
+			args: args{
+				ctx:       context.Background(),
+				personID:  testPersonID,
+				addressID: testAddressID,
+				newVal:    testNewAddresValue,
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Person DNE",
+			cmi: contactMicroImpl{
+				contactStore: testContactStore,
+			},
+			args: args{
+				ctx:       context.Background(),
+				personID:  testNotFoundPersonID,
+				addressID: testAddressID,
+				newVal:    testNewAddresValue,
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Address DNE",
+			cmi: contactMicroImpl{
+				contactStore: testContactStore,
+			},
+			args: args{
+				ctx:       context.Background(),
+				personID:  testPersonID,
+				addressID: testNotFoundAddressID,
+				newVal:    testNewAddresValue,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.assertion(t, tt.cmi.UpdatePersonAddress(tt.args.ctx, tt.args.personID, tt.args.addressID, tt.args.newVal))
+		})
+	}
+}
+
+func Test_contactMicroImpl_UpdatePersonEmail(t *testing.T) {
+	type args struct {
+		ctx      context.Context
+		personID uuid.UUID
+		emailID  uuid.UUID
+		newVal   models.ContactEmail
+	}
+	testPersonID := uuid.New()
+	testNotFoundPersonID := uuid.New()
+
+	testEmailID := uuid.New()
+	testNotFoundEmailID := uuid.New()
+
+	testNewEmailValue := models.ContactEmail{
+		Username: "tester",
+		Provider: "test.com",
+		Primary:  true,
+	}
+
+	testContactStore := &mockContactStore{}
+	testContactStore.On("UpdatePersonEmail", mock.Anything, testPersonID, testEmailID, testNewEmailValue).Return(error(nil))
+	testContactStore.On("UpdatePersonEmail", mock.Anything, testNotFoundPersonID, testEmailID, testNewEmailValue).Return(assert.AnError)
+	testContactStore.On("UpdatePersonEmail", mock.Anything, testPersonID, testNotFoundEmailID, testNewEmailValue).Return(assert.AnError)
+
+	tests := []struct {
+		name      string
+		cmi       contactMicroImpl
+		args      args
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			cmi: contactMicroImpl{
+				contactStore: testContactStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testPersonID,
+				emailID:  testEmailID,
+				newVal:   testNewEmailValue,
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Person DNE",
+			cmi: contactMicroImpl{
+				contactStore: testContactStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testNotFoundPersonID,
+				emailID:  testEmailID,
+				newVal:   testNewEmailValue,
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Email DNE",
+			cmi: contactMicroImpl{
+				contactStore: testContactStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testPersonID,
+				emailID:  testNotFoundEmailID,
+				newVal:   testNewEmailValue,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.assertion(t, tt.cmi.UpdatePersonEmail(tt.args.ctx, tt.args.personID, tt.args.emailID, tt.args.newVal))
+		})
+	}
+}
+
+func Test_contactMicroImpl_UpdatePersonPhone(t *testing.T) {
+	type args struct {
+		ctx      context.Context
+		personID uuid.UUID
+		phoneID  uuid.UUID
+		newVal   models.ContactPhone
+	}
+	testPersonID := uuid.New()
+	testNotFoundPersonID := uuid.New()
+
+	testPhoneID := uuid.New()
+	testNotFoundPhoneID := uuid.New()
+
+	testNewPhoneValue := models.ContactPhone{
+		CountryCode: 1,
+		PhoneNumber: "(555)555-5555",
+		Type:        models.PhoneTypeHome,
+		Primary:     true,
+	}
+
+	testContactStore := &mockContactStore{}
+	testContactStore.On("UpdatePersonEmail", mock.Anything, testPersonID, testPhoneID, testNewPhoneValue).Return(error(nil))
+	testContactStore.On("UpdatePersonEmail", mock.Anything, testNotFoundPersonID, testPhoneID, testNewPhoneValue).Return(assert.AnError)
+	testContactStore.On("UpdatePersonEmail", mock.Anything, testPersonID, testNotFoundPhoneID, testNewPhoneValue).Return(assert.AnError)
+
+	tests := []struct {
+		name      string
+		cmi       contactMicroImpl
+		args      args
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			cmi: contactMicroImpl{
+				contactStore: testContactStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testPersonID,
+				phoneID:  testPhoneID,
+				newVal:   testNewPhoneValue,
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Person DNE",
+			cmi: contactMicroImpl{
+				contactStore: testContactStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testNotFoundPersonID,
+				phoneID:  testPhoneID,
+				newVal:   testNewPhoneValue,
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Phone DNE",
+			cmi: contactMicroImpl{
+				contactStore: testContactStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testPersonID,
+				phoneID:  testNotFoundPhoneID,
+				newVal:   testNewPhoneValue,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.assertion(t, tt.cmi.UpdatePersonPhone(tt.args.ctx, tt.args.personID, tt.args.phoneID, tt.args.newVal))
+		})
+	}
+}

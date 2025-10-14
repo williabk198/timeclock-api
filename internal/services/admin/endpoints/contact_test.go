@@ -939,3 +939,552 @@ func Test_adminContactEndpoint_GetPersonContactPhones(t *testing.T) {
 		})
 	}
 }
+
+func Test_adminContactEndpoints_UpdatePersonContactAddress(t *testing.T) {
+	type args struct {
+		ctx     context.Context
+		reqData UpdateContactRequestData[PersonAddressData]
+	}
+
+	testValidPersonID := uuid.New()
+	testNotFoundPersonID := uuid.New()
+
+	testValidAddressID := uuid.New()
+	testNotFoundAddressID := uuid.New()
+
+	testValidAddressData := PersonAddressData{
+		Street1:    "987 Testing Ln",
+		Street2:    "APT 3",
+		Locality:   "Testington",
+		Region:     "Testoria",
+		PostalCode: "98765-4321",
+		Country:    "Testopia",
+		Type:       "mailing",
+		Primary:    true,
+	}
+	testValidAddressDB := models.ContactAddress{
+		Street1:    "987 Testing Ln",
+		Street2:    "APT 3",
+		Locality:   "Testington",
+		Region:     "Testoria",
+		PostalCode: "98765-4321",
+		Country:    "Testopia",
+		Type:       models.AddressTypeMailing,
+		Primary:    true,
+	}
+
+	testContactMicro := &mockContactMicro{}
+	testContactMicro.On("UpdatePersonAddress", mock.Anything, testValidPersonID, testValidAddressID, testValidAddressDB).Return(error(nil))
+	testContactMicro.On("UpdatePersonAddress", mock.Anything, testNotFoundPersonID, testValidAddressID, testValidAddressDB).Return(assert.AnError)
+	testContactMicro.On("UpdatePersonAddress", mock.Anything, testValidPersonID, testNotFoundAddressID, testValidAddressDB).Return(assert.AnError)
+
+	tests := []struct {
+		name      string
+		ace       adminContactEndpoints
+		args      args
+		want      PersonAddressData
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonAddressData]{
+					PersonID:  testValidPersonID.String(),
+					ContactID: testValidAddressID.String(),
+					Data:      testValidAddressData,
+				},
+			},
+			want:      testValidAddressData,
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Invalid Person ID",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonAddressData]{
+					PersonID: "invalid_id",
+					Data:     testValidAddressData,
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Person DNE",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonAddressData]{
+					PersonID:  testNotFoundAddressID.String(),
+					ContactID: testValidAddressID.String(),
+					Data:      testValidAddressData,
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Address DNE",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonAddressData]{
+					PersonID:  testValidPersonID.String(),
+					ContactID: testNotFoundAddressID.String(),
+					Data:      testValidAddressData,
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Address; Missing Street 1",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonAddressData]{
+					PersonID:  testValidPersonID.String(),
+					ContactID: testValidAddressID.String(),
+					Data: PersonAddressData{
+						Locality:   "Testetville",
+						Region:     "Testaria",
+						PostalCode: "12345-6789",
+						Country:    "Testopia",
+						Type:       "mailing",
+						Primary:    true,
+					},
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Address; Missing Locality",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonAddressData]{
+					PersonID:  testValidPersonID.String(),
+					ContactID: testValidAddressID.String(),
+					Data: PersonAddressData{
+						Locality:   "Testetville",
+						Region:     "Testaria",
+						PostalCode: "12345-6789",
+						Country:    "Testopia",
+						Type:       "mailing",
+						Primary:    true,
+					},
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Address; Missing Region",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonAddressData]{
+					PersonID:  testValidPersonID.String(),
+					ContactID: testValidAddressID.String(),
+					Data: PersonAddressData{
+						Street1:    "123 Test Dr",
+						Locality:   "Testetville",
+						PostalCode: "12345-6789",
+						Country:    "Testopia",
+						Type:       "mailing",
+						Primary:    true,
+					},
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Address; Missing Postal Code",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonAddressData]{
+					PersonID:  testValidPersonID.String(),
+					ContactID: testValidAddressID.String(),
+					Data: PersonAddressData{
+						Street1:  "123 Test Dr",
+						Locality: "Testetville",
+						Region:   "Testaria",
+						Country:  "Testopia",
+						Type:     "mailing",
+						Primary:  true,
+					},
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Address; Missing Country",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonAddressData]{
+					PersonID:  testValidPersonID.String(),
+					ContactID: testValidAddressID.String(),
+					Data: PersonAddressData{
+						Street1:    "123 Test Dr",
+						Locality:   "Testetville",
+						Region:     "Testaria",
+						PostalCode: "12345-6789",
+						Type:       "mailing",
+						Primary:    true,
+					},
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Address; Missing Type",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonAddressData]{
+					PersonID:  testValidPersonID.String(),
+					ContactID: testValidAddressID.String(),
+					Data: PersonAddressData{
+						Street1:    "123 Test Dr",
+						Locality:   "Testetville",
+						Region:     "Testaria",
+						PostalCode: "12345-6789",
+						Country:    "Testopia",
+						Primary:    true,
+					},
+				},
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.ace.UpdatePersonContactAddress(tt.args.ctx, tt.args.reqData)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_adminContactEndpoints_UpdatePersonContactEmail(t *testing.T) {
+	type args struct {
+		ctx     context.Context
+		reqData UpdateContactRequestData[PersonEmailData]
+	}
+
+	testValidPersonID := uuid.New()
+	testNotFoundPersonID := uuid.New()
+	testValidEmailID := uuid.New()
+	testNotFoundEmailID := uuid.New()
+
+	testValidEmailData := PersonEmailData{
+		Email:   "test@example.com",
+		Primary: true,
+	}
+	testValidEmailDB := models.ContactEmail{
+		PersonID: testValidPersonID,
+		Username: "test",
+		Provider: "example.com",
+		Primary:  true,
+	}
+
+	testInvalidEmailData1 := PersonEmailData{
+		Email: "@example.com",
+	}
+	testInvalidEmailData2 := PersonEmailData{
+		Email: "user@",
+	}
+	testInvalidEmailData3 := PersonEmailData{
+		Email: "user@example",
+	}
+
+	testContactMicro := &mockContactMicro{}
+	testContactMicro.On("UpdatePersonEmail", mock.Anything, testValidPersonID, testValidEmailID, testValidEmailDB).Return(error(nil))
+	testContactMicro.On("UpdatePersonEmail", mock.Anything, testNotFoundPersonID, testValidEmailID, testValidEmailDB).Return(assert.AnError)
+	testContactMicro.On("UpdatePersonEmail", mock.Anything, testValidPersonID, testNotFoundEmailID, testValidEmailDB).Return(assert.AnError)
+
+	tests := []struct {
+		name      string
+		ace       adminContactEndpoints
+		args      args
+		want      PersonEmailData
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonEmailData]{
+					PersonID:  testValidPersonID.String(),
+					ContactID: testValidEmailID.String(),
+					Data:      testValidEmailData,
+				},
+			},
+			want: PersonEmailData{
+				ID:      testValidEmailID.String(),
+				Email:   "test@example.com",
+				Primary: true,
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Invalid Person ID",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonEmailData]{
+					PersonID: "invalid_id",
+					Data:     testValidEmailData,
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Person DNE",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonEmailData]{
+					PersonID:  testNotFoundPersonID.String(),
+					ContactID: testValidEmailID.String(),
+					Data:      testValidEmailData,
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Email DNE",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonEmailData]{
+					PersonID:  testValidPersonID.String(),
+					ContactID: testNotFoundEmailID.String(),
+					Data:      testValidEmailData,
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; No Email Given",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonEmailData]{
+					PersonID:  testValidPersonID.String(),
+					ContactID: testValidEmailID.String(),
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Email; No Username",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonEmailData]{
+					PersonID:  testValidPersonID.String(),
+					ContactID: testValidEmailID.String(),
+					Data:      testInvalidEmailData1,
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Email; No Domain",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonEmailData]{
+					PersonID:  testValidPersonID.String(),
+					ContactID: testValidEmailID.String(),
+					Data:      testInvalidEmailData2,
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Email; Missing Top-level Domain",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonEmailData]{
+					PersonID:  testValidPersonID.String(),
+					ContactID: testValidEmailID.String(),
+					Data:      testInvalidEmailData3,
+				},
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.ace.UpdatePersonContactEmail(tt.args.ctx, tt.args.reqData)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_adminContactEndpoints_UpdatePersonContactPhone(t *testing.T) {
+	type args struct {
+		ctx     context.Context
+		reqData UpdateContactRequestData[PersonPhoneData]
+	}
+
+	testValidPersonID := uuid.New()
+	testNotFoundPersonID := uuid.New()
+	testValidPhoneID := uuid.New()
+	testNotFoundPhoneID := uuid.New()
+
+	testValidPhoneData := PersonPhoneData{
+		CountryCode: 1,
+		PhoneNumber: "(555)555-5555",
+		Type:        "home",
+		Primary:     true,
+	}
+	testValidPhoneDB := models.ContactPhone{
+		PersonID:    testValidPersonID,
+		CountryCode: 1,
+		PhoneNumber: "(555)555-5555",
+		Type:        models.PhoneTypeHome,
+		Primary:     true,
+	}
+
+	testContactMicro := &mockContactMicro{}
+	testContactMicro.On("UpdatePersonPhone", mock.Anything, testValidPersonID, testValidPhoneID, testValidPhoneDB).Return(error(nil))
+	testContactMicro.On("UpdatePersonPhone", mock.Anything, testValidPersonID, testNotFoundPhoneID, testValidPhoneDB).Return(assert.AnError)
+	testContactMicro.On("UpdatePersonPhone", mock.Anything, testNotFoundPersonID, testValidPhoneID, testValidPhoneDB).Return(assert.AnError)
+
+	tests := []struct {
+		name      string
+		ace       adminContactEndpoints
+		args      args
+		want      PersonPhoneData
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonPhoneData]{
+					PersonID:  testValidPersonID.String(),
+					ContactID: testValidPhoneID.String(),
+					Data:      testValidPhoneData,
+				},
+			},
+		},
+		{
+			name: "Error; Person DNE",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonPhoneData]{
+					PersonID:  testNotFoundPersonID.String(),
+					ContactID: testValidPhoneID.String(),
+					Data:      testValidPhoneData,
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Person ID",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonPhoneData]{
+					PersonID: "invalid_id",
+					Data:     testValidPhoneData,
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Phone DNE",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonPhoneData]{
+					PersonID:  testValidPersonID.String(),
+					ContactID: testNotFoundPhoneID.String(),
+					Data:      testValidPhoneData,
+				},
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Invalid Phone; Bad Country Code",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: UpdateContactRequestData[PersonPhoneData]{
+					PersonID:  testValidPersonID.String(),
+					ContactID: testValidPhoneID.String(),
+					Data: PersonPhoneData{
+						CountryCode: -1,
+						PhoneNumber: "555-555-5555",
+						Type:        "home",
+						Primary:     false,
+					},
+				},
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.ace.UpdatePersonContactPhone(tt.args.ctx, tt.args.reqData)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
