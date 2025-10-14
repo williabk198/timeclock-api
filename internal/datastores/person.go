@@ -136,77 +136,10 @@ func (ps personStore) personSliceFromRows(rows *sql.Rows) ([]models.Person, erro
 	return result, nil
 }
 
-func (ps personStore) personAddressFromRows(rows *sql.Rows) ([]models.ContactAddress, error) {
-	results := make([]models.ContactAddress, 0)
-
-	for rows.Next() {
-		var item models.ContactAddress
-		if err := rows.Scan(
-			&item.ID, &item.PersonID, &item.Street1, &item.Street2, &item.Locality, &item.Region,
-			&item.PostalCode, &item.Country, &item.Type, &item.Primary,
-		); err != nil {
-			return nil, err
-		}
-		results = append(results, item)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return results, nil
-}
-
-func (ps personStore) personEmailFromRows(rows *sql.Rows) ([]models.ContactEmail, error) {
-	results := make([]models.ContactEmail, 0)
-
-	for rows.Next() {
-		var item models.ContactEmail
-		if err := rows.Scan(
-			&item.ID, &item.PersonID, &item.Username, &item.Provider, &item.Primary,
-		); err != nil {
-			return nil, err
-		}
-		results = append(results, item)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return results, nil
-}
-
-func (ps personStore) personPhoneFromRows(rows *sql.Rows) ([]models.ContactPhone, error) {
-	results := make([]models.ContactPhone, 0)
-
-	for rows.Next() {
-		var item models.ContactPhone
-		if err := rows.Scan(
-			&item.ID, &item.PersonID, &item.CountryCode, &item.PhoneNumber, &item.Type, &item.Primary,
-		); err != nil {
-			return nil, err
-		}
-		results = append(results, item)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return results, nil
-}
-
 func NewPersonStore(dbConn *sql.DB) PersonStore {
 	return personStore{
 		dbConn:     dbConn,
 		sqlBuilder: jagsqlb.NewSqlBuilder(),
-		tableName:  "person.persons", // TODO: Remove
-		tableNameMap: map[string]string{
-			"persons":   "person.persons",
-			"addresses": "person.addresses",
-			"emails":    "person.emails",
-			"phones":    "person.phones",
-		},
+		tableName:  "person.persons",
 	}
 }
