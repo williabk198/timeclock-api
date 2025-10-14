@@ -160,17 +160,99 @@ func (ace adminContactEndpoints) GetPersonContactPhones(ctx context.Context, idS
 
 // UpdatePersonContactAddress implements ContactEndpoints.
 func (ace adminContactEndpoints) UpdatePersonContactAddress(ctx context.Context, reqData UpdateContactRequestData[PersonAddressData]) (PersonAddressData, error) {
-	panic("unimplemented")
+	personID, err := uuid.Parse(reqData.PersonID)
+	if err != nil {
+		return PersonAddressData{}, err
+	}
+
+	addressID, err := uuid.Parse(reqData.ContactID)
+	if err != nil {
+		return PersonAddressData{}, nil
+	}
+
+	if reqData.Data.Street1 == "" || reqData.Data.Locality == "" || reqData.Data.Region == "" ||
+		reqData.Data.PostalCode == "" || reqData.Data.Country == "" || reqData.Data.Type == "" {
+
+		return PersonAddressData{}, fmt.Errorf("provided address data was ill formated")
+	}
+
+	err = ace.contactMicro.UpdatePersonAddress(ctx, personID, addressID, models.ContactAddress{
+		Street1:    reqData.Data.Street1,
+		Street2:    reqData.Data.Street2,
+		Locality:   reqData.Data.Locality,
+		Region:     reqData.Data.Region,
+		PostalCode: reqData.Data.PostalCode,
+		Country:    reqData.Data.Country,
+		Type:       models.AddressType(reqData.Data.Type),
+		Primary:    reqData.Data.Primary,
+	})
+	if err != nil {
+		return PersonAddressData{}, err
+	}
+
+	return reqData.Data, nil
 }
 
 // UpdatePersonContactEmail implements ContactEndpoints.
 func (ace adminContactEndpoints) UpdatePersonContactEmail(ctx context.Context, reqData UpdateContactRequestData[PersonEmailData]) (PersonEmailData, error) {
-	panic("unimplemented")
+	personID, err := uuid.Parse(reqData.PersonID)
+	if err != nil {
+		return PersonEmailData{}, err
+	}
+
+	emailID, err := uuid.Parse(reqData.ContactID)
+	if err != nil {
+		return PersonEmailData{}, err
+	}
+
+	// Oversimplifed email validation. This will eventually need to be more robust.
+	splitEmail := strings.Split(reqData.Data.Email, "@")
+	if len(splitEmail) != 2 || splitEmail[0] == "" || splitEmail[1] == "" || !strings.Contains(splitEmail[1], ".") ||
+		splitEmail[1][0] == '.' || splitEmail[1][len(splitEmail)-1] == '.' {
+
+		return PersonEmailData{}, fmt.Errorf("provided email address was ill formated")
+	}
+
+	err = ace.contactMicro.UpdatePersonEmail(ctx, personID, emailID, models.ContactEmail{
+		Username: splitEmail[0],
+		Provider: splitEmail[1],
+		Primary:  reqData.Data.Primary,
+	})
+	if err != nil {
+		return PersonEmailData{}, err
+	}
+
+	return reqData.Data, nil
 }
 
 // UpdatePersonContactPhone implements ContactEndpoints.
 func (ace adminContactEndpoints) UpdatePersonContactPhone(ctx context.Context, reqData UpdateContactRequestData[PersonPhoneData]) (PersonPhoneData, error) {
-	panic("unimplemented")
+	personID, err := uuid.Parse(reqData.PersonID)
+	if err != nil {
+		return PersonPhoneData{}, err
+	}
+
+	phoneID, err := uuid.Parse(reqData.ContactID)
+	if err != nil {
+		return PersonPhoneData{}, err
+	}
+
+	// Oversimplified validation. This will eventually need to be more robust.
+	if reqData.Data.CountryCode < 1 {
+		return PersonPhoneData{}, fmt.Errorf("invalid value for country code")
+	}
+
+	err = ace.contactMicro.UpdatePersonPhone(ctx, personID, phoneID, models.ContactPhone{
+		CountryCode: reqData.Data.CountryCode,
+		PhoneNumber: reqData.Data.PhoneNumber,
+		Type:        models.PhoneType(reqData.Data.Type),
+		Primary:     reqData.Data.Primary,
+	})
+	if err != nil {
+		return PersonPhoneData{}, err
+	}
+
+	return reqData.Data, nil
 }
 
 func (ace adminContactEndpoints) convertContactAddressSliceToPersonAddressDataSlice(addresses []models.ContactAddress) []PersonAddressData {
