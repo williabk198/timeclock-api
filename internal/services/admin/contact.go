@@ -93,13 +93,13 @@ func (cmi contactMicroImpl) GetPersonPhones(ctx context.Context, personID uuid.U
 }
 
 func (cmi contactMicroImpl) UpdatePersonAddress(ctx context.Context, personID uuid.UUID, addressID uuid.UUID, newVal models.ContactAddress) error {
-	panic("unimplemented")
+	return cmi.contactStore.UpdatePersonAddress(ctx, personID, addressID, newVal)
 }
 
 func (cmi contactMicroImpl) UpdatePersonEmail(ctx context.Context, personID uuid.UUID, emailID uuid.UUID, newVal models.ContactEmail) error {
-	panic("unimplemented")
+	return cmi.contactStore.UpdatePersonEmail(ctx, personID, emailID, newVal)
 }
 
 func (cmi contactMicroImpl) UpdatePersonPhone(ctx context.Context, personID uuid.UUID, phoneID uuid.UUID, newVal models.ContactPhone) error {
-	panic("unimplemented")
+	return cmi.contactStore.UpdatePersonPhone(ctx, personID, phoneID, newVal)
 }
