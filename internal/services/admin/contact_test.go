@@ -779,9 +779,9 @@ func Test_contactMicroImpl_UpdatePersonPhone(t *testing.T) {
 	}
 
 	testContactStore := &mockContactStore{}
-	testContactStore.On("UpdatePersonEmail", mock.Anything, testPersonID, testPhoneID, testNewPhoneValue).Return(error(nil))
-	testContactStore.On("UpdatePersonEmail", mock.Anything, testNotFoundPersonID, testPhoneID, testNewPhoneValue).Return(assert.AnError)
-	testContactStore.On("UpdatePersonEmail", mock.Anything, testPersonID, testNotFoundPhoneID, testNewPhoneValue).Return(assert.AnError)
+	testContactStore.On("UpdatePersonPhone", mock.Anything, testPersonID, testPhoneID, testNewPhoneValue).Return(error(nil))
+	testContactStore.On("UpdatePersonPhone", mock.Anything, testNotFoundPersonID, testPhoneID, testNewPhoneValue).Return(assert.AnError)
+	testContactStore.On("UpdatePersonPhone", mock.Anything, testPersonID, testNotFoundPhoneID, testNewPhoneValue).Return(assert.AnError)
 
 	tests := []struct {
 		name      string
