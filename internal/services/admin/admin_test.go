@@ -89,6 +89,21 @@ func (mcs *mockContactStore) AddPersonPhone(ctx context.Context, phone models.Co
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }
 
+func (mcs *mockContactStore) DeletePersonAddress(ctx context.Context, personID, addressID uuid.UUID) (models.ContactAddress, error) {
+	args := mcs.Called(ctx, personID, addressID)
+	return args.Get(0).(models.ContactAddress), args.Error(1)
+}
+
+func (mcs *mockContactStore) DeletePersonEmail(ctx context.Context, personID, emailID uuid.UUID) (models.ContactEmail, error) {
+	args := mcs.Called(ctx, personID, emailID)
+	return args.Get(0).(models.ContactEmail), args.Error(1)
+}
+
+func (mcs *mockContactStore) DeletePersonPhone(ctx context.Context, personID, phoneID uuid.UUID) (models.ContactPhone, error) {
+	args := mcs.Called(ctx, personID, phoneID)
+	return args.Get(0).(models.ContactPhone), args.Error(1)
+}
+
 func (mcs *mockContactStore) GetPersonAddresses(ctx context.Context, id uuid.UUID) ([]models.ContactAddress, error) {
 	args := mcs.Called(ctx, id)
 	return args.Get(0).([]models.ContactAddress), args.Error(1)

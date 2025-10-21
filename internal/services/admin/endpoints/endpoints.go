@@ -25,6 +25,9 @@ type ContactEndpoints interface {
 	AddContactAddressForPerson(ctx context.Context, reqData AddSubItemRequestData[PersonAddressData]) (PersonAddressData, error)
 	AddContactEmailForPerson(ctx context.Context, reqData AddSubItemRequestData[PersonEmailData]) (PersonEmailData, error)
 	AddContactPhoneForPerson(ctx context.Context, reqData AddSubItemRequestData[PersonPhoneData]) (PersonPhoneData, error)
+	DeleteContactAddressForPerson(ctx context.Context, reqData DeleteContactRequestData) (PersonAddressData, error)
+	DeleteContactEmailForPerson(ctx context.Context, reqData DeleteContactRequestData) (PersonEmailData, error)
+	DeleteContactPhoneForPerson(ctx context.Context, reqData DeleteContactRequestData) (PersonPhoneData, error)
 	GetPersonContacts(ctx context.Context, personID string) (PersonContactData, error)
 	GetPersonContactAddresses(ctx context.Context, personID string) ([]PersonAddressData, error)
 	GetPersonContactEmails(ctx context.Context, personID string) ([]PersonEmailData, error)
@@ -65,6 +68,11 @@ type AddSubItemRequestData[T any] struct {
 type UpdateRequestData[T any] struct {
 	ID   string
 	Data T
+}
+
+type DeleteContactRequestData struct {
+	PerosnID  string
+	ContactID string
 }
 
 type UpdateContactRequestData[T ContactConstraint] struct {

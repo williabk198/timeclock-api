@@ -78,6 +78,13 @@ func NewHttpHandler(adminEndpoints endpoints.Endpoints) http.Handler {
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodPut)
 
+	personRouter.Handle("{personID}/contacts/addresses/{id}", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		adminEndpoints.Contact().DeleteContactAddressForPerson,
+		decodeDeleteContactRequestData(),
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodDelete)
+
 	personRouter.Handle("/{id}/contacts/emails", httputil.BuildRouteHandler(
 		routeHandleBuilder,
 		adminEndpoints.Contact().GetPersonContactEmails,
@@ -99,6 +106,13 @@ func NewHttpHandler(adminEndpoints endpoints.Endpoints) http.Handler {
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodPut)
 
+	personRouter.Handle("{personID}/contacts/emails/{id}", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		adminEndpoints.Contact().DeleteContactEmailForPerson,
+		decodeDeleteContactRequestData(),
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodDelete)
+
 	personRouter.Handle("/{id}/contacts/phones", httputil.BuildRouteHandler(
 		routeHandleBuilder,
 		adminEndpoints.Contact().AddContactPhoneForPerson,
@@ -119,6 +133,13 @@ func NewHttpHandler(adminEndpoints endpoints.Endpoints) http.Handler {
 		decodeUpdateContactRequestData[endpoints.PersonPhoneData](),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodPut)
+
+	personRouter.Handle("{personID}/contacts/phones/{id}", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		adminEndpoints.Contact().DeleteContactPhoneForPerson,
+		decodeDeleteContactRequestData(),
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodDelete)
 
 	return rootRouter
 }
@@ -194,6 +215,17 @@ func decodeUpdateItemRequestData[T any](key string) httputil.RequestDecoderFunc[
 		return endpoints.UpdateRequestData[T]{
 			ID:   id,
 			Data: data,
+		}, nil
+	}
+}
+
+func decodeDeleteContactRequestData() httputil.RequestDecoderFunc[endpoints.DeleteContactRequestData] {
+	return func(ctx context.Context, r *http.Request) (endpoints.DeleteContactRequestData, error) {
+		personID := mux.Vars(r)["personID"]
+		contactID := mux.Vars(r)["id"]
+		return endpoints.DeleteContactRequestData{
+			PerosnID:  personID,
+			ContactID: contactID,
 		}, nil
 	}
 }

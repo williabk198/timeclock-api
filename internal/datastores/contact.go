@@ -14,6 +14,9 @@ type ContactDatastore interface {
 	AddPersonAddress(ctx context.Context, address models.ContactAddress) (uuid.UUID, error)
 	AddPersonEmail(ctx context.Context, email models.ContactEmail) (uuid.UUID, error)
 	AddPersonPhone(ctx context.Context, phone models.ContactPhone) (uuid.UUID, error)
+	DeletePersonAddress(ctx context.Context, personID, addressID uuid.UUID) (models.ContactAddress, error)
+	DeletePersonEmail(ctx context.Context, personID, emailID uuid.UUID) (models.ContactEmail, error)
+	DeletePersonPhone(ctx context.Context, personID, phoneID uuid.UUID) (models.ContactPhone, error)
 	GetPersonAddresses(ctx context.Context, id uuid.UUID) ([]models.ContactAddress, error)
 	GetPersonEmails(ctx context.Context, id uuid.UUID) ([]models.ContactEmail, error)
 	GetPersonPhones(ctx context.Context, id uuid.UUID) ([]models.ContactPhone, error)
@@ -72,6 +75,21 @@ func (cs contactStore) AddPersonPhone(ctx context.Context, phone models.ContactP
 	}
 
 	return id, nil
+}
+
+// DeletePersonAddress implements ContactDatastore.
+func (cs contactStore) DeletePersonAddress(ctx context.Context, personID uuid.UUID, addressID uuid.UUID) (models.ContactAddress, error) {
+	panic("unimplemented")
+}
+
+// DeletePersonEmail implements ContactDatastore.
+func (cs contactStore) DeletePersonEmail(ctx context.Context, personID uuid.UUID, emailID uuid.UUID) (models.ContactEmail, error) {
+	panic("unimplemented")
+}
+
+// DeletePersonPhone implements ContactDatastore.
+func (cs contactStore) DeletePersonPhone(ctx context.Context, personID uuid.UUID, phoneID uuid.UUID) (models.ContactPhone, error) {
+	panic("unimplemented")
 }
 
 // GetSpecificContactAddresses implements PersonStore.

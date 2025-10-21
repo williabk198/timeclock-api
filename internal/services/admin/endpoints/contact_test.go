@@ -536,6 +536,281 @@ func Test_adminContactEndpoints_AddContactPhoneForPerson(t *testing.T) {
 	}
 }
 
+func Test_adminContactEndpoints_DeleteContactAddressForPerson(t *testing.T) {
+	type args struct {
+		ctx     context.Context
+		reqData DeleteContactRequestData
+	}
+
+	testPersonID := uuid.New()
+	testPersonNotFoundID := uuid.New()
+
+	testAddressID := uuid.New()
+	testAddressNotFoundID := uuid.New()
+
+	testAddress := models.ContactAddress{
+		ID:         testAddressID,
+		PersonID:   testPersonID,
+		Street1:    "123 Test Dr",
+		Street2:    "",
+		Locality:   "Testerville",
+		Region:     "Testia",
+		PostalCode: "12345-6789",
+		Country:    "Testopia",
+		Type:       models.AddressTypePhysical,
+		Primary:    true,
+	}
+
+	testContactMicro := &mockContactMicro{}
+	testContactMicro.On("DeletePersonAddress", mock.Anything, testPersonID, testAddressID).Return(testAddress, error(nil))
+	testContactMicro.On("DeletePersonAddress", mock.Anything, testPersonNotFoundID, testAddressID).Return(models.ContactAddress{}, assert.AnError)
+	testContactMicro.On("DeletePersonAddress", mock.Anything, testPersonID, testAddressNotFoundID).Return(models.ContactAddress{}, assert.AnError)
+
+	tests := []struct {
+		name      string
+		ace       adminContactEndpoints
+		args      args
+		want      PersonAddressData
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: DeleteContactRequestData{
+					PerosnID:  testPersonID.String(),
+					ContactID: testAddressID.String(),
+				},
+			},
+			want: PersonAddressData{
+				ID:         testAddressID.String(),
+				Street1:    testAddress.Street1,
+				Street2:    testAddress.Street2,
+				Locality:   testAddress.Locality,
+				Region:     testAddress.Region,
+				PostalCode: testAddress.PostalCode,
+				Country:    testAddress.Country,
+				Type:       string(testAddress.Type),
+				Primary:    testAddress.Primary,
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Person DNE",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: DeleteContactRequestData{
+					PerosnID:  testPersonNotFoundID.String(),
+					ContactID: testAddressID.String(),
+				},
+			},
+		},
+		{
+			name: "Error; Address DNE",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: DeleteContactRequestData{
+					PerosnID:  testPersonID.String(),
+					ContactID: testAddressNotFoundID.String(),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.ace.DeleteContactAddressForPerson(tt.args.ctx, tt.args.reqData)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_adminContactEndpoints_DeleteContactEmailForPerson(t *testing.T) {
+	type args struct {
+		ctx     context.Context
+		reqData DeleteContactRequestData
+	}
+
+	testPersonID := uuid.New()
+	testPersonNotFoundID := uuid.New()
+
+	testEmailID := uuid.New()
+	testEmailNotFoundID := uuid.New()
+
+	testEmail := models.ContactEmail{
+		ID:       testEmailID,
+		PersonID: testPersonID,
+		Username: "",
+		Provider: "",
+		Primary:  true,
+	}
+
+	testContactMicro := &mockContactMicro{}
+	testContactMicro.On("DeletePersonEmail", mock.Anything, testPersonID, testEmailID).Return(testEmail, error(nil))
+	testContactMicro.On("DeletePersonEmail", mock.Anything, testPersonNotFoundID, testEmailID).Return(models.ContactEmail{}, assert.AnError)
+	testContactMicro.On("DeletePersonEmail", mock.Anything, testPersonID, testEmailNotFoundID).Return(models.ContactEmail{}, assert.AnError)
+
+	tests := []struct {
+		name      string
+		ace       adminContactEndpoints
+		args      args
+		want      PersonEmailData
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: DeleteContactRequestData{
+					PerosnID:  testPersonID.String(),
+					ContactID: testEmailID.String(),
+				},
+			},
+			want: PersonEmailData{
+				ID:      testEmailID.String(),
+				Email:   testEmail.String(),
+				Primary: testEmail.Primary,
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Person DNE",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: DeleteContactRequestData{
+					PerosnID:  testPersonNotFoundID.String(),
+					ContactID: testEmailID.String(),
+				},
+			},
+		},
+		{
+			name: "Error; Address DNE",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: DeleteContactRequestData{
+					PerosnID:  testPersonID.String(),
+					ContactID: testEmailNotFoundID.String(),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.ace.DeleteContactEmailForPerson(tt.args.ctx, tt.args.reqData)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_adminContactEndpoints_DeleteContactPhoneForPerson(t *testing.T) {
+	type args struct {
+		ctx     context.Context
+		reqData DeleteContactRequestData
+	}
+
+	testPersonID := uuid.New()
+	testPersonNotFoundID := uuid.New()
+
+	testPhoneID := uuid.New()
+	testPhoneNotFoundID := uuid.New()
+
+	testPhone := models.ContactPhone{
+		ID:          testPhoneID,
+		PersonID:    testPersonID,
+		CountryCode: 1,
+		PhoneNumber: "",
+		Type:        models.PhoneTypeHome,
+		Primary:     true,
+	}
+
+	testContactMicro := &mockContactMicro{}
+	testContactMicro.On("DeletePersonPhone", mock.Anything, testPersonID, testPhoneID).Return(testPhone, error(nil))
+	testContactMicro.On("DeletePersonPhone", mock.Anything, testPersonNotFoundID, testPhoneID).Return(models.ContactPhone{}, assert.AnError)
+	testContactMicro.On("DeletePersonPhone", mock.Anything, testPersonID, testPhoneNotFoundID).Return(models.ContactPhone{}, assert.AnError)
+
+	tests := []struct {
+		name      string
+		ace       adminContactEndpoints
+		args      args
+		want      PersonPhoneData
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: DeleteContactRequestData{
+					PerosnID:  testPersonID.String(),
+					ContactID: testPhoneID.String(),
+				},
+			},
+			want: PersonPhoneData{
+				ID:          testPhoneID.String(),
+				CountryCode: 1,
+				PhoneNumber: testPhone.PhoneNumber,
+				Type:        string(testPhone.Type),
+				Primary:     testPhone.Primary,
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Person DNE",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: DeleteContactRequestData{
+					PerosnID:  testPersonNotFoundID.String(),
+					ContactID: testPhoneID.String(),
+				},
+			},
+		},
+		{
+			name: "Error; Address DNE",
+			ace: adminContactEndpoints{
+				contactMicro: testContactMicro,
+			},
+			args: args{
+				ctx: context.Background(),
+				reqData: DeleteContactRequestData{
+					PerosnID:  testPersonID.String(),
+					ContactID: testPhoneNotFoundID.String(),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.ace.DeleteContactPhoneForPerson(tt.args.ctx, tt.args.reqData)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func Test_adminContactEndpoint_GetPersonContacts(t *testing.T) {
 	type args struct {
 		ctx   context.Context

@@ -206,6 +206,252 @@ func Test_contactMicroImpl_AddPersonPhone(t *testing.T) {
 	}
 }
 
+func Test_contactMicroImpl_DeletePerosnAddress(t *testing.T) {
+	type args struct {
+		ctx       context.Context
+		personID  uuid.UUID
+		addressID uuid.UUID
+	}
+
+	testValidAddressID := uuid.New()
+	testNotFoundAddressID := uuid.New()
+
+	testValidPersonID := uuid.New()
+	testNotFoundPersonID := uuid.New()
+
+	testAddress := models.ContactAddress{
+		ID:         testValidAddressID,
+		PersonID:   testValidPersonID,
+		Street1:    "123 Test Dr",
+		Street2:    "",
+		Locality:   "Testerville",
+		Region:     "Testaria",
+		PostalCode: "12345-6789",
+		Country:    "Testopia",
+		Type:       models.AddressTypePhysical,
+		Primary:    true,
+	}
+
+	testContactStore := &mockContactStore{}
+	testContactStore.On("DeletePersonAddress", mock.Anything, testValidPersonID, testValidAddressID).Return(testAddress, error(nil))
+	testContactStore.On("DeletePersonAddress", mock.Anything, testNotFoundPersonID, testValidAddressID).Return(models.ContactAddress{}, assert.AnError)
+	testContactStore.On("DeletePersonAddress", mock.Anything, testValidPersonID, testNotFoundAddressID).Return(models.ContactAddress{}, assert.AnError)
+
+	tests := []struct {
+		name      string
+		cmi       contactMicroImpl
+		args      args
+		want      models.ContactAddress
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			cmi: contactMicroImpl{
+				contactStore: testContactStore,
+			},
+			args: args{
+				ctx:       context.Background(),
+				personID:  testValidPersonID,
+				addressID: testValidAddressID,
+			},
+			want:      testAddress,
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Person DNE",
+			cmi: contactMicroImpl{
+				contactStore: testContactStore,
+			},
+			args: args{
+				ctx:       context.Background(),
+				personID:  testNotFoundPersonID,
+				addressID: testValidAddressID,
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Address DNE",
+			cmi: contactMicroImpl{
+				contactStore: testContactStore,
+			},
+			args: args{
+				ctx:       context.Background(),
+				personID:  testValidPersonID,
+				addressID: testNotFoundAddressID,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.cmi.DeletePerosnAddress(tt.args.ctx, tt.args.personID, tt.args.addressID)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_contactMicroImpl_DeletePersonEmail(t *testing.T) {
+	type args struct {
+		ctx      context.Context
+		personID uuid.UUID
+		emailID  uuid.UUID
+	}
+
+	testValidEmailID := uuid.New()
+	testNotFoundEmailID := uuid.New()
+
+	testValidPersonID := uuid.New()
+	testNotFoundPersonID := uuid.New()
+
+	testEmail := models.ContactEmail{
+		ID:       testValidEmailID,
+		PersonID: testValidPersonID,
+		Username: "tester",
+		Provider: "test.com",
+		Primary:  true,
+	}
+
+	testContactStore := &mockContactStore{}
+	testContactStore.On("DeletePersonEmail", mock.Anything, testValidPersonID, testValidEmailID).Return(testEmail, error(nil))
+	testContactStore.On("DeletePersonEmail", mock.Anything, testNotFoundPersonID, testValidEmailID).Return(models.ContactEmail{}, assert.AnError)
+	testContactStore.On("DeletePersonEmail", mock.Anything, testValidPersonID, testNotFoundEmailID).Return(models.ContactEmail{}, assert.AnError)
+
+	tests := []struct {
+		name      string
+		cmi       contactMicroImpl
+		args      args
+		want      models.ContactEmail
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			cmi: contactMicroImpl{
+				contactStore: testContactStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testValidPersonID,
+				emailID:  testValidEmailID,
+			},
+			want:      testEmail,
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Person DNE",
+			cmi: contactMicroImpl{
+				contactStore: testContactStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testNotFoundPersonID,
+				emailID:  testValidEmailID,
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Address DNE",
+			cmi: contactMicroImpl{
+				contactStore: testContactStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testValidPersonID,
+				emailID:  testNotFoundEmailID,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.cmi.DeletePersonEmail(tt.args.ctx, tt.args.personID, tt.args.emailID)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_contactMicroImpl_DeletePersonPhone(t *testing.T) {
+	type args struct {
+		ctx      context.Context
+		personID uuid.UUID
+		phoneID  uuid.UUID
+	}
+
+	testValidPhoneID := uuid.New()
+	testNotFoundPhoneID := uuid.New()
+
+	testValidPersonID := uuid.New()
+	testNotFoundPersonID := uuid.New()
+
+	testPhone := models.ContactPhone{
+		ID:          testValidPhoneID,
+		PersonID:    testValidPersonID,
+		CountryCode: 1,
+		PhoneNumber: "(555)555-5555",
+		Type:        models.PhoneTypeHome,
+		Primary:     true,
+	}
+
+	testContactStore := &mockContactStore{}
+	testContactStore.On("DeletePersonPhone", mock.Anything, testValidPersonID, testValidPhoneID).Return(testPhone, error(nil))
+	testContactStore.On("DeletePersonPhone", mock.Anything, testNotFoundPersonID, testValidPhoneID).Return(models.ContactPhone{}, assert.AnError)
+	testContactStore.On("DeletePersonPhone", mock.Anything, testValidPersonID, testNotFoundPhoneID).Return(models.ContactPhone{}, assert.AnError)
+
+	tests := []struct {
+		name      string
+		cmi       contactMicroImpl
+		args      args
+		want      models.ContactPhone
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			cmi: contactMicroImpl{
+				contactStore: testContactStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testValidPersonID,
+				phoneID:  testValidPhoneID,
+			},
+			want:      testPhone,
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error; Person DNE",
+			cmi: contactMicroImpl{
+				contactStore: testContactStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testNotFoundPersonID,
+				phoneID:  testValidPhoneID,
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Address DNE",
+			cmi: contactMicroImpl{
+				contactStore: testContactStore,
+			},
+			args: args{
+				ctx:      context.Background(),
+				personID: testValidPersonID,
+				phoneID:  testNotFoundPhoneID,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.cmi.DeletePersonPhone(tt.args.ctx, tt.args.personID, tt.args.phoneID)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func Test_contactMicroImpl_GetAllForPerson(t *testing.T) {
 	type args struct {
 		ctx      context.Context
