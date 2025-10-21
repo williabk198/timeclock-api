@@ -42,6 +42,21 @@ func (mcm *mockContactMicro) AddPersonPhone(ctx context.Context, phone models.Co
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }
 
+func (mcm *mockContactMicro) DeletePerosnAddress(ctx context.Context, personID, addressID uuid.UUID) (models.ContactAddress, error) {
+	args := mcm.Called(ctx, personID, addressID)
+	return args.Get(0).(models.ContactAddress), args.Error(1)
+}
+
+func (mcm *mockContactMicro) DeletePersonEmail(ctx context.Context, personID, emailID uuid.UUID) (models.ContactEmail, error) {
+	args := mcm.Called(ctx, personID, emailID)
+	return args.Get(0).(models.ContactEmail), args.Error(1)
+}
+
+func (mcm *mockContactMicro) DeletePersonPhone(ctx context.Context, personID, phoneID uuid.UUID) (models.ContactPhone, error) {
+	args := mcm.Called(ctx, personID, phoneID)
+	return args.Get(0).(models.ContactPhone), args.Error(1)
+}
+
 func (mcm *mockContactMicro) GetAllForPerson(ctx context.Context, id uuid.UUID) (models.Contacts, error) {
 	args := mcm.Called(ctx, id)
 	return args.Get(0).(models.Contacts), args.Error(1)

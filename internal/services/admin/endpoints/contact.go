@@ -102,6 +102,21 @@ func (ace adminContactEndpoints) AddContactPhoneForPerson(ctx context.Context, r
 	return reqData.Data, nil
 }
 
+// DeleteContactAddressForPerson implements ContactEndpoints.
+func (ace adminContactEndpoints) DeleteContactAddressForPerson(ctx context.Context, reqData DeleteContactRequestData) (PersonAddressData, error) {
+	panic("unimplemented")
+}
+
+// DeleteContactEmailForPerson implements ContactEndpoints.
+func (ace adminContactEndpoints) DeleteContactEmailForPerson(ctx context.Context, reqData DeleteContactRequestData) (PersonEmailData, error) {
+	panic("unimplemented")
+}
+
+// DeleteContactPhoneForPerson implements ContactEndpoints.
+func (ace adminContactEndpoints) DeleteContactPhoneForPerson(ctx context.Context, reqData DeleteContactRequestData) (PersonPhoneData, error) {
+	panic("unimplemented")
+}
+
 func (ace adminContactEndpoints) GetPersonContacts(ctx context.Context, idStr string) (PersonContactData, error) {
 	id, err := uuid.Parse(idStr)
 	if err != nil {
