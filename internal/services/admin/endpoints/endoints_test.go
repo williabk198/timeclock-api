@@ -42,7 +42,7 @@ func (mcm *mockContactMicro) AddPersonPhone(ctx context.Context, phone models.Co
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }
 
-func (mcm *mockContactMicro) DeletePerosnAddress(ctx context.Context, personID, addressID uuid.UUID) (models.ContactAddress, error) {
+func (mcm *mockContactMicro) DeletePersonAddress(ctx context.Context, personID, addressID uuid.UUID) (models.ContactAddress, error) {
 	args := mcm.Called(ctx, personID, addressID)
 	return args.Get(0).(models.ContactAddress), args.Error(1)
 }
