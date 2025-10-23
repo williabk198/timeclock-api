@@ -13,7 +13,7 @@ type ContactMicro interface {
 	AddPersonAddress(ctx context.Context, address models.ContactAddress) (uuid.UUID, error)
 	AddPersonEmail(ctx context.Context, email models.ContactEmail) (uuid.UUID, error)
 	AddPersonPhone(ctx context.Context, phone models.ContactPhone) (uuid.UUID, error)
-	DeletePerosnAddress(ctx context.Context, personID, addressID uuid.UUID) (models.ContactAddress, error)
+	DeletePersonAddress(ctx context.Context, personID, addressID uuid.UUID) (models.ContactAddress, error)
 	DeletePersonEmail(ctx context.Context, personID, emailID uuid.UUID) (models.ContactEmail, error)
 	DeletePersonPhone(ctx context.Context, personID, phoneID uuid.UUID) (models.ContactPhone, error)
 	GetAllForPerson(ctx context.Context, personID uuid.UUID) (models.Contacts, error)
@@ -43,17 +43,17 @@ func (cmi contactMicroImpl) AddPersonPhone(ctx context.Context, phone models.Con
 
 // DeletePersonAddress implements ContactMicro.
 func (cmi contactMicroImpl) DeletePersonAddress(ctx context.Context, personID uuid.UUID, addressID uuid.UUID) (models.ContactAddress, error) {
-	panic("unimplemented")
+	return cmi.contactStore.DeletePersonAddress(ctx, personID, addressID)
 }
 
 // DeletePersonEmail implements ContactMicro.
 func (cmi contactMicroImpl) DeletePersonEmail(ctx context.Context, personID uuid.UUID, emailID uuid.UUID) (models.ContactEmail, error) {
-	panic("unimplemented")
+	return cmi.contactStore.DeletePersonEmail(ctx, personID, emailID)
 }
 
 // DeletePersonPhone implements ContactMicro.
 func (cmi contactMicroImpl) DeletePersonPhone(ctx context.Context, personID uuid.UUID, phoneID uuid.UUID) (models.ContactPhone, error) {
-	panic("unimplemented")
+	return cmi.contactStore.DeletePersonPhone(ctx, personID, phoneID)
 }
 
 func (cmi contactMicroImpl) GetAllForPerson(ctx context.Context, personID uuid.UUID) (models.Contacts, error) {
