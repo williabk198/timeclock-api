@@ -423,7 +423,7 @@ func Test_contactStore_DeletePersonAddress(t *testing.T) {
 				addressID: testAddressID,
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `DELETE FROM "person"."addresses" WHERE "id" = $1 AND "person_id" = $2 RETURNING *`,
+				rawQuery:  `DELETE FROM "person"."addresses" WHERE "id" = $1 AND "person_id" = $2 RETURNING *;`,
 				arguments: []driver.Value{testAddressID.String(), testPersonID.String()},
 				result: sqlmock.NewRows(tableRows).AddRow(
 					testAddressID.String(), testPersonID.String(), "123 Test Dr", "APT 1",
@@ -460,11 +460,12 @@ func Test_contactStore_DeletePersonAddress(t *testing.T) {
 				addressID: testNotFoundAddressID,
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `DELETE FROM "person"."addresses" WHERE "id" = $1 AND "person_id" = $2 RETURNING *`,
+				rawQuery:  `DELETE FROM "person"."addresses" WHERE "id" = $1 AND "person_id" = $2 RETURNING *;`,
 				arguments: []driver.Value{testNotFoundAddressID.String(), testPersonID.String()},
 				result:    sqlmock.NewRows(nil),
 				returnErr: assert.AnError,
 			},
+			assertion: assert.Error,
 		},
 	}
 	for _, tt := range tests {
@@ -542,7 +543,7 @@ func Test_contactStore_DeletePersonEmail(t *testing.T) {
 				emailID:  testEmailID,
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `DELETE FROM "person"."emails" WHERE "id" = $1 AND "person_id" = $2 RETURNING *`,
+				rawQuery:  `DELETE FROM "person"."emails" WHERE "id" = $1 AND "person_id" = $2 RETURNING *;`,
 				arguments: []driver.Value{testEmailID.String(), testPersonID.String()},
 				result:    sqlmock.NewRows(tableRows).AddRow(testEmailID.String(), testPersonID.String(), "tester", "test.com", true),
 			},
@@ -576,7 +577,7 @@ func Test_contactStore_DeletePersonEmail(t *testing.T) {
 				emailID:  testNotFoundEmailID,
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `DELETE FROM "person"."emails" WHERE "id" = $1 AND "person_id" = $2 RETURNING *`,
+				rawQuery:  `DELETE FROM "person"."emails" WHERE "id" = $1 AND "person_id" = $2 RETURNING *;`,
 				arguments: []driver.Value{testNotFoundEmailID.String(), testPersonID.String()},
 				result:    sqlmock.NewRows(nil),
 				returnErr: assert.AnError,
@@ -660,7 +661,7 @@ func Test_contactStore_DeletePersonPhone(t *testing.T) {
 				phoneID:  testPhoneID,
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `DELETE FROM "person"."phones" WHERE "id" = $1 AND "person_id" = $2`,
+				rawQuery:  `DELETE FROM "person"."phones" WHERE "id" = $1 AND "person_id" = $2 RETURNING *;`,
 				arguments: []driver.Value{testPhoneID.String(), testPersonID.String()},
 				result:    sqlmock.NewRows(tableRows).AddRow(testPhoneID.String(), testPersonID.String(), 1, "(555)555-5555", "home", true),
 			},
@@ -694,7 +695,7 @@ func Test_contactStore_DeletePersonPhone(t *testing.T) {
 				phoneID:  testNotFoundPhoneID,
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `DELETE FROM "person"."phones" WHERE "id" = $1 AND "person_id" = $2`,
+				rawQuery:  `DELETE FROM "person"."phones" WHERE "id" = $1 AND "person_id" = $2 RETURNING *;`,
 				arguments: []driver.Value{testNotFoundPhoneID.String(), testPersonID.String()},
 				result:    sqlmock.NewRows(nil),
 				returnErr: assert.AnError,
