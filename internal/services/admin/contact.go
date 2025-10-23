@@ -41,8 +41,8 @@ func (cmi contactMicroImpl) AddPersonPhone(ctx context.Context, phone models.Con
 	return cmi.contactStore.AddPersonPhone(ctx, phone)
 }
 
-// DeletePerosnAddress implements ContactMicro.
-func (cmi contactMicroImpl) DeletePerosnAddress(ctx context.Context, personID uuid.UUID, addressID uuid.UUID) (models.ContactAddress, error) {
+// DeletePersonAddress implements ContactMicro.
+func (cmi contactMicroImpl) DeletePersonAddress(ctx context.Context, personID uuid.UUID, addressID uuid.UUID) (models.ContactAddress, error) {
 	panic("unimplemented")
 }
 

@@ -284,7 +284,7 @@ func Test_contactMicroImpl_DeletePerosnAddress(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.cmi.DeletePerosnAddress(tt.args.ctx, tt.args.personID, tt.args.addressID)
+			got, err := tt.cmi.DeletePersonAddress(tt.args.ctx, tt.args.personID, tt.args.addressID)
 			tt.assertion(t, err)
 			assert.Equal(t, tt.want, got)
 		})
