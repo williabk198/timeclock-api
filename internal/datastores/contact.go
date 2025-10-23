@@ -79,17 +79,66 @@ func (cs contactStore) AddPersonPhone(ctx context.Context, phone models.ContactP
 
 // DeletePersonAddress implements ContactDatastore.
 func (cs contactStore) DeletePersonAddress(ctx context.Context, personID uuid.UUID, addressID uuid.UUID) (models.ContactAddress, error) {
-	panic("unimplemented")
+	var result models.ContactAddress
+
+	query, params, err := cs.sqlBuilder.Delete(cs.tableNameMap["addresses"]).Where(
+		condition.Equals("id", addressID), condition.Equals("person_id", personID),
+	).Returning("*").Build()
+	if err != nil {
+		return result, err
+	}
+
+	row := cs.dbConn.QueryRowContext(ctx, query, params...)
+	if err := row.Scan(
+		&result.ID, &result.PersonID, &result.Street1, &result.Street2, &result.Locality, &result.Region,
+		&result.PostalCode, &result.Country, &result.Type, &result.Primary,
+	); err != nil {
+		return result, err
+	}
+
+	return result, nil
 }
 
 // DeletePersonEmail implements ContactDatastore.
 func (cs contactStore) DeletePersonEmail(ctx context.Context, personID uuid.UUID, emailID uuid.UUID) (models.ContactEmail, error) {
-	panic("unimplemented")
+	var result models.ContactEmail
+
+	query, params, err := cs.sqlBuilder.Delete(cs.tableNameMap["emails"]).Where(
+		condition.Equals("id", emailID), condition.Equals("person_id", personID),
+	).Returning("*").Build()
+	if err != nil {
+		return result, err
+	}
+
+	row := cs.dbConn.QueryRowContext(ctx, query, params...)
+	if err := row.Scan(
+		&result.ID, &result.PersonID, &result.Username, &result.Provider, &result.Primary,
+	); err != nil {
+		return result, err
+	}
+
+	return result, nil
 }
 
 // DeletePersonPhone implements ContactDatastore.
 func (cs contactStore) DeletePersonPhone(ctx context.Context, personID uuid.UUID, phoneID uuid.UUID) (models.ContactPhone, error) {
-	panic("unimplemented")
+	var result models.ContactPhone
+
+	query, params, err := cs.sqlBuilder.Delete(cs.tableNameMap["phones"]).Where(
+		condition.Equals("id", phoneID), condition.Equals("person_id", personID),
+	).Returning("*").Build()
+	if err != nil {
+		return result, err
+	}
+
+	row := cs.dbConn.QueryRowContext(ctx, query, params...)
+	if err := row.Scan(
+		&result.ID, &result.PersonID, &result.CountryCode, &result.PhoneNumber, &result.Type, &result.Primary,
+	); err != nil {
+		return result, err
+	}
+
+	return result, nil
 }
 
 // GetSpecificContactAddresses implements PersonStore.

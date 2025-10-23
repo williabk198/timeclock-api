@@ -104,17 +104,82 @@ func (ace adminContactEndpoints) AddContactPhoneForPerson(ctx context.Context, r
 
 // DeleteContactAddressForPerson implements ContactEndpoints.
 func (ace adminContactEndpoints) DeleteContactAddressForPerson(ctx context.Context, reqData DeleteContactRequestData) (PersonAddressData, error) {
-	panic("unimplemented")
+	addressID, err := uuid.Parse(reqData.ContactID)
+	if err != nil {
+		return PersonAddressData{}, err
+	}
+
+	personID, err := uuid.Parse(reqData.PerosnID)
+	if err != nil {
+		return PersonAddressData{}, err
+	}
+
+	deletedAddress, err := ace.contactMicro.DeletePersonAddress(ctx, personID, addressID)
+	if err != nil {
+		return PersonAddressData{}, err
+	}
+
+	return PersonAddressData{
+		ID:         deletedAddress.ID.String(),
+		Street1:    deletedAddress.Street1,
+		Street2:    deletedAddress.Street2,
+		Locality:   deletedAddress.Locality,
+		Region:     deletedAddress.Region,
+		PostalCode: deletedAddress.PostalCode,
+		Country:    deletedAddress.Country,
+		Type:       string(deletedAddress.Type),
+		Primary:    deletedAddress.Primary,
+	}, nil
 }
 
 // DeleteContactEmailForPerson implements ContactEndpoints.
 func (ace adminContactEndpoints) DeleteContactEmailForPerson(ctx context.Context, reqData DeleteContactRequestData) (PersonEmailData, error) {
-	panic("unimplemented")
+	emailID, err := uuid.Parse(reqData.ContactID)
+	if err != nil {
+		return PersonEmailData{}, err
+	}
+
+	personID, err := uuid.Parse(reqData.PerosnID)
+	if err != nil {
+		return PersonEmailData{}, err
+	}
+
+	deletedEmail, err := ace.contactMicro.DeletePersonEmail(ctx, personID, emailID)
+	if err != nil {
+		return PersonEmailData{}, err
+	}
+
+	return PersonEmailData{
+		ID:      deletedEmail.ID.String(),
+		Email:   deletedEmail.String(),
+		Primary: deletedEmail.Primary,
+	}, nil
 }
 
 // DeleteContactPhoneForPerson implements ContactEndpoints.
 func (ace adminContactEndpoints) DeleteContactPhoneForPerson(ctx context.Context, reqData DeleteContactRequestData) (PersonPhoneData, error) {
-	panic("unimplemented")
+	phoneID, err := uuid.Parse(reqData.ContactID)
+	if err != nil {
+		return PersonPhoneData{}, err
+	}
+
+	personID, err := uuid.Parse(reqData.PerosnID)
+	if err != nil {
+		return PersonPhoneData{}, err
+	}
+
+	deletedPhone, err := ace.contactMicro.DeletePersonPhone(ctx, personID, phoneID)
+	if err != nil {
+		return PersonPhoneData{}, err
+	}
+
+	return PersonPhoneData{
+		ID:          deletedPhone.ID.String(),
+		CountryCode: deletedPhone.CountryCode,
+		PhoneNumber: deletedPhone.PhoneNumber,
+		Type:        string(deletedPhone.Type),
+		Primary:     deletedPhone.Primary,
+	}, nil
 }
 
 func (ace adminContactEndpoints) GetPersonContacts(ctx context.Context, idStr string) (PersonContactData, error) {
