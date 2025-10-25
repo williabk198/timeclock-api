@@ -71,14 +71,14 @@ func NewHttpHandler(adminEndpoints endpoints.Endpoints) http.Handler {
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodPost)
 
-	personRouter.Handle("{personID}/contacts/addresses/{id}", httputil.BuildRouteHandler(
+	personRouter.Handle("/{personID}/contacts/addresses/{id}", httputil.BuildRouteHandler(
 		routeHandleBuilder,
 		adminEndpoints.Contact().UpdatePersonContactAddress,
 		decodeUpdateContactRequestData[endpoints.PersonAddressData](),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodPut)
 
-	personRouter.Handle("{personID}/contacts/addresses/{id}", httputil.BuildRouteHandler(
+	personRouter.Handle("/{personID}/contacts/addresses/{id}", httputil.BuildRouteHandler(
 		routeHandleBuilder,
 		adminEndpoints.Contact().DeleteContactAddressForPerson,
 		decodeDeleteContactRequestData(),
@@ -99,14 +99,14 @@ func NewHttpHandler(adminEndpoints endpoints.Endpoints) http.Handler {
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodPost)
 
-	personRouter.Handle("{personID}/contacts/email/{id}", httputil.BuildRouteHandler(
+	personRouter.Handle("/{personID}/contacts/emails/{id}", httputil.BuildRouteHandler(
 		routeHandleBuilder,
 		adminEndpoints.Contact().UpdatePersonContactEmail,
 		decodeUpdateContactRequestData[endpoints.PersonEmailData](),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodPut)
 
-	personRouter.Handle("{personID}/contacts/emails/{id}", httputil.BuildRouteHandler(
+	personRouter.Handle("/{personID}/contacts/emails/{id}", httputil.BuildRouteHandler(
 		routeHandleBuilder,
 		adminEndpoints.Contact().DeleteContactEmailForPerson,
 		decodeDeleteContactRequestData(),
@@ -127,14 +127,14 @@ func NewHttpHandler(adminEndpoints endpoints.Endpoints) http.Handler {
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodGet)
 
-	personRouter.Handle("{personID}/contacts/phones/{id}", httputil.BuildRouteHandler(
+	personRouter.Handle("/{personID}/contacts/phones/{id}", httputil.BuildRouteHandler(
 		routeHandleBuilder,
 		adminEndpoints.Contact().UpdatePersonContactPhone,
 		decodeUpdateContactRequestData[endpoints.PersonPhoneData](),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodPut)
 
-	personRouter.Handle("{personID}/contacts/phones/{id}", httputil.BuildRouteHandler(
+	personRouter.Handle("/{personID}/contacts/phones/{id}", httputil.BuildRouteHandler(
 		routeHandleBuilder,
 		adminEndpoints.Contact().DeleteContactPhoneForPerson,
 		decodeDeleteContactRequestData(),
