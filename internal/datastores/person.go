@@ -18,9 +18,7 @@ type PersonStore interface {
 type personStore struct {
 	dbConn     *sql.DB
 	sqlBuilder jagsqlb.SqlBuilder
-	tableName  string // TODO: Remove
-
-	tableNameMap map[string]string
+	tableName  string
 }
 
 // Add implements Store.
