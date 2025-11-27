@@ -49,7 +49,7 @@ func Test_employeeSqlStore_Add(t *testing.T) {
 			e: employeeSqlStore{
 				dbConn:     mockSession,
 				sqlBuilder: testSqlBuilder,
-				tableName:  "employess",
+				tableName:  "employees",
 			},
 			args: args{
 				ctx: context.Background(),
@@ -82,7 +82,7 @@ func Test_employeeSqlStore_Add(t *testing.T) {
 			e: employeeSqlStore{
 				dbConn:     mockSession,
 				sqlBuilder: testSqlBuilder,
-				tableName:  "employess",
+				tableName:  "employees",
 			},
 			args: args{
 				ctx: context.Background(),
@@ -165,7 +165,7 @@ func Test_employeeSqlStore_Delete(t *testing.T) {
 			e: employeeSqlStore{
 				dbConn:     mockSession,
 				sqlBuilder: testSqlBuilder,
-				tableName:  "employee",
+				tableName:  "employees",
 			},
 			args: args{ctx: context.Background(), id: removedEmployeeID},
 			wantQuery: &wantQuery{
@@ -198,7 +198,7 @@ func Test_employeeSqlStore_Delete(t *testing.T) {
 				sqlBuilder: testSqlBuilder,
 				tableName:  "employees",
 			},
-			args: args{ctx: context.Background(), id: uuid.New()},
+			args: args{ctx: context.Background(), id: badEmployeeID},
 			wantQuery: &wantQuery{
 				rawQuery:  `DELETE FROM "employees" WHERE "id" = $1 RETURNING *;`,
 				arguments: []driver.Value{badEmployeeID.String()},
@@ -269,7 +269,7 @@ func Test_employeeSqlStore_GetAllPaginated(t *testing.T) {
 			ID:          uuid.New(),
 			PersonID:    uuid.New(),
 			ReportsToID: testTechPrezEmployeeID,
-			Title:       "Corporate Systesm Manager",
+			Title:       "Corporate Systems Manager",
 		},
 		{
 			ID:          uuid.New(),
@@ -324,10 +324,11 @@ func Test_employeeSqlStore_GetAllPaginated(t *testing.T) {
 			},
 			args: args{ctx: context.Background(), offset: 1, limit: 0},
 			wantQuery: &wantQuery{
-				rawQuery:  `SELECT * FROM "employee" OFFSET 1 LIMIT 0;`,
+				rawQuery:  `SELECT * FROM "employees" OFFSET 1 LIMIT 0;`,
 				arguments: []driver.Value{},
 				result:    sqlmock.NewRows(tableRows),
 			},
+			wantItems: []models.Employee{},
 			assertion: assert.NoError,
 		},
 		{
@@ -443,7 +444,7 @@ func Test_employeeSqlStore_GetSpecific(t *testing.T) {
 			},
 			args: args{ctx: context.Background(), id: testEmployeeID},
 			wantQuery: &wantQuery{
-				rawQuery:  `SELECT * FROM "employees" WHEN "id" = $1;`,
+				rawQuery:  `SELECT * FROM "employees" WHERE "id" = $1;`,
 				arguments: []driver.Value{testEmployeeID.String()},
 				result: sqlmock.NewRows(tableRows).AddRow(
 					testEmployeeID.String(), testPersonID.String(), uuid.Nil.String(), "Owner/President",
@@ -546,7 +547,7 @@ func Test_employeeSqlStore_Update(t *testing.T) {
 				},
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `UPDATE "employees SET "reports_to_eid"=$1, "title"=$2 WHERE "id" = $3;`,
+				rawQuery:  `UPDATE "employees" SET "reports_to_eid"=$1, "title"=$2 WHERE "id" = $3;`,
 				arguments: []driver.Value{uuid.Nil.String(), "Owner/President", testEmployeeID.String()},
 				result:    sqlmock.NewResult(0, 1),
 			},
@@ -583,7 +584,7 @@ func Test_employeeSqlStore_Update(t *testing.T) {
 				},
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `UPDATE "employees SET "reports_to_eid"=$1, "title"=$2 WHERE "id" = $3;`,
+				rawQuery:  `UPDATE "employees" SET "reports_to_eid"=$1, "title"=$2 WHERE "id" = $3;`,
 				arguments: []driver.Value{uuid.Nil.String(), "invalid", testEmployeeID.String()},
 				returnErr: assert.AnError,
 			},
