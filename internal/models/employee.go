@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,9 +19,31 @@ const (
 	employeeStatusStrGone     string = "gone"
 )
 
-// TODO Create String function for EmployeeStatus
+func (es EmployeeStatus) String() string {
+	switch es {
+	case EmployeeStatusActive:
+		return employeeStatusStrActive
+	case EmployeeStatusInactive:
+		return employeeStatusStrInactive
+	case EmployeeStatusGone:
+		return employeeStatusStrGone
+	}
 
-// TODO? Create Parser to turn a string into an EmployeeStatus
+	return ""
+}
+
+func ParseEmployeeStatus(input string) (EmployeeStatus, error) {
+	switch input {
+	case employeeStatusStrActive:
+		return EmployeeStatusActive, nil
+	case employeeStatusStrInactive:
+		return EmployeeStatusInactive, nil
+	case employeeStatusStrGone:
+		return EmployeeStatusGone, nil
+	}
+
+	return -1, fmt.Errorf("")
+}
 
 type PayCadence string
 
@@ -35,22 +58,27 @@ type EmployeePay struct {
 	Cadence  PayCadence
 }
 
-// TODO: Create `Marshal` and `Unmarshal` functions for EmployeePay as it should be stored as one property in the DB.
-// For example if the values here are "USD", 16.00, and "per hour" respectively, then the value in the DB should be
-// "16.00 USD/hour"
+func (ep EmployeePay) String() string {
+	return fmt.Sprintf("%.2f %s/%s", ep.Rate, ep.Currency, ep.Cadence)
+}
+
+func (ep EmployeePay) MarshalQuery() (string, error) {
+	return ep.String(), nil
+}
 
 type Employee struct {
-	ID          uuid.UUID `db:"id"`
-	PersonID    uuid.UUID `db:"person_id"`
-	ReportsToID uuid.UUID `db:"reports_to_id"` // The employeeID of the individual that the employee reports to. Use uuid.Nil to indicate the employee reports to nobody
-	Title       string
-	Pay         EmployeePay
-	Status      EmployeeStatus
+	ID          uuid.UUID `jagsqlb:"id;omit"`
+	PersonID    uuid.UUID `jagsqlb:"person_id;omit-update"`
+	ReportsToID uuid.UUID `jagsqlb:"reports_to_eid"` // The employeeID of the individual that the employee reports to. Use uuid.Nil to indicate the employee reports to nobody
+	Title       string    `jagsqlb:"title"`
 }
 
 type EmployeeMetadata struct {
-	HireDate time.Time `db:"hire_date"`
-	SickTime float32   `db:"sick_time"`
-	TimeOff  float32   `db:"time_off"`
-	Exempt   bool
+	Pay       EmployeePay    `jagsqlb:"pay"`
+	HireDate  time.Time      `jagsqlb:"hire_date"`
+	StartDate time.Time      `jagsqlb:"start_date"`
+	SickTime  float32        `jagsqlb:"sick_time"`
+	TimeOff   float32        `jagsqlb:"time_off"`
+	Exempt    bool           `jagsqlb:"exempt"`
+	Status    EmployeeStatus `jagsqlb:"status"`
 }

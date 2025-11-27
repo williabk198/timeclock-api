@@ -133,3 +133,28 @@ func (mcs *mockContactStore) UpdatePersonPhone(ctx context.Context, personID, ph
 	args := mcs.Called(ctx, personID, phoneID, newVal)
 	return args.Error(0)
 }
+
+type mockEmployeeStore struct {
+	mock.Mock
+}
+
+func (mes *mockEmployeeStore) Add(ctx context.Context, item models.Employee) (id uuid.UUID, err error) {
+	args := mes.Called(ctx, item)
+	return args.Get(0).(uuid.UUID), args.Error(1)
+}
+func (mes *mockEmployeeStore) Delete(ctx context.Context, id uuid.UUID) (item models.Employee, err error) {
+	args := mes.Called(ctx, id)
+	return args.Get(0).(models.Employee), args.Error(1)
+}
+func (mes *mockEmployeeStore) GetAllPaginated(ctx context.Context, offset uint, limit uint) (items []models.Employee, err error) {
+	args := mes.Called(ctx, offset, limit)
+	return args.Get(0).([]models.Employee), args.Error(1)
+}
+func (mes *mockEmployeeStore) GetSpecific(ctx context.Context, id uuid.UUID) (item models.Employee, err error) {
+	args := mes.Called(ctx, id)
+	return args.Get(0).(models.Employee), args.Error(1)
+}
+func (mes *mockEmployeeStore) Update(ctx context.Context, id uuid.UUID, item models.Employee) (err error) {
+	args := mes.Called(ctx, item)
+	return args.Error(0)
+}

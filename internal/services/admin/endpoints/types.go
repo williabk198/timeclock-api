@@ -48,13 +48,14 @@ type EmployeeData struct {
 	PersonID    string `json:"personID"`
 	ReportsToID string `json:"reportsToID"`
 	Title       string `json:"title"`
-	Exempt      bool   `json:"exempt"`
-	Status      int    `json:"status"`
 }
 
 type EmployeeMetadata struct {
-	EmployeeID string  `json:"employeeID"`
-	HireDate   int64   `json:"hireDate"` // UNIX Timestamp
-	SickTime   float32 `json:"sickTime"`
-	TimeOff    float32 `json:"timeOff"`
+	EmployeeID string             `json:"employeeID"`
+	Pay        models.EmployeePay `json:"pay"`
+	Status     int                `json:"status"`
+	HireDate   int64              `json:"hireDate"` // UNIX Timestamp
+	SickTime   float32            `json:"sickTime"`
+	TimeOff    float32            `json:"timeOff"`
+	Exempt     bool               `json:"exempt"`
 }
