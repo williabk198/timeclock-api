@@ -10,6 +10,22 @@ import (
 	"github.com/williabk198/timeclock/internal/services/admin"
 )
 
+type ContactEndpoints interface {
+	AddContactAddressForPerson(ctx context.Context, reqData AddSubItemRequestData[PersonAddressData]) (PersonAddressData, error)
+	AddContactEmailForPerson(ctx context.Context, reqData AddSubItemRequestData[PersonEmailData]) (PersonEmailData, error)
+	AddContactPhoneForPerson(ctx context.Context, reqData AddSubItemRequestData[PersonPhoneData]) (PersonPhoneData, error)
+	DeleteContactAddressForPerson(ctx context.Context, reqData DeleteContactRequestData) (PersonAddressData, error)
+	DeleteContactEmailForPerson(ctx context.Context, reqData DeleteContactRequestData) (PersonEmailData, error)
+	DeleteContactPhoneForPerson(ctx context.Context, reqData DeleteContactRequestData) (PersonPhoneData, error)
+	GetPersonContacts(ctx context.Context, personID string) (PersonContactData, error)
+	GetPersonContactAddresses(ctx context.Context, personID string) ([]PersonAddressData, error)
+	GetPersonContactEmails(ctx context.Context, personID string) ([]PersonEmailData, error)
+	GetPersonContactPhones(ctx context.Context, personID string) ([]PersonPhoneData, error)
+	UpdatePersonContactAddress(ctx context.Context, reqData UpdateContactRequestData[PersonAddressData]) (PersonAddressData, error)
+	UpdatePersonContactEmail(ctx context.Context, reqData UpdateContactRequestData[PersonEmailData]) (PersonEmailData, error)
+	UpdatePersonContactPhone(ctx context.Context, reqData UpdateContactRequestData[PersonPhoneData]) (PersonPhoneData, error)
+}
+
 type adminContactEndpoints struct {
 	contactMicro admin.ContactMicro
 }

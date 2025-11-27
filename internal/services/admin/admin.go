@@ -6,18 +6,27 @@ import (
 
 type Service interface {
 	Contact() ContactMicro
+	Employee() EmployeeMicro
 	Person() PersonMicro
 }
 
 type adminService struct {
-	personStore  datastores.PersonStore
-	contactStore datastores.ContactDatastore
+	personStore   datastores.PersonStore
+	contactStore  datastores.ContactDatastore
+	employeeStore datastores.EmployeeDatastore
 }
 
 // Contact implements Service.
 func (a adminService) Contact() ContactMicro {
 	return contactMicroImpl{
 		contactStore: a.contactStore,
+	}
+}
+
+// Employee implements Service.
+func (a adminService) Employee() EmployeeMicro {
+	return employeeMicroImpl{
+		employeeStore: a.employeeStore,
 	}
 }
 
