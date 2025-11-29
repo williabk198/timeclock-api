@@ -21,26 +21,26 @@ type employeeMicroImpl struct {
 }
 
 // Add implements EmployeeMicro.
-func (e employeeMicroImpl) Add(ctx context.Context, person models.Employee) (uuid.UUID, error) {
-	panic("unimplemented")
+func (emi employeeMicroImpl) Add(ctx context.Context, employee models.Employee) (uuid.UUID, error) {
+	return emi.employeeStore.Add(ctx, employee)
 }
 
 // Delete implements EmployeeMicro.
-func (e employeeMicroImpl) Delete(ctx context.Context, id uuid.UUID) (models.Employee, error) {
-	panic("unimplemented")
+func (emi employeeMicroImpl) Delete(ctx context.Context, id uuid.UUID) (models.Employee, error) {
+	return emi.employeeStore.Delete(ctx, id)
 }
 
 // GetAll implements EmployeeMicro.
-func (e employeeMicroImpl) GetAll(ctx context.Context, offset uint, limit uint) ([]models.Employee, error) {
-	panic("unimplemented")
+func (emi employeeMicroImpl) GetAll(ctx context.Context, offset uint, limit uint) ([]models.Employee, error) {
+	return emi.employeeStore.GetAllPaginated(ctx, offset, limit)
 }
 
 // GetSpecific implements EmployeeMicro.
-func (e employeeMicroImpl) GetSpecific(ctx context.Context, id uuid.UUID) (models.Employee, error) {
-	panic("unimplemented")
+func (emi employeeMicroImpl) GetSpecific(ctx context.Context, id uuid.UUID) (models.Employee, error) {
+	return emi.employeeStore.GetSpecific(ctx, id)
 }
 
 // Update implements EmployeeMicro.
-func (e employeeMicroImpl) Update(ctx context.Context, id uuid.UUID, newVal models.Employee) error {
-	panic("unimplemented")
+func (emi employeeMicroImpl) Update(ctx context.Context, id uuid.UUID, newVal models.Employee) error {
+	return emi.employeeStore.Update(ctx, id, newVal)
 }
