@@ -54,7 +54,7 @@ func Test_employeeMicroImpl_Add(t *testing.T) {
 			name:      "Error",
 			e:         employeeMicroImpl{employeeStore: testEmployeeStore},
 			args:      args{ctx: context.Background(), person: testEmployeeError},
-			assertion: assert.NoError,
+			assertion: assert.Error,
 		},
 	}
 	for _, tt := range tests {
@@ -169,7 +169,7 @@ func Test_employeeMicroImpl_GetAll(t *testing.T) {
 			e: employeeMicroImpl{
 				employeeStore: testEmployeeStore,
 			},
-			args:      args{ctx: context.Background(), offset: 0, limit: 2},
+			args:      args{ctx: context.Background(), offset: 0, limit: 0},
 			assertion: assert.Error,
 		},
 	}
@@ -260,13 +260,13 @@ func Test_employeeMicroImpl_Update(t *testing.T) {
 		{
 			name:      "Success",
 			e:         employeeMicroImpl{employeeStore: testEmployeeStore},
-			args:      args{ctx: context.Background(), id: testEmployeeID},
+			args:      args{ctx: context.Background(), id: testEmployeeID, newVal: testEmployee},
 			assertion: assert.NoError,
 		},
 		{
 			name:      "Error",
 			e:         employeeMicroImpl{employeeStore: testEmployeeStore},
-			args:      args{ctx: context.Background(), id: testEmployeNotFoundID},
+			args:      args{ctx: context.Background(), id: testEmployeNotFoundID, newVal: testEmployee},
 			assertion: assert.Error,
 		},
 	}

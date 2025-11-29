@@ -155,6 +155,6 @@ func (mes *mockEmployeeStore) GetSpecific(ctx context.Context, id uuid.UUID) (it
 	return args.Get(0).(models.Employee), args.Error(1)
 }
 func (mes *mockEmployeeStore) Update(ctx context.Context, id uuid.UUID, item models.Employee) (err error) {
-	args := mes.Called(ctx, item)
+	args := mes.Called(ctx, id, item)
 	return args.Error(0)
 }
