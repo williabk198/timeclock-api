@@ -52,10 +52,15 @@ func Test_adminEmployeeEndpoints_Add(t *testing.T) {
 		assertion assert.ErrorAssertionFunc
 	}{
 		{
-			name:      "Success",
-			a:         adminEmployeeEndpoints{employeeMicro: testEmployeeMicro},
-			args:      args{ctx: context.Background(), person: testGoodEmployeeData},
-			want:      testGoodEmployeeData,
+			name: "Success",
+			a:    adminEmployeeEndpoints{employeeMicro: testEmployeeMicro},
+			args: args{ctx: context.Background(), person: testGoodEmployeeData},
+			want: EmployeeData{
+				ID:          testGoodEmployeeID.String(),
+				PersonID:    testGoodEmployeeData.PersonID,
+				ReportsToID: testGoodEmployeeData.ReportsToID,
+				Title:       testGoodEmployeeData.Title,
+			},
 			assertion: assert.NoError,
 		},
 		{
@@ -196,6 +201,7 @@ func Test_adminEmployeeEndpoints_GetAll(t *testing.T) {
 			name:      "Error",
 			a:         adminEmployeeEndpoints{employeeMicro: testEmployeeMicro},
 			args:      args{ctx: context.Background(), reqData: GetPaginatedRequestData{Offset: 0, Limit: 0}},
+			want:      []EmployeeData{},
 			assertion: assert.Error,
 		},
 	}
@@ -216,13 +222,16 @@ func Test_adminEmployeeEndpoints_GetSpecific(t *testing.T) {
 
 	testNotFoundID := uuid.New()
 	testEmployeeID := uuid.New()
+	testPersonID := uuid.New()
 	testEmployeeDB := models.Employee{
-		PersonID:    uuid.New(),
+		ID:          testEmployeeID,
+		PersonID:    testPersonID,
 		ReportsToID: uuid.Nil,
 		Title:       "President",
 	}
 	testEmployeeData := EmployeeData{
-		PersonID:    testEmployeeID.String(),
+		ID:          testEmployeeID.String(),
+		PersonID:    testPersonID.String(),
 		ReportsToID: uuid.Nil.String(),
 		Title:       "President",
 	}
@@ -248,7 +257,7 @@ func Test_adminEmployeeEndpoints_GetSpecific(t *testing.T) {
 		{
 			name:      "Error",
 			a:         adminEmployeeEndpoints{employeeMicro: testEmployeeMicro},
-			args:      args{ctx: context.Background(), id: testEmployeeID.String()},
+			args:      args{ctx: context.Background(), id: testNotFoundID.String()},
 			assertion: assert.Error,
 		},
 	}
@@ -270,14 +279,10 @@ func Test_adminEmployeeEndpoints_Update(t *testing.T) {
 	testNotFoundID := uuid.New()
 	testEmployeeID := uuid.New()
 	testEmployeeDB := models.Employee{
-		ID:          testEmployeeID,
-		PersonID:    uuid.New(),
 		ReportsToID: uuid.Nil,
 		Title:       "Co-Owner",
 	}
 	testEmployeeData := EmployeeData{
-		ID:          testEmployeeDB.ID.String(),
-		PersonID:    testEmployeeDB.PersonID.String(),
 		ReportsToID: testEmployeeDB.ReportsToID.String(),
 		Title:       testEmployeeDB.Title,
 	}
