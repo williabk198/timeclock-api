@@ -123,3 +123,62 @@ func NewEmployeeStore(dbConn *sql.DB) EmployeeDatastore {
 		tableName:  "employees",
 	}
 }
+
+type EmployeeMetadataDatastore interface {
+	Add(ctx context.Context, data models.EmployeeMetadata) error
+	AdjustSickTime(ctx context.Context, employeeID uuid.UUID, adjustment float64) error
+	AdjustTimeOff(ctx context.Context, employeeID uuid.UUID, adjustment float64) error
+	Get(ctx context.Context, employeeID uuid.UUID) (models.EmployeeMetadata, error)
+	UpdatePay(ctx context.Context, employeeID uuid.UUID, newPayInfo models.EmployeePay) error
+	UpdateExemptStatus(ctx context.Context, employeeID uuid.UUID, newExemptVal bool) error
+	UpdateStatus(ctx context.Context, employeeID uuid.UUID, newStatus models.EmployeeStatus) error
+}
+
+type employeeMetadataSqlStore struct {
+	dbConn     *sql.DB
+	sqlBuilder jagsqlb.SqlBuilder
+	tableName  string
+}
+
+// Add implements EmployeeMetadataDatastore.
+func (emss employeeMetadataSqlStore) Add(ctx context.Context, data models.EmployeeMetadata) error {
+	panic("unimplemented")
+}
+
+// AdjustSickTime implements EmployeeMetadataDatastore.
+func (emss employeeMetadataSqlStore) AdjustSickTime(ctx context.Context, employeeID uuid.UUID, newVal float64) error {
+	panic("unimplemented")
+}
+
+// AdjustTimeOff implements EmployeeMetadataDatastore.
+func (emss employeeMetadataSqlStore) AdjustTimeOff(ctx context.Context, employeeID uuid.UUID, newVal float64) error {
+	panic("unimplemented")
+}
+
+// Get implements EmployeeMetadataDatastore.
+func (emss employeeMetadataSqlStore) Get(ctx context.Context, employeeID uuid.UUID) (models.EmployeeMetadata, error) {
+	panic("unimplemented")
+}
+
+// UpdateExemptStatus implements EmployeeMetadataDatastore.
+func (emss employeeMetadataSqlStore) UpdateExemptStatus(ctx context.Context, employeeID uuid.UUID, newExemptVal bool) error {
+	panic("unimplemented")
+}
+
+// UpdatePay implements EmployeeMetadataDatastore.
+func (emss employeeMetadataSqlStore) UpdatePay(ctx context.Context, employeeID uuid.UUID, newPayInfo models.EmployeePay) error {
+	panic("unimplemented")
+}
+
+// UpdateStatus implements EmployeeMetadataDatastore.
+func (emss employeeMetadataSqlStore) UpdateStatus(ctx context.Context, employeeID uuid.UUID, newStatus models.EmployeeStatus) error {
+	panic("unimplemented")
+}
+
+func NewEmployeeMetadataStore(dbConn *sql.DB) EmployeeMetadataDatastore {
+	return employeeMetadataSqlStore{
+		dbConn:     dbConn,
+		sqlBuilder: jagsqlb.NewSqlBuilder(),
+		tableName:  "metadata.employees",
+	}
+}

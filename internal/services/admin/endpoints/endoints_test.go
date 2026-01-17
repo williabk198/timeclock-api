@@ -128,7 +128,7 @@ type mockEmployeeMicro struct {
 	mock.Mock
 }
 
-func (mem *mockEmployeeMicro) Add(ctx context.Context, employee models.Employee) (uuid.UUID, error) {
+func (mem *mockEmployeeMicro) Add(ctx context.Context, employee models.Employee, metadata models.EmployeeMetadata) (uuid.UUID, error) {
 	args := mem.Called(ctx, employee)
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }

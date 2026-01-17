@@ -9,7 +9,7 @@ import (
 )
 
 type EmployeeMicro interface {
-	Add(ctx context.Context, person models.Employee) (uuid.UUID, error)
+	Add(ctx context.Context, employee models.Employee, metadata models.EmployeeMetadata) (uuid.UUID, error)
 	Delete(ctx context.Context, id uuid.UUID) (models.Employee, error)
 	GetAll(ctx context.Context, offset uint, limit uint) ([]models.Employee, error)
 	GetSpecific(ctx context.Context, id uuid.UUID) (models.Employee, error)
@@ -17,11 +17,12 @@ type EmployeeMicro interface {
 }
 
 type employeeMicroImpl struct {
-	employeeStore datastores.EmployeeDatastore
+	employeeStore     datastores.EmployeeDatastore
+	employeeMetaStore datastores.EmployeeMetadataDatastore
 }
 
 // Add implements EmployeeMicro.
-func (emi employeeMicroImpl) Add(ctx context.Context, employee models.Employee) (uuid.UUID, error) {
+func (emi employeeMicroImpl) Add(ctx context.Context, employee models.Employee, metadata models.EmployeeMetadata) (uuid.UUID, error) {
 	return emi.employeeStore.Add(ctx, employee)
 }
 
