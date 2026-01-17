@@ -37,7 +37,7 @@ func (a adminEmployeeEndpoints) Add(ctx context.Context, employee EmployeeData) 
 		PersonID:    personID,
 		ReportsToID: reportsToID,
 		Title:       employee.Title,
-	})
+	}, models.EmployeeMetadata{})
 	if err != nil {
 		return EmployeeData{}, fmt.Errorf("failed to add employee to DB: %w", err)
 	}

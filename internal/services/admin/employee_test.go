@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -12,8 +13,9 @@ import (
 
 func Test_employeeMicroImpl_Add(t *testing.T) {
 	type args struct {
-		ctx    context.Context
-		person models.Employee
+		ctx      context.Context
+		employee models.Employee
+		metadata models.EmployeeMetadata
 	}
 	type wants struct {
 		id uuid.UUID
@@ -23,7 +25,6 @@ func Test_employeeMicroImpl_Add(t *testing.T) {
 	testPersonID := uuid.New()
 
 	testEmployee := models.Employee{
-		ID:          testEmployeeID,
 		PersonID:    testPersonID,
 		ReportsToID: uuid.Nil,
 		Title:       "Owner/President",
@@ -32,9 +33,37 @@ func Test_employeeMicroImpl_Add(t *testing.T) {
 		Title: "error_val",
 	}
 
+	testEmployeeMetadata := models.EmployeeMetadata{
+		EmployeeID: testEmployeeID,
+		Pay: models.EmployeePay{
+			Currency: "USD",
+			Rate:     19.0,
+			Cadence:  models.PayCadenceHourly,
+		},
+		HireDate:  time.Date(2017, 5, 4, 0, 0, 0, 0, time.UTC),
+		StartDate: time.Date(2017, 6, 5, 13, 0, 0, 0, time.UTC),
+		SickTime:  20.0,
+		TimeOff:   20.0,
+		Exempt:    false,
+		Status:    models.EmployeeStatusActive,
+	}
+
+	testEmployeeMetadataError := models.EmployeeMetadata{
+		EmployeeID: testEmployeeID,
+		Pay: models.EmployeePay{
+			Currency: "invalid",
+			Rate:     19.0,
+			Cadence:  models.PayCadenceHourly,
+		},
+	}
+
 	testEmployeeStore := &mockEmployeeStore{}
 	testEmployeeStore.On("Add", mock.Anything, testEmployee).Return(testEmployeeID, error(nil))
 	testEmployeeStore.On("Add", mock.Anything, testEmployeeError).Return(uuid.Nil, assert.AnError)
+
+	testEmployeeMetaStore := &mockEmployeeMetaStore{}
+	testEmployeeMetaStore.On("Add", mock.Anything, testEmployeeMetadata).Return(error(nil))
+	testEmployeeMetaStore.On("Add", mock.Anything, testEmployeeMetadataError).Return(assert.AnError)
 
 	tests := []struct {
 		name      string
@@ -45,21 +74,27 @@ func Test_employeeMicroImpl_Add(t *testing.T) {
 	}{
 		{
 			name:      "Success",
-			e:         employeeMicroImpl{employeeStore: testEmployeeStore},
-			args:      args{ctx: context.Background(), person: testEmployee},
+			e:         employeeMicroImpl{employeeStore: testEmployeeStore, employeeMetaStore: testEmployeeMetaStore},
+			args:      args{ctx: context.Background(), employee: testEmployee, metadata: testEmployeeMetadata},
 			wants:     wants{id: testEmployeeID},
 			assertion: assert.NoError,
 		},
 		{
-			name:      "Error",
-			e:         employeeMicroImpl{employeeStore: testEmployeeStore},
-			args:      args{ctx: context.Background(), person: testEmployeeError},
+			name:      "Error; EmployeeData",
+			e:         employeeMicroImpl{employeeStore: testEmployeeStore, employeeMetaStore: testEmployeeMetaStore},
+			args:      args{ctx: context.Background(), employee: testEmployeeError, metadata: testEmployeeMetadata},
+			assertion: assert.Error,
+		},
+		{
+			name:      "Error; Metadata",
+			e:         employeeMicroImpl{employeeStore: testEmployeeStore, employeeMetaStore: testEmployeeMetaStore},
+			args:      args{ctx: context.Background(), employee: testEmployee, metadata: testEmployeeMetadataError},
 			assertion: assert.Error,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotID, err := tt.e.Add(tt.args.ctx, tt.args.person)
+			gotID, err := tt.e.Add(tt.args.ctx, tt.args.employee, tt.args.metadata)
 			tt.assertion(t, err)
 			assert.Equal(t, tt.wants.id, gotID)
 		})

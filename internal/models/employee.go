@@ -74,11 +74,12 @@ type Employee struct {
 }
 
 type EmployeeMetadata struct {
-	Pay       EmployeePay    `jagsqlb:"pay"`
-	HireDate  time.Time      `jagsqlb:"hire_date"`
-	StartDate time.Time      `jagsqlb:"start_date"`
-	SickTime  float32        `jagsqlb:"sick_time"`
-	TimeOff   float32        `jagsqlb:"time_off"`
-	Exempt    bool           `jagsqlb:"exempt"`
-	Status    EmployeeStatus `jagsqlb:"status"`
+	EmployeeID uuid.UUID      `jagsqlb:"eid"`
+	Pay        EmployeePay    `jagsqlb:"pay"`
+	HireDate   time.Time      `jagsqlb:"hire_date"`
+	StartDate  time.Time      `jagsqlb:"start_date"`
+	SickTime   float32        `jagsqlb:"sick_time"`
+	TimeOff    float32        `jagsqlb:"time_off"`
+	Exempt     bool           `jagsqlb:"exempt"`
+	Status     EmployeeStatus `jagsqlb:"status"`
 }
