@@ -610,6 +610,7 @@ func Test_adminContactEndpoints_DeleteContactAddressForPerson(t *testing.T) {
 					ContactID: testAddressID.String(),
 				},
 			},
+			assertion: assert.Error,
 		},
 		{
 			name: "Error; Address DNE",
@@ -623,6 +624,7 @@ func Test_adminContactEndpoints_DeleteContactAddressForPerson(t *testing.T) {
 					ContactID: testAddressNotFoundID.String(),
 				},
 			},
+			assertion: assert.Error,
 		},
 	}
 	for _, tt := range tests {
@@ -697,6 +699,7 @@ func Test_adminContactEndpoints_DeleteContactEmailForPerson(t *testing.T) {
 					ContactID: testEmailID.String(),
 				},
 			},
+			assertion: assert.Error,
 		},
 		{
 			name: "Error; Address DNE",
@@ -710,6 +713,7 @@ func Test_adminContactEndpoints_DeleteContactEmailForPerson(t *testing.T) {
 					ContactID: testEmailNotFoundID.String(),
 				},
 			},
+			assertion: assert.Error,
 		},
 	}
 	for _, tt := range tests {
@@ -787,6 +791,7 @@ func Test_adminContactEndpoints_DeleteContactPhoneForPerson(t *testing.T) {
 					ContactID: testPhoneID.String(),
 				},
 			},
+			assertion: assert.Error,
 		},
 		{
 			name: "Error; Address DNE",
@@ -800,6 +805,7 @@ func Test_adminContactEndpoints_DeleteContactPhoneForPerson(t *testing.T) {
 					ContactID: testPhoneNotFoundID.String(),
 				},
 			},
+			assertion: assert.Error,
 		},
 	}
 	for _, tt := range tests {

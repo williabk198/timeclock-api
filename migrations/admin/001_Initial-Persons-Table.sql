@@ -12,9 +12,7 @@ CREATE TABLE person.persons (
 );
 COMMENT ON TABLE person.persons IS 'Holds the basic information of a person like name, birthday, and preferred gender & pronouns';
 
-COPY person.persons (id, given_name, family_name, first_name, dob, gender, pronouns) FROM stdin;
-f43d8d6f-bd21-4fd7-8c7e-61ca1077b789	Testy	McTesterson	given	1970-01-01	non-binary	they/them
-\.
+INSERT INTO person.persons VALUES ('f43d8d6f-bd21-4fd7-8c7e-61ca1077b789', 'Testy', 'McTesterson', 'given', '1970-01-01', 'non-binary', 'they/them');
 
 ALTER TABLE ONLY person.persons
     ADD CONSTRAINT persons_pkey PRIMARY KEY (id);

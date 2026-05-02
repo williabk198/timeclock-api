@@ -17,14 +17,9 @@ import (
 
 func Test_employeeSqlStore_Add(t *testing.T) {
 	type args struct {
-		ctx  context.Context
-		item models.Employee
-	}
-	type wantQuery struct {
-		rawQuery  string
-		arguments []driver.Value
-		result    *sqlmock.Rows
-		returnErr error
+		ctx      context.Context
+		employee models.Employee
+		metadata models.EmployeeMetadata
 	}
 
 	testSqlBuilder := jagsqlb.NewSqlBuilder()
@@ -38,48 +33,66 @@ func Test_employeeSqlStore_Add(t *testing.T) {
 	testReportsToID := uuid.New()
 
 	tests := []struct {
-		name      string
-		e         employeeSqlStore
-		args      args
-		wantQuery *wantQuery
-		wantId    uuid.UUID
-		assertion assert.ErrorAssertionFunc
+		name                 string
+		e                    employeeSqlStore
+		args                 args
+		queryExpectationFunc queryExpectationsFunc
+		wantId               uuid.UUID
+		assertion            assert.ErrorAssertionFunc
 	}{
 		{
 			name: "Success",
 			e: employeeSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  "employees",
+				dbConn:            mockSession,
+				sqlBuilder:        testSqlBuilder,
+				tableName:         "employees",
+				metadataTableName: "metadata.employees",
 			},
 			args: args{
 				ctx: context.Background(),
-				item: models.Employee{
+				employee: models.Employee{
 					PersonID:    testPersonID,
 					ReportsToID: testReportsToID,
 					Title:       "QA Tester",
 				},
+				metadata: models.EmployeeMetadata{
+					Pay:       models.EmployeePay{Currency: "USD", Rate: 25.0, Cadence: models.PayCadenceHourly},
+					HireDate:  time.Date(2017, 5, 8, 0, 0, 0, 0, time.UTC),
+					StartDate: time.Date(2017, 6, 5, 0, 0, 0, 0, time.UTC),
+					SickTime:  40.0,
+					TimeOff:   40.0,
+					Status:    models.EmployeeStatusActive,
+				},
 			},
-			wantQuery: &wantQuery{
-				rawQuery:  `INSERT INTO "employees" ("person_id", "reports_to_eid", "title") VALUES ($1, $2, $3) RETURNING "id";`,
-				arguments: []driver.Value{testPersonID.String(), testReportsToID.String(), "QA Tester"},
-				result:    sqlmock.NewRows([]string{"id"}).AddRow(newEmployeeID.String()),
+			queryExpectationFunc: func(s sqlmock.Sqlmock) {
+				s.ExpectBegin()
+				s.ExpectQuery(
+					regexp.QuoteMeta(`INSERT INTO "employees" ("person_id", "reports_to_eid", "title") VALUES ($1, $2, $3) RETURNING "id";`)).WithArgs(
+					testPersonID.String(), testReportsToID.String(), "QA Tester",
+				).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(newEmployeeID.String()))
+
+				s.ExpectExec(regexp.QuoteMeta(
+					`INSERT INTO "metadata"."employees" ("eid", "pay", "hire_date", "start_date", "sick_time_hrs", "time_off_hrs", "exempt", "status") VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`,
+				)).WithArgs(
+					newEmployeeID, "25.00 USD/hour", time.Date(2017, 5, 8, 0, 0, 0, 0, time.UTC), time.Date(2017, 6, 5, 0, 0, 0, 0, time.UTC), 40.0, 40.0, false, 1,
+				).WillReturnResult(sqlmock.NewResult(0, 1))
+				s.ExpectCommit()
 			},
 			wantId:    newEmployeeID,
 			assertion: assert.NoError,
 		},
 		{
-			name: "Error; SQL Builder",
+			name: "Error; Employee SQL Builder",
 			e: employeeSqlStore{
 				dbConn:     mockSession,
 				sqlBuilder: testSqlBuilder,
 				tableName:  ".invalid",
 			},
-			args:      args{ctx: context.Background(), item: models.Employee{}},
+			args:      args{ctx: context.Background(), employee: models.Employee{}},
 			assertion: assert.Error,
 		},
 		{
-			name: "Error Query Execution",
+			name: "Error; Employee Query Execution",
 			e: employeeSqlStore{
 				dbConn:     mockSession,
 				sqlBuilder: testSqlBuilder,
@@ -87,31 +100,97 @@ func Test_employeeSqlStore_Add(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				item: models.Employee{
+				employee: models.Employee{
 					PersonID:    newEmployeeID,
 					ReportsToID: testReportsToID,
 					Title:       "invalid",
 				},
 			},
-			wantQuery: &wantQuery{
-				rawQuery:  `INSERT INTO "employees" ("person_id", "reports_to_eid", "title") VALUES ($1, $2, $3) RETURNING "id";`,
-				arguments: []driver.Value{newEmployeeID.String(), testReportsToID.String(), "invalid"},
-				result:    sqlmock.NewRows(nil),
-				returnErr: assert.AnError,
+			queryExpectationFunc: func(s sqlmock.Sqlmock) {
+				s.ExpectBegin()
+				s.ExpectQuery(regexp.QuoteMeta(
+					`INSERT INTO "employees" ("person_id", "reports_to_eid", "title") VALUES ($1, $2, $3) RETURNING "id";`,
+				)).WithArgs(
+					newEmployeeID.String(), testReportsToID.String(), "invalid",
+				).WillReturnError(assert.AnError)
+				s.ExpectRollback()
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Metadata Query Builder",
+			e: employeeSqlStore{
+				dbConn:            mockSession,
+				sqlBuilder:        testSqlBuilder,
+				tableName:         "employees",
+				metadataTableName: ".invalid",
+			},
+			args: args{
+				ctx: context.Background(),
+				employee: models.Employee{
+					PersonID:    testPersonID,
+					ReportsToID: testReportsToID,
+					Title:       "QA Tester",
+				},
+			},
+			queryExpectationFunc: func(s sqlmock.Sqlmock) {
+				s.ExpectBegin()
+				s.ExpectQuery(
+					regexp.QuoteMeta(`INSERT INTO "employees" ("person_id", "reports_to_eid", "title") VALUES ($1, $2, $3) RETURNING "id";`)).WithArgs(
+					testPersonID.String(), testReportsToID.String(), "QA Tester",
+				).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(newEmployeeID.String()))
+				s.ExpectRollback()
+			},
+			assertion: assert.Error,
+		},
+		{
+			name: "Error; Metadata Query Execution",
+			e: employeeSqlStore{
+				dbConn:            mockSession,
+				sqlBuilder:        testSqlBuilder,
+				tableName:         "employees",
+				metadataTableName: "metadata.employees",
+			},
+			args: args{
+				ctx: context.Background(),
+				employee: models.Employee{
+					PersonID:    testPersonID,
+					ReportsToID: testReportsToID,
+					Title:       "QA Tester",
+				},
+				metadata: models.EmployeeMetadata{
+					Pay:       models.EmployeePay{Currency: "USD", Rate: 52000, Cadence: models.PayCadenceYearly},
+					HireDate:  time.Date(2017, 5, 8, 0, 0, 0, 0, time.UTC),
+					StartDate: time.Date(2017, 6, 5, 0, 0, 0, 0, time.UTC),
+					SickTime:  -1.0,
+					TimeOff:   -1.0,
+					Exempt:    true,
+					Status:    models.EmployeeStatusActive,
+				},
+			},
+			queryExpectationFunc: func(s sqlmock.Sqlmock) {
+				s.ExpectBegin()
+				s.ExpectQuery(
+					regexp.QuoteMeta(`INSERT INTO "employees" ("person_id", "reports_to_eid", "title") VALUES ($1, $2, $3) RETURNING "id";`)).WithArgs(
+					testPersonID.String(), testReportsToID.String(), "QA Tester",
+				).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(newEmployeeID.String()))
+
+				s.ExpectExec(regexp.QuoteMeta(
+					`INSERT INTO "metadata"."employees" ("eid", "pay", "hire_date", "start_date", "sick_time_hrs", "time_off_hrs", "exempt", "status") VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`,
+				)).WithArgs(
+					newEmployeeID, "52000.00 USD/year", time.Date(2017, 5, 8, 0, 0, 0, 0, time.UTC), time.Date(2017, 6, 5, 0, 0, 0, 0, time.UTC), -1.0, -1.0, true, 1,
+				).WillReturnError(assert.AnError)
+				s.ExpectRollback()
 			},
 			assertion: assert.Error,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.wantQuery != nil {
-				mockDb.ExpectQuery(regexp.QuoteMeta(tt.wantQuery.rawQuery)).
-					WithArgs(tt.wantQuery.arguments...).WillReturnRows(
-					tt.wantQuery.result,
-				).WillReturnError(tt.wantQuery.returnErr)
+			if tt.queryExpectationFunc != nil {
+				tt.queryExpectationFunc.SetExpectactions(mockDb)
 			}
-
-			gotId, err := tt.e.Add(tt.args.ctx, tt.args.item)
+			gotId, err := tt.e.Add(tt.args.ctx, tt.args.employee, tt.args.metadata)
 			tt.assertion(t, err)
 			assert.Equal(t, tt.wantId, gotId)
 
@@ -601,7 +680,7 @@ func Test_employeeSqlStore_Update(t *testing.T) {
 					WillReturnError(tt.wantQuery.returnErr)
 			}
 
-			tt.assertion(t, tt.e.Update(tt.args.ctx, tt.args.id, tt.args.item))
+			tt.assertion(t, tt.e.UpdateEmployee(tt.args.ctx, tt.args.id, tt.args.item))
 
 			// Check to see if the expectations of the query were met
 			if err := mockDb.ExpectationsWereMet(); err != nil {
@@ -633,9 +712,10 @@ func TestNewEmployeeStore(t *testing.T) {
 				dbConn: mockSession,
 			},
 			want: employeeSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  "employees",
+				dbConn:            mockSession,
+				sqlBuilder:        testSqlBuilder,
+				tableName:         "employees",
+				metadataTableName: "metadata.employees",
 			},
 		},
 	}
@@ -646,238 +726,7 @@ func TestNewEmployeeStore(t *testing.T) {
 	}
 }
 
-func Test_employeeMetadataSqlStore_Add(t *testing.T) {
-	type args struct {
-		ctx  context.Context
-		data models.EmployeeMetadata
-	}
-	type wantQuery struct {
-		rawQuery  string
-		arguments []driver.Value
-		result    driver.Result
-		returnErr error
-	}
-
-	testSqlBuilder := jagsqlb.NewSqlBuilder()
-	mockSession, mockDb, err := sqlmock.New()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	testEmployeeID := uuid.New()
-	testBadEmployeeID := uuid.New()
-	testHireDate := time.Date(2017, 5, 4, 0, 0, 0, 0, time.UTC)
-	testStartDate := time.Date(2017, 6, 5, 13, 0, 0, 0, time.UTC)
-
-	tests := []struct {
-		name      string
-		emss      employeeMetadataSqlStore
-		args      args
-		wantQuery *wantQuery
-		assertion assert.ErrorAssertionFunc
-	}{
-		{
-			name: "Success",
-			emss: employeeMetadataSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  "metadata.employees",
-			},
-			args: args{
-				ctx: context.Background(),
-				data: models.EmployeeMetadata{
-					EmployeeID: testEmployeeID,
-					Pay: models.EmployeePay{
-						Currency: "USD",
-						Rate:     19.0,
-						Cadence:  models.PayCadenceHourly,
-					},
-					HireDate:  testHireDate,
-					StartDate: testStartDate,
-					SickTime:  16.0,
-					TimeOff:   20.0,
-					Exempt:    false,
-					Status:    models.EmployeeStatusActive,
-				},
-			},
-			wantQuery: &wantQuery{
-				rawQuery:  `INSERT INTO "metadata"."employees" ("eid", "pay", "hire_date", "start_date", "sick_time", "time_off", "exempt", "status") VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`,
-				arguments: []driver.Value{testEmployeeID.String(), "19.00 USD/hour", testHireDate, testStartDate, 16.0, 20.0, false, 1},
-				result:    driver.ResultNoRows,
-			},
-			assertion: assert.NoError,
-		},
-		{
-			name: "Error; SQL Builder",
-			emss: employeeMetadataSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  ".invalid",
-			},
-			args: args{
-				ctx:  context.Background(),
-				data: models.EmployeeMetadata{},
-			},
-			assertion: assert.Error,
-		},
-		{
-			name: "Error; Query Execution",
-			emss: employeeMetadataSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  "metadata.employees",
-			},
-			args: args{
-				ctx: context.Background(),
-				data: models.EmployeeMetadata{
-					EmployeeID: testBadEmployeeID,
-					Pay: models.EmployeePay{
-						Currency: "CAD",
-						Rate:     100_000.0,
-						Cadence:  models.PayCadenceYearly,
-					},
-					HireDate:  testHireDate,
-					StartDate: testStartDate,
-					SickTime:  16.0,
-					TimeOff:   20.0,
-					Exempt:    true,
-					Status:    models.EmployeeStatusActive,
-				},
-			},
-			wantQuery: &wantQuery{
-				rawQuery:  `INSERT INTO "metadata"."employees" ("eid", "pay", "hire_date", "start_date", "sick_time", "time_off", "exempt", "status") VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`,
-				arguments: []driver.Value{testBadEmployeeID.String(), "100000.00 CAD/year", testHireDate, testStartDate, 16.0, 20.0, true, 1},
-				returnErr: assert.AnError,
-			},
-			assertion: assert.Error,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.wantQuery != nil {
-				mockDb.ExpectExec(regexp.QuoteMeta(tt.wantQuery.rawQuery)).
-					WithArgs(tt.wantQuery.arguments...).
-					WillReturnResult(tt.wantQuery.result).
-					WillReturnError(tt.wantQuery.returnErr)
-			}
-
-			tt.assertion(t, tt.emss.Add(tt.args.ctx, tt.args.data))
-
-			// Check to see if the expectations of the query were met
-			if err := mockDb.ExpectationsWereMet(); err != nil {
-				t.Errorf("sql expectations were not met: %v", err)
-			}
-		})
-	}
-}
-
-func Test_employeeMetadataSqlStore_Get(t *testing.T) {
-	type args struct {
-		ctx        context.Context
-		employeeID uuid.UUID
-	}
-	type wantQuery struct {
-		rawQuery  string
-		arguments []driver.Value
-		result    *sqlmock.Rows
-		returnErr error
-	}
-
-	columns := []string{"eid", "pay", "hire_date", "start_date", "sick_time", "time_off", "exempt", "status"}
-	testSqlBuilder := jagsqlb.NewSqlBuilder()
-	mockSession, mockDb, err := sqlmock.New()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	testEmployeeID := uuid.New()
-	testNotFoundID := uuid.New()
-	testHireDate := time.Date(2017, 5, 4, 0, 0, 0, 0, time.UTC)
-	testStartDate := time.Date(2017, 6, 5, 13, 0, 0, 0, time.UTC)
-
-	tests := []struct {
-		name      string
-		emss      employeeMetadataSqlStore
-		args      args
-		wantQuery *wantQuery
-		want      models.EmployeeMetadata
-		assertion assert.ErrorAssertionFunc
-	}{
-		{
-			name: "Success",
-			emss: employeeMetadataSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  "metadata.employees",
-			},
-			args: args{
-				ctx:        context.Background(),
-				employeeID: testEmployeeID,
-			},
-			wantQuery: &wantQuery{
-				rawQuery:  `SELECT * FROM "metadata"."employees" WHERE "id" = $1;`,
-				arguments: []driver.Value{testEmployeeID.String()},
-				result: sqlmock.NewRows(columns).AddRow(
-					testEmployeeID.String(), "74000 USD/year", testHireDate, testStartDate, 20.0, 40.0, true, 1,
-				),
-			},
-			want:      models.EmployeeMetadata{},
-			assertion: assert.NoError,
-		},
-		{
-			name: "Error; SQL Builder",
-			emss: employeeMetadataSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  ".invalid",
-			},
-			args: args{
-				ctx:        context.Background(),
-				employeeID: testEmployeeID,
-			},
-			assertion: assert.Error,
-		},
-		{
-			name: "Error; Query Execution",
-			emss: employeeMetadataSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  "metadata.employees",
-			},
-			args: args{
-				ctx:        context.Background(),
-				employeeID: testEmployeeID,
-			},
-			wantQuery: &wantQuery{
-				rawQuery:  `SELECT * FROM "metadata"."employees" WHERE "id" = $1;`,
-				arguments: []driver.Value{testNotFoundID.String()},
-				returnErr: assert.AnError,
-			},
-			assertion: assert.Error,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.wantQuery != nil {
-				mockDb.ExpectQuery(regexp.QuoteMeta(tt.wantQuery.rawQuery)).
-					WithArgs(tt.wantQuery.arguments...).WillReturnRows(
-					tt.wantQuery.result,
-				).WillReturnError(tt.wantQuery.returnErr)
-			}
-
-			got, err := tt.emss.Get(tt.args.ctx, tt.args.employeeID)
-			tt.assertion(t, err)
-			assert.Equal(t, tt.want, got)
-
-			// Check to see if the expectations of the query were met
-			if err := mockDb.ExpectationsWereMet(); err != nil {
-				t.Errorf("sql expectations were not met: %v", err)
-			}
-		})
-	}
-}
-
-func Test_employeeMetadataSqlStore_UpdateExemptStatus(t *testing.T) {
+func Test_employeeSqlStore_UpdateExemptStatus(t *testing.T) {
 	type args struct {
 		ctx          context.Context
 		employeeID   uuid.UUID
@@ -901,17 +750,17 @@ func Test_employeeMetadataSqlStore_UpdateExemptStatus(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		emss      employeeMetadataSqlStore
+		ess       employeeSqlStore
 		args      args
 		wantQuery *wantQuery
 		assertion assert.ErrorAssertionFunc
 	}{
 		{
 			name: "Success",
-			emss: employeeMetadataSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  "metadata.employees",
+			ess: employeeSqlStore{
+				dbConn:            mockSession,
+				sqlBuilder:        testSqlBuilder,
+				metadataTableName: "metadata.employees",
 			},
 			args: args{
 				ctx:          context.Background(),
@@ -919,7 +768,7 @@ func Test_employeeMetadataSqlStore_UpdateExemptStatus(t *testing.T) {
 				newExemptVal: false,
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `UPDATE "metadata"."employees" SET "exempt" = $1 WHERE "id" = $2;`,
+				rawQuery:  `UPDATE "metadata"."employees" SET "exempt"=$1 WHERE "eid" = $2;`,
 				arguments: []driver.Value{false, testEmployeeID.String()},
 				result:    sqlmock.NewResult(0, 1),
 			},
@@ -927,10 +776,10 @@ func Test_employeeMetadataSqlStore_UpdateExemptStatus(t *testing.T) {
 		},
 		{
 			name: "Error; SQL Builder",
-			emss: employeeMetadataSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  ".invalid",
+			ess: employeeSqlStore{
+				dbConn:            mockSession,
+				sqlBuilder:        testSqlBuilder,
+				metadataTableName: ".invalid",
 			},
 			args: args{
 				ctx:          context.Background(),
@@ -941,10 +790,10 @@ func Test_employeeMetadataSqlStore_UpdateExemptStatus(t *testing.T) {
 		},
 		{
 			name: "Error; Query Execution",
-			emss: employeeMetadataSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  "metadata.employees",
+			ess: employeeSqlStore{
+				dbConn:            mockSession,
+				sqlBuilder:        testSqlBuilder,
+				metadataTableName: "metadata.employees",
 			},
 			args: args{
 				ctx:          context.Background(),
@@ -952,7 +801,7 @@ func Test_employeeMetadataSqlStore_UpdateExemptStatus(t *testing.T) {
 				newExemptVal: false,
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `UPDATE "metadata"."employees" SET "exempt" = $1 WHERE "id" = $2;`,
+				rawQuery:  `UPDATE "metadata"."employees" SET "exempt"=$1 WHERE "eid" = $2;`,
 				arguments: []driver.Value{false, testNotFoundID.String()},
 				returnErr: assert.AnError,
 			},
@@ -968,7 +817,7 @@ func Test_employeeMetadataSqlStore_UpdateExemptStatus(t *testing.T) {
 					WillReturnError(tt.wantQuery.returnErr)
 			}
 
-			tt.assertion(t, tt.emss.UpdateExemptStatus(tt.args.ctx, tt.args.employeeID, tt.args.newExemptVal))
+			tt.assertion(t, tt.ess.UpdateExemptStatus(tt.args.ctx, tt.args.employeeID, tt.args.newExemptVal))
 
 			// Check to see if the expectations of the query were met
 			if err := mockDb.ExpectationsWereMet(); err != nil {
@@ -978,7 +827,7 @@ func Test_employeeMetadataSqlStore_UpdateExemptStatus(t *testing.T) {
 	}
 }
 
-func Test_employeeMetadataSqlStore_UpdatePay(t *testing.T) {
+func Test_employeeSqlStore_UpdatePay(t *testing.T) {
 	type args struct {
 		ctx        context.Context
 		employeeID uuid.UUID
@@ -1002,17 +851,17 @@ func Test_employeeMetadataSqlStore_UpdatePay(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		emss      employeeMetadataSqlStore
+		ess       employeeSqlStore
 		args      args
 		wantQuery *wantQuery
 		assertion assert.ErrorAssertionFunc
 	}{
 		{
 			name: "Success",
-			emss: employeeMetadataSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  "metadata.employees",
+			ess: employeeSqlStore{
+				dbConn:            mockSession,
+				sqlBuilder:        testSqlBuilder,
+				metadataTableName: "metadata.employees",
 			},
 			args: args{
 				ctx:        context.Background(),
@@ -1024,18 +873,18 @@ func Test_employeeMetadataSqlStore_UpdatePay(t *testing.T) {
 				},
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `UPDATE "metadata"."employees" SET pay = $1 WHERE "id" = $2;`,
-				arguments: []driver.Value{"25 USD/hour", testEmployeeID.String()},
+				rawQuery:  `UPDATE "metadata"."employees" SET "pay"=$1 WHERE "eid" = $2;`,
+				arguments: []driver.Value{"25.00 USD/hour", testEmployeeID.String()},
 				result:    sqlmock.NewResult(0, 1),
 			},
 			assertion: assert.NoError,
 		},
 		{
 			name: "Error; SQL Builder",
-			emss: employeeMetadataSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  ".invalid",
+			ess: employeeSqlStore{
+				dbConn:            mockSession,
+				sqlBuilder:        testSqlBuilder,
+				metadataTableName: ".invalid",
 			},
 			args: args{
 				ctx:        context.Background(),
@@ -1046,10 +895,10 @@ func Test_employeeMetadataSqlStore_UpdatePay(t *testing.T) {
 		},
 		{
 			name: "Error; Query Execution",
-			emss: employeeMetadataSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  "metadata.employees",
+			ess: employeeSqlStore{
+				dbConn:            mockSession,
+				sqlBuilder:        testSqlBuilder,
+				metadataTableName: "metadata.employees",
 			},
 			args: args{
 				ctx:        context.Background(),
@@ -1061,8 +910,8 @@ func Test_employeeMetadataSqlStore_UpdatePay(t *testing.T) {
 				},
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `UPDATE "metadata"."employees" SET pay = $1 WHERE "id" = $2;`,
-				arguments: []driver.Value{"25 USD/hour", testNotFoundID.String()},
+				rawQuery:  `UPDATE "metadata"."employees" SET "pay"=$1 WHERE "eid" = $2;`,
+				arguments: []driver.Value{"25.00 USD/hour", testNotFoundID.String()},
 				returnErr: assert.AnError,
 			},
 			assertion: assert.Error,
@@ -1077,7 +926,7 @@ func Test_employeeMetadataSqlStore_UpdatePay(t *testing.T) {
 					WillReturnError(tt.wantQuery.returnErr)
 			}
 
-			tt.assertion(t, tt.emss.UpdatePay(tt.args.ctx, tt.args.employeeID, tt.args.newPayInfo))
+			tt.assertion(t, tt.ess.UpdatePay(tt.args.ctx, tt.args.employeeID, tt.args.newPayInfo))
 
 			// Check to see if the expectations of the query were met
 			if err := mockDb.ExpectationsWereMet(); err != nil {
@@ -1087,7 +936,7 @@ func Test_employeeMetadataSqlStore_UpdatePay(t *testing.T) {
 	}
 }
 
-func Test_employeeMetadataSqlStore_UpdateStatus(t *testing.T) {
+func Test_employeeSqlStore_UpdateStatus(t *testing.T) {
 	type args struct {
 		ctx        context.Context
 		employeeID uuid.UUID
@@ -1111,17 +960,17 @@ func Test_employeeMetadataSqlStore_UpdateStatus(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		emss      employeeMetadataSqlStore
+		ess       employeeSqlStore
 		args      args
 		wantQuery *wantQuery
 		assertion assert.ErrorAssertionFunc
 	}{
 		{
 			name: "Success",
-			emss: employeeMetadataSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  "metadata.employees",
+			ess: employeeSqlStore{
+				dbConn:            mockSession,
+				sqlBuilder:        testSqlBuilder,
+				metadataTableName: "metadata.employees",
 			},
 			args: args{
 				ctx:        context.Background(),
@@ -1129,18 +978,18 @@ func Test_employeeMetadataSqlStore_UpdateStatus(t *testing.T) {
 				newStatus:  models.EmployeeStatusInactive,
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `UPDATE "metadata"."employees" SET "status" = $1 WHERE "id" = $2;`,
-				arguments: []driver.Value{3, testEmployeeID.String()},
+				rawQuery:  `UPDATE "metadata"."employees" SET "status"=$1 WHERE "eid" = $2;`,
+				arguments: []driver.Value{2, testEmployeeID.String()},
 				result:    sqlmock.NewResult(0, 1),
 			},
 			assertion: assert.NoError,
 		},
 		{
 			name: "Error; SQL Builder",
-			emss: employeeMetadataSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  ".invalid",
+			ess: employeeSqlStore{
+				dbConn:            mockSession,
+				sqlBuilder:        testSqlBuilder,
+				metadataTableName: ".invalid",
 			},
 			args: args{
 				ctx:        context.Background(),
@@ -1151,10 +1000,10 @@ func Test_employeeMetadataSqlStore_UpdateStatus(t *testing.T) {
 		},
 		{
 			name: "Error; Query Execution",
-			emss: employeeMetadataSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  "metadata.employees",
+			ess: employeeSqlStore{
+				dbConn:            mockSession,
+				sqlBuilder:        testSqlBuilder,
+				metadataTableName: "metadata.employees",
 			},
 			args: args{
 				ctx:        context.Background(),
@@ -1162,8 +1011,8 @@ func Test_employeeMetadataSqlStore_UpdateStatus(t *testing.T) {
 				newStatus:  models.EmployeeStatusInactive,
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `UPDATE "metadata"."employees" SET "status" = $1 WHERE "id" = $2;`,
-				arguments: []driver.Value{3, testNotFoundID.String()},
+				rawQuery:  `UPDATE "metadata"."employees" SET "status"=$1 WHERE "eid" = $2;`,
+				arguments: []driver.Value{2, testNotFoundID.String()},
 				returnErr: assert.AnError,
 			},
 			assertion: assert.Error,
@@ -1178,7 +1027,7 @@ func Test_employeeMetadataSqlStore_UpdateStatus(t *testing.T) {
 					WillReturnError(tt.wantQuery.returnErr)
 			}
 
-			tt.assertion(t, tt.emss.UpdateStatus(tt.args.ctx, tt.args.employeeID, tt.args.newStatus))
+			tt.assertion(t, tt.ess.UpdateStatus(tt.args.ctx, tt.args.employeeID, tt.args.newStatus))
 
 			// Check to see if the expectations of the query were met
 			if err := mockDb.ExpectationsWereMet(); err != nil {
@@ -1188,7 +1037,7 @@ func Test_employeeMetadataSqlStore_UpdateStatus(t *testing.T) {
 	}
 }
 
-func Test_employeeMetadataSqlStore_UpdateSickTime(t *testing.T) {
+func Test_employeeSqlStore_UpdateSickTime(t *testing.T) {
 	type args struct {
 		ctx        context.Context
 		employeeID uuid.UUID
@@ -1212,17 +1061,17 @@ func Test_employeeMetadataSqlStore_UpdateSickTime(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		emss      employeeMetadataSqlStore
+		ess       employeeSqlStore
 		args      args
 		wantQuery *wantQuery
 		assertion assert.ErrorAssertionFunc
 	}{
 		{
 			name: "Success",
-			emss: employeeMetadataSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  ".invalid",
+			ess: employeeSqlStore{
+				dbConn:            mockSession,
+				sqlBuilder:        testSqlBuilder,
+				metadataTableName: "metadata.employees",
 			},
 			args: args{
 				ctx:        context.Background(),
@@ -1230,7 +1079,7 @@ func Test_employeeMetadataSqlStore_UpdateSickTime(t *testing.T) {
 				newVal:     17.5,
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `UPDATE "metadata"."employees" SET "sick_time" = $1 WHERE "eid" = $2;`,
+				rawQuery:  `UPDATE "metadata"."employees" SET "sick_time_hrs"=$1 WHERE "eid" = $2;`,
 				arguments: []driver.Value{17.5, testEmployeeID.String()},
 				result:    sqlmock.NewResult(0, 1),
 			},
@@ -1238,10 +1087,10 @@ func Test_employeeMetadataSqlStore_UpdateSickTime(t *testing.T) {
 		},
 		{
 			name: "Error; SQL Builder",
-			emss: employeeMetadataSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  ".invalid",
+			ess: employeeSqlStore{
+				dbConn:            mockSession,
+				sqlBuilder:        testSqlBuilder,
+				metadataTableName: ".invalid",
 			},
 			args: args{
 				ctx:        context.Background(),
@@ -1252,18 +1101,18 @@ func Test_employeeMetadataSqlStore_UpdateSickTime(t *testing.T) {
 		},
 		{
 			name: "Error; Query Execution",
-			emss: employeeMetadataSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  "metadata.employees",
+			ess: employeeSqlStore{
+				dbConn:            mockSession,
+				sqlBuilder:        testSqlBuilder,
+				metadataTableName: "metadata.employees",
 			},
 			args: args{
 				ctx:        context.Background(),
 				employeeID: testBadEmployeeID,
-				newVal:     0,
+				newVal:     0.0,
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `UPDATE "metadata"."employees" SET "sick_time" = $1 WHERE "eid" = $2;`,
+				rawQuery:  `UPDATE "metadata"."employees" SET "sick_time_hrs"=$1 WHERE "eid" = $2;`,
 				arguments: []driver.Value{0.0, testBadEmployeeID.String()},
 				returnErr: assert.AnError,
 			},
@@ -1279,7 +1128,7 @@ func Test_employeeMetadataSqlStore_UpdateSickTime(t *testing.T) {
 					WillReturnError(tt.wantQuery.returnErr)
 			}
 
-			err := tt.emss.AdjustSickTime(tt.args.ctx, tt.args.employeeID, tt.args.newVal)
+			err := tt.ess.UpdateSickTime(tt.args.ctx, tt.args.employeeID, tt.args.newVal)
 			tt.assertion(t, err)
 
 			// Check to see if the expectations of the query were met
@@ -1290,7 +1139,7 @@ func Test_employeeMetadataSqlStore_UpdateSickTime(t *testing.T) {
 	}
 }
 
-func Test_employeeMetadataSqlStore_UpdateTimeOff(t *testing.T) {
+func Test_employeeSqlStore_UpdateTimeOff(t *testing.T) {
 	type args struct {
 		ctx        context.Context
 		employeeID uuid.UUID
@@ -1314,17 +1163,17 @@ func Test_employeeMetadataSqlStore_UpdateTimeOff(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		emss      employeeMetadataSqlStore
+		ess       employeeSqlStore
 		args      args
 		wantQuery *wantQuery
 		assertion assert.ErrorAssertionFunc
 	}{
 		{
 			name: "Success",
-			emss: employeeMetadataSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  "metadata.employees",
+			ess: employeeSqlStore{
+				dbConn:            mockSession,
+				sqlBuilder:        testSqlBuilder,
+				metadataTableName: "metadata.employees",
 			},
 			args: args{
 				ctx:        context.Background(),
@@ -1332,7 +1181,7 @@ func Test_employeeMetadataSqlStore_UpdateTimeOff(t *testing.T) {
 				newVal:     36.5,
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `UPDATE "metadata"."employees" SET "time_off" = $1 WHERE "id" = $2;`,
+				rawQuery:  `UPDATE "metadata"."employees" SET "time_off_hrs"=$1 WHERE "eid" = $2;`,
 				arguments: []driver.Value{36.5, testEmployeeID.String()},
 				result:    sqlmock.NewResult(0, 1),
 			},
@@ -1340,10 +1189,10 @@ func Test_employeeMetadataSqlStore_UpdateTimeOff(t *testing.T) {
 		},
 		{
 			name: "Error; SQL Builder",
-			emss: employeeMetadataSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  ".invalid",
+			ess: employeeSqlStore{
+				dbConn:            mockSession,
+				sqlBuilder:        testSqlBuilder,
+				metadataTableName: ".invalid",
 			},
 			args: args{
 				ctx:        context.Background(),
@@ -1354,10 +1203,10 @@ func Test_employeeMetadataSqlStore_UpdateTimeOff(t *testing.T) {
 		},
 		{
 			name: "Error; Query Execution",
-			emss: employeeMetadataSqlStore{
-				dbConn:     mockSession,
-				sqlBuilder: testSqlBuilder,
-				tableName:  "metadata.employees",
+			ess: employeeSqlStore{
+				dbConn:            mockSession,
+				sqlBuilder:        testSqlBuilder,
+				metadataTableName: "metadata.employees",
 			},
 			args: args{
 				ctx:        context.Background(),
@@ -1365,11 +1214,11 @@ func Test_employeeMetadataSqlStore_UpdateTimeOff(t *testing.T) {
 				newVal:     36.5,
 			},
 			wantQuery: &wantQuery{
-				rawQuery:  `UPDATE "metadata"."employees" SET "time_off" = $1 WHERE "id" = $2;`,
+				rawQuery:  `UPDATE "metadata"."employees" SET "time_off_hrs"=$1 WHERE "eid" = $2;`,
 				arguments: []driver.Value{36.5, testNotFoundID.String()},
 				returnErr: assert.AnError,
 			},
-			assertion: assert.NoError,
+			assertion: assert.Error,
 		},
 	}
 	for _, tt := range tests {
@@ -1381,7 +1230,7 @@ func Test_employeeMetadataSqlStore_UpdateTimeOff(t *testing.T) {
 					WillReturnError(tt.wantQuery.returnErr)
 			}
 
-			err := tt.emss.AdjustTimeOff(tt.args.ctx, tt.args.employeeID, tt.args.newVal)
+			err := tt.ess.UpdateTimeOff(tt.args.ctx, tt.args.employeeID, tt.args.newVal)
 			tt.assertion(t, err)
 
 			// Check to see if the expectations of the query were met

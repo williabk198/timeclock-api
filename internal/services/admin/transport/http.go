@@ -15,133 +15,180 @@ import (
 
 func NewHttpHandler(adminEndpoints endpoints.Endpoints) http.Handler {
 	rootRouter := mux.NewRouter()
+
+	buildPersonRoutes(rootRouter.PathPrefix("/persons").Subrouter(), adminEndpoints.Person())
+	buildPersonContactRoutes(rootRouter.PathPrefix("/persons/{personID}/contacts").Subrouter(), adminEndpoints.Contact())
+	buildEmployeeEndpoints(rootRouter.PathPrefix("/employees").Subrouter(), adminEndpoints.Employee())
+
+	return rootRouter
+}
+
+func buildPersonRoutes(personRouter *mux.Router, personEndpoints endpoints.PersonEndpoints) {
 	routeHandleBuilder := httputil.RouteHandleBuilder{
 		ErrorEncoder: errorEncoder,
 		ErrorHandler: errorHandler,
 	}
 
-	personRouter := rootRouter.PathPrefix("/persons").Subrouter()
-
 	personRouter.Handle("", httputil.BuildRouteHandler(
 		routeHandleBuilder,
-		adminEndpoints.Person().GetAll,
+		personEndpoints.GetAll,
 		decodeFetchAllRequestData,
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodGet)
 
 	personRouter.Handle("", httputil.BuildRouteHandler(
 		routeHandleBuilder,
-		adminEndpoints.Person().Add,
+		personEndpoints.Add,
 		decodeCreateItemRequestData,
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodPost)
 
 	personRouter.Handle("/{id}", httputil.BuildRouteHandler(
 		routeHandleBuilder,
-		adminEndpoints.Person().GetSpecific,
+		personEndpoints.GetSpecific,
 		decodeFetchItemRequestData("id"),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodGet)
 
 	personRouter.Handle("/{id}", httputil.BuildRouteHandler(
 		routeHandleBuilder,
-		adminEndpoints.Person().Update,
+		personEndpoints.Update,
 		decodeUpdateItemRequestData[endpoints.PersonData]("id"),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodPut)
+}
 
-	personRouter.Handle("/{id}/contacts", httputil.BuildRouteHandler(
+func buildPersonContactRoutes(contactRouter *mux.Router, contactEndpoints endpoints.ContactEndpoints) {
+	routeHandleBuilder := httputil.RouteHandleBuilder{
+		ErrorEncoder: errorEncoder,
+		ErrorHandler: errorHandler,
+	}
+
+	contactRouter.Handle("", httputil.BuildRouteHandler(
 		routeHandleBuilder,
-		adminEndpoints.Contact().GetPersonContacts,
-		decodeFetchItemRequestData("id"),
+		contactEndpoints.GetPersonContacts,
+		decodeFetchItemRequestData("personID"),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodGet)
 
-	personRouter.Handle("/{id}/contacts/addresses", httputil.BuildRouteHandler(
+	contactRouter.Handle("/addresses", httputil.BuildRouteHandler(
 		routeHandleBuilder,
-		adminEndpoints.Contact().GetPersonContactAddresses,
-		decodeFetchItemRequestData("id"),
+		contactEndpoints.GetPersonContactAddresses,
+		decodeFetchItemRequestData("personID"),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodGet)
 
-	personRouter.Handle("/{id}/contacts/addresses", httputil.BuildRouteHandler(
+	contactRouter.Handle("/addresses", httputil.BuildRouteHandler(
 		routeHandleBuilder,
-		adminEndpoints.Contact().AddContactAddressForPerson,
-		decodeAddSubItemRequestData[endpoints.PersonAddressData]("id"),
+		contactEndpoints.AddContactAddressForPerson,
+		decodeAddSubItemRequestData[endpoints.PersonAddressData]("personID"),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodPost)
 
-	personRouter.Handle("/{personID}/contacts/addresses/{id}", httputil.BuildRouteHandler(
+	contactRouter.Handle("/addresses/{id}", httputil.BuildRouteHandler(
 		routeHandleBuilder,
-		adminEndpoints.Contact().UpdatePersonContactAddress,
+		contactEndpoints.UpdatePersonContactAddress,
 		decodeUpdateContactRequestData[endpoints.PersonAddressData](),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodPut)
 
-	personRouter.Handle("/{personID}/contacts/addresses/{id}", httputil.BuildRouteHandler(
+	contactRouter.Handle("/addresses/{id}", httputil.BuildRouteHandler(
 		routeHandleBuilder,
-		adminEndpoints.Contact().DeleteContactAddressForPerson,
+		contactEndpoints.DeleteContactAddressForPerson,
 		decodeDeleteContactRequestData(),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodDelete)
 
-	personRouter.Handle("/{id}/contacts/emails", httputil.BuildRouteHandler(
+	contactRouter.Handle("/emails", httputil.BuildRouteHandler(
 		routeHandleBuilder,
-		adminEndpoints.Contact().GetPersonContactEmails,
-		decodeFetchItemRequestData("id"),
+		contactEndpoints.GetPersonContactEmails,
+		decodeFetchItemRequestData("personID"),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodGet)
 
-	personRouter.Handle("/{id}/contacts/emails", httputil.BuildRouteHandler(
+	contactRouter.Handle("/emails", httputil.BuildRouteHandler(
 		routeHandleBuilder,
-		adminEndpoints.Contact().AddContactEmailForPerson,
-		decodeAddSubItemRequestData[endpoints.PersonEmailData]("id"),
+		contactEndpoints.AddContactEmailForPerson,
+		decodeAddSubItemRequestData[endpoints.PersonEmailData]("personID"),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodPost)
 
-	personRouter.Handle("/{personID}/contacts/emails/{id}", httputil.BuildRouteHandler(
+	contactRouter.Handle("/emails/{id}", httputil.BuildRouteHandler(
 		routeHandleBuilder,
-		adminEndpoints.Contact().UpdatePersonContactEmail,
+		contactEndpoints.UpdatePersonContactEmail,
 		decodeUpdateContactRequestData[endpoints.PersonEmailData](),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodPut)
 
-	personRouter.Handle("/{personID}/contacts/emails/{id}", httputil.BuildRouteHandler(
+	contactRouter.Handle("/emails/{id}", httputil.BuildRouteHandler(
 		routeHandleBuilder,
-		adminEndpoints.Contact().DeleteContactEmailForPerson,
+		contactEndpoints.DeleteContactEmailForPerson,
 		decodeDeleteContactRequestData(),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodDelete)
 
-	personRouter.Handle("/{id}/contacts/phones", httputil.BuildRouteHandler(
+	contactRouter.Handle("/phones", httputil.BuildRouteHandler(
 		routeHandleBuilder,
-		adminEndpoints.Contact().AddContactPhoneForPerson,
+		contactEndpoints.AddContactPhoneForPerson,
 		decodeAddSubItemRequestData[endpoints.PersonPhoneData]("id"),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodPost)
 
-	personRouter.Handle("/{id}/contacts/phones", httputil.BuildRouteHandler(
+	contactRouter.Handle("/phones", httputil.BuildRouteHandler(
 		routeHandleBuilder,
-		adminEndpoints.Contact().GetPersonContactPhones,
-		decodeFetchItemRequestData("id"),
+		contactEndpoints.GetPersonContactPhones,
+		decodeFetchItemRequestData("personID"),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodGet)
 
-	personRouter.Handle("/{personID}/contacts/phones/{id}", httputil.BuildRouteHandler(
+	contactRouter.Handle("/phones/{id}", httputil.BuildRouteHandler(
 		routeHandleBuilder,
-		adminEndpoints.Contact().UpdatePersonContactPhone,
+		contactEndpoints.UpdatePersonContactPhone,
 		decodeUpdateContactRequestData[endpoints.PersonPhoneData](),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodPut)
 
-	personRouter.Handle("/{personID}/contacts/phones/{id}", httputil.BuildRouteHandler(
+	contactRouter.Handle("/phones/{id}", httputil.BuildRouteHandler(
 		routeHandleBuilder,
-		adminEndpoints.Contact().DeleteContactPhoneForPerson,
+		contactEndpoints.DeleteContactPhoneForPerson,
 		decodeDeleteContactRequestData(),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodDelete)
+}
 
-	return rootRouter
+func buildEmployeeEndpoints(employeeRouter *mux.Router, employeeEndpoints endpoints.EmployeeEndpoints) {
+	routeHandleBuilder := httputil.RouteHandleBuilder{
+		ErrorEncoder: errorEncoder,
+		ErrorHandler: errorHandler,
+	}
+
+	employeeRouter.Handle("", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		employeeEndpoints.GetAll,
+		decodeFetchAllRequestData,
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodGet)
+
+	employeeRouter.Handle("/{id}", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		employeeEndpoints.GetSpecific,
+		decodeFetchItemRequestData("id"),
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodGet)
+
+	employeeRouter.Handle("/{id}", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		employeeEndpoints.Update,
+		decodeUpdateItemRequestData[endpoints.EmployeeData]("id"),
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodPut)
+
+	employeeRouter.Handle("/{id}", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		employeeEndpoints.Delete,
+		decodeFetchItemRequestData("id"),
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodDelete)
 }
 
 func errorEncoder(ctx context.Context, err error, w http.ResponseWriter) {

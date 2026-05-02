@@ -53,9 +53,9 @@ const (
 )
 
 type EmployeePay struct {
-	Currency string // This value should hold the abbreviation(NOT THE SYMBOL) of the currency (e.g USD, CAD, JPY, etc...)
-	Rate     float32
-	Cadence  PayCadence
+	Currency string     `json:"currency"` // This value should hold the abbreviation(NOT THE SYMBOL) of the currency (e.g USD, CAD, JPY, etc...)
+	Rate     float32    `json:"rate"`
+	Cadence  PayCadence `json:"cadence"`
 }
 
 func (ep EmployeePay) String() string {
@@ -78,8 +78,8 @@ type EmployeeMetadata struct {
 	Pay        EmployeePay    `jagsqlb:"pay"`
 	HireDate   time.Time      `jagsqlb:"hire_date"`
 	StartDate  time.Time      `jagsqlb:"start_date"`
-	SickTime   float32        `jagsqlb:"sick_time"`
-	TimeOff    float32        `jagsqlb:"time_off"`
+	SickTime   float32        `jagsqlb:"sick_time_hrs"`
+	TimeOff    float32        `jagsqlb:"time_off_hrs"`
 	Exempt     bool           `jagsqlb:"exempt"`
 	Status     EmployeeStatus `jagsqlb:"status"`
 }

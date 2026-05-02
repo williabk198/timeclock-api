@@ -3,6 +3,7 @@ package endpoints
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/williabk198/timeclock/internal/models"
@@ -15,6 +16,11 @@ type EmployeeEndpoints interface {
 	GetSpecific(ctx context.Context, id string) (EmployeeData, error)
 	GetAll(ctx context.Context, reqData GetPaginatedRequestData) ([]EmployeeData, error)
 	Update(ctx context.Context, urd UpdateRequestData[EmployeeData]) (EmployeeData, error)
+	UpdateExemptStatus(ctx context.Context, urd UpdateRequestData[bool]) (bool, error)
+	UpdatePay(ctx context.Context, urd UpdateRequestData[models.EmployeePay]) (models.EmployeePay, error)
+	UpdateSickTimeHours(ctx context.Context, urd UpdateRequestData[float64]) (float64, error)
+	UpdateStatus(ctx context.Context, urd UpdateRequestData[int]) (int, error)
+	UpdateTimeOffHours(ctx context.Context, urd UpdateRequestData[float64]) (float64, error)
 }
 
 type adminEmployeeEndpoints struct {
@@ -37,7 +43,15 @@ func (a adminEmployeeEndpoints) Add(ctx context.Context, employee EmployeeData) 
 		PersonID:    personID,
 		ReportsToID: reportsToID,
 		Title:       employee.Title,
-	}, models.EmployeeMetadata{})
+	}, models.EmployeeMetadata{
+		Pay:       employee.Metadata.Pay,
+		HireDate:  time.UnixMilli(employee.Metadata.HireDate),
+		StartDate: time.UnixMilli(employee.Metadata.StartDate),
+		SickTime:  employee.Metadata.SickTime,
+		TimeOff:   employee.Metadata.TimeOff,
+		Exempt:    employee.Metadata.Exempt,
+		Status:    models.EmployeeStatus(employee.Metadata.Status),
+	})
 	if err != nil {
 		return EmployeeData{}, fmt.Errorf("failed to add employee to DB: %w", err)
 	}
@@ -117,12 +131,87 @@ func (a adminEmployeeEndpoints) Update(ctx context.Context, urd UpdateRequestDat
 		return EmployeeData{}, fmt.Errorf("failed to parse reportsTo ID: %w", err)
 	}
 
-	err = a.employeeMicro.Update(ctx, employeeID, models.Employee{
+	err = a.employeeMicro.UpdateEmployee(ctx, employeeID, models.Employee{
 		ReportsToID: reportsToID,
 		Title:       urd.Data.Title,
 	})
 	if err != nil {
-		return EmployeeData{}, fmt.Errorf("failed to update employee: %w", err)
+		return EmployeeData{}, fmt.Errorf("failed to update employee for %s: %w", employeeID, err)
+	}
+
+	return urd.Data, nil
+}
+
+func (a adminEmployeeEndpoints) UpdateExemptStatus(ctx context.Context, urd UpdateRequestData[bool]) (bool, error) {
+	employeeID, err := uuid.Parse(urd.ID)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse employee ID: %w", err)
+	}
+
+	err = a.employeeMicro.UpdateExemptStatus(ctx, employeeID, urd.Data)
+	if err != nil {
+		return false, fmt.Errorf("failed to update exempt status for %s: %w", employeeID, err)
+	}
+
+	return urd.Data, nil
+}
+
+func (a adminEmployeeEndpoints) UpdatePay(ctx context.Context, urd UpdateRequestData[models.EmployeePay]) (models.EmployeePay, error) {
+	employeeID, err := uuid.Parse(urd.ID)
+	if err != nil {
+		return models.EmployeePay{}, fmt.Errorf("failed to parse employee ID: %w", err)
+	}
+
+	err = a.employeeMicro.UpdatePay(ctx, employeeID, urd.Data)
+	if err != nil {
+		return models.EmployeePay{}, fmt.Errorf("failed to update employee pay for %s: %w", employeeID, err)
+	}
+
+	return urd.Data, nil
+}
+
+func (a adminEmployeeEndpoints) UpdateSickTimeHours(ctx context.Context, urd UpdateRequestData[float64]) (float64, error) {
+	employeeID, err := uuid.Parse(urd.ID)
+	if err != nil {
+		return -1.0, fmt.Errorf("failed to parse employee ID: %w", err)
+	}
+
+	err = a.employeeMicro.UpdateSickTime(ctx, employeeID, urd.Data)
+	if err != nil {
+		return -1.0, fmt.Errorf("failed to update sick time hours for %s: %w", employeeID, err)
+	}
+
+	return urd.Data, nil
+}
+
+func (a adminEmployeeEndpoints) UpdateStatus(ctx context.Context, urd UpdateRequestData[int]) (int, error) {
+	employeeID, err := uuid.Parse(urd.ID)
+	if err != nil {
+		return -1, fmt.Errorf("failed to parse employee ID: %w", err)
+	}
+
+	rawStatus := urd.Data
+	if rawStatus < int(models.EmployeeStatusActive) && rawStatus > int(models.EmployeeStatusInactive) {
+		return -1, fmt.Errorf("%d is an invalid status value", rawStatus)
+	}
+
+	err = a.employeeMicro.UpdateStatus(ctx, employeeID, models.EmployeeStatus(rawStatus))
+	if err != nil {
+		return -1, fmt.Errorf("failed to update active status for %s: %w", employeeID, err)
+	}
+
+	return urd.Data, nil
+}
+
+func (a adminEmployeeEndpoints) UpdateTimeOffHours(ctx context.Context, urd UpdateRequestData[float64]) (float64, error) {
+	employeeID, err := uuid.Parse(urd.ID)
+	if err != nil {
+		return -1.0, fmt.Errorf("failed to parse employee ID: %w", err)
+	}
+
+	err = a.employeeMicro.UpdateTimeOff(ctx, employeeID, urd.Data)
+	if err != nil {
+		return -1.0, fmt.Errorf("failed to update time off hours for %s: %w", employeeID, err)
 	}
 
 	return urd.Data, nil

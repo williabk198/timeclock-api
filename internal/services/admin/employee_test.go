@@ -58,12 +58,9 @@ func Test_employeeMicroImpl_Add(t *testing.T) {
 	}
 
 	testEmployeeStore := &mockEmployeeStore{}
-	testEmployeeStore.On("Add", mock.Anything, testEmployee).Return(testEmployeeID, error(nil))
-	testEmployeeStore.On("Add", mock.Anything, testEmployeeError).Return(uuid.Nil, assert.AnError)
-
-	testEmployeeMetaStore := &mockEmployeeMetaStore{}
-	testEmployeeMetaStore.On("Add", mock.Anything, testEmployeeMetadata).Return(error(nil))
-	testEmployeeMetaStore.On("Add", mock.Anything, testEmployeeMetadataError).Return(assert.AnError)
+	testEmployeeStore.On("Add", mock.Anything, testEmployee, testEmployeeMetadata).Return(testEmployeeID, error(nil))
+	testEmployeeStore.On("Add", mock.Anything, testEmployeeError, testEmployeeMetadata).Return(uuid.Nil, assert.AnError)
+	testEmployeeStore.On("Add", mock.Anything, testEmployee, testEmployeeMetadataError).Return(uuid.Nil, assert.AnError)
 
 	tests := []struct {
 		name      string
@@ -74,20 +71,20 @@ func Test_employeeMicroImpl_Add(t *testing.T) {
 	}{
 		{
 			name:      "Success",
-			e:         employeeMicroImpl{employeeStore: testEmployeeStore, employeeMetaStore: testEmployeeMetaStore},
+			e:         employeeMicroImpl{employeeStore: testEmployeeStore},
 			args:      args{ctx: context.Background(), employee: testEmployee, metadata: testEmployeeMetadata},
 			wants:     wants{id: testEmployeeID},
 			assertion: assert.NoError,
 		},
 		{
 			name:      "Error; EmployeeData",
-			e:         employeeMicroImpl{employeeStore: testEmployeeStore, employeeMetaStore: testEmployeeMetaStore},
+			e:         employeeMicroImpl{employeeStore: testEmployeeStore},
 			args:      args{ctx: context.Background(), employee: testEmployeeError, metadata: testEmployeeMetadata},
 			assertion: assert.Error,
 		},
 		{
 			name:      "Error; Metadata",
-			e:         employeeMicroImpl{employeeStore: testEmployeeStore, employeeMetaStore: testEmployeeMetaStore},
+			e:         employeeMicroImpl{employeeStore: testEmployeeStore},
 			args:      args{ctx: context.Background(), employee: testEmployee, metadata: testEmployeeMetadataError},
 			assertion: assert.Error,
 		},
@@ -266,7 +263,7 @@ func Test_employeeMicroImpl_GetSpecific(t *testing.T) {
 	}
 }
 
-func Test_employeeMicroImpl_Update(t *testing.T) {
+func Test_employeeMicroImpl_UpdateEmployee(t *testing.T) {
 	type args struct {
 		ctx    context.Context
 		id     uuid.UUID
@@ -283,8 +280,8 @@ func Test_employeeMicroImpl_Update(t *testing.T) {
 	}
 
 	testEmployeeStore := &mockEmployeeStore{}
-	testEmployeeStore.On("Update", mock.Anything, testEmployeeID, testEmployee).Return(error(nil))
-	testEmployeeStore.On("Update", mock.Anything, testEmployeNotFoundID, testEmployee).Return(assert.AnError)
+	testEmployeeStore.On("UpdateEmployee", mock.Anything, testEmployeeID, testEmployee).Return(error(nil))
+	testEmployeeStore.On("UpdateEmployee", mock.Anything, testEmployeNotFoundID, testEmployee).Return(assert.AnError)
 
 	tests := []struct {
 		name      string
@@ -307,7 +304,258 @@ func Test_employeeMicroImpl_Update(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.assertion(t, tt.e.Update(tt.args.ctx, tt.args.id, tt.args.newVal))
+			tt.assertion(t, tt.e.UpdateEmployee(tt.args.ctx, tt.args.id, tt.args.newVal))
+		})
+	}
+}
+
+func Test_employeeMicroImpl_UpdateExemptStatus(t *testing.T) {
+	type args struct {
+		ctx    context.Context
+		id     uuid.UUID
+		newVal bool
+	}
+
+	testEmployeeNotFoundID := uuid.New()
+	testEmployeeID := uuid.New()
+
+	testEmployeeStore := &mockEmployeeStore{}
+	testEmployeeStore.On("UpdateExemptStatus", mock.Anything, testEmployeeID, true).Return(error(nil))
+	testEmployeeStore.On("UpdateExemptStatus", mock.Anything, testEmployeeNotFoundID, false).Return(assert.AnError)
+
+	tests := []struct {
+		name      string
+		emi       employeeMicroImpl
+		args      args
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			emi: employeeMicroImpl{
+				employeeStore: testEmployeeStore,
+			},
+			args: args{
+				ctx:    context.Background(),
+				id:     testEmployeeID,
+				newVal: true,
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error",
+			emi: employeeMicroImpl{
+				employeeStore: testEmployeeStore,
+			},
+			args: args{
+				ctx:    context.Background(),
+				id:     testEmployeeNotFoundID,
+				newVal: false,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.assertion(t, tt.emi.UpdateExemptStatus(tt.args.ctx, tt.args.id, tt.args.newVal))
+		})
+	}
+}
+
+func Test_employeeMicroImpl_UpdatePay(t *testing.T) {
+	type args struct {
+		ctx    context.Context
+		id     uuid.UUID
+		newVal models.EmployeePay
+	}
+
+	testEmployeNotFoundID := uuid.New()
+	testEmployeeID := uuid.New()
+
+	testPayDataDB := models.EmployeePay{
+		Currency: "USD",
+		Rate:     37.0,
+		Cadence:  models.PayCadenceHourly,
+	}
+
+	testEmployeeStore := &mockEmployeeStore{}
+	testEmployeeStore.On("UpdatePay", mock.Anything, testEmployeeID, testPayDataDB).Return(error(nil))
+	testEmployeeStore.On("UpdatePay", mock.Anything, testEmployeNotFoundID, testPayDataDB).Return(assert.AnError)
+
+	tests := []struct {
+		name      string
+		emi       employeeMicroImpl
+		args      args
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			emi:  employeeMicroImpl{employeeStore: testEmployeeStore},
+			args: args{
+				ctx:    context.Background(),
+				id:     testEmployeeID,
+				newVal: testPayDataDB,
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error",
+			emi:  employeeMicroImpl{employeeStore: testEmployeeStore},
+			args: args{
+				ctx:    context.Background(),
+				id:     testEmployeNotFoundID,
+				newVal: testPayDataDB,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.assertion(t, tt.emi.UpdatePay(tt.args.ctx, tt.args.id, tt.args.newVal))
+		})
+	}
+}
+
+func Test_employeeMicroImpl_UpdateSickTime(t *testing.T) {
+	type args struct {
+		ctx    context.Context
+		id     uuid.UUID
+		newVal float64
+	}
+
+	testEmployeNotFoundID := uuid.New()
+	testEmployeeID := uuid.New()
+
+	testEmployeeStore := &mockEmployeeStore{}
+	testEmployeeStore.On("UpdateSickTime", mock.Anything, testEmployeeID, 16.0).Return(error(nil))
+	testEmployeeStore.On("UpdateSickTime", mock.Anything, testEmployeNotFoundID, 16.0).Return(assert.AnError)
+
+	tests := []struct {
+		name      string
+		emi       employeeMicroImpl
+		args      args
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			emi:  employeeMicroImpl{employeeStore: testEmployeeStore},
+			args: args{
+				ctx:    context.Background(),
+				id:     testEmployeeID,
+				newVal: 16.0,
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error",
+			emi:  employeeMicroImpl{employeeStore: testEmployeeStore},
+			args: args{
+				ctx:    context.Background(),
+				id:     testEmployeNotFoundID,
+				newVal: 16.0,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// TODO: construct the receiver type.
+			tt.assertion(t, tt.emi.UpdateSickTime(context.Background(), tt.args.id, tt.args.newVal))
+		})
+	}
+}
+
+func Test_employeeMicroImpl_UpdateStatus(t *testing.T) {
+	type args struct {
+		ctx    context.Context
+		id     uuid.UUID
+		newVal models.EmployeeStatus
+	}
+
+	testEmployeNotFoundID := uuid.New()
+	testEmployeeID := uuid.New()
+
+	testEmployeeStore := &mockEmployeeStore{}
+	testEmployeeStore.On("UpdateStatus", mock.Anything, testEmployeNotFoundID, models.EmployeeStatusInactive).Return(assert.AnError)
+	testEmployeeStore.On("UpdateStatus", mock.Anything, testEmployeeID, models.EmployeeStatusInactive).Return(error(nil))
+
+	tests := []struct {
+		name      string
+		emi       employeeMicroImpl
+		args      args
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			emi:  employeeMicroImpl{employeeStore: testEmployeeStore},
+			args: args{
+				ctx:    context.Background(),
+				id:     testEmployeeID,
+				newVal: 2,
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error",
+			emi:  employeeMicroImpl{employeeStore: testEmployeeStore},
+			args: args{
+				ctx:    context.Background(),
+				id:     testEmployeNotFoundID,
+				newVal: 2,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.assertion(t, tt.emi.UpdateStatus(tt.args.ctx, tt.args.id, tt.args.newVal))
+		})
+	}
+}
+
+func Test_employeeMicroImpl_UpdateTimeOff(t *testing.T) {
+	type args struct {
+		ctx    context.Context
+		id     uuid.UUID
+		newVal float64
+	}
+
+	testEmployeNotFoundID := uuid.New()
+	testEmployeeID := uuid.New()
+
+	testEmployeeStore := &mockEmployeeStore{}
+	testEmployeeStore.On("UpdateTimeOff", mock.Anything, testEmployeeID, 32.0).Return(error(nil))
+	testEmployeeStore.On("UpdateTimeOff", mock.Anything, testEmployeNotFoundID, 32.0).Return(assert.AnError)
+
+	tests := []struct {
+		name      string
+		emi       employeeMicroImpl
+		args      args
+		assertion assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Success",
+			emi:  employeeMicroImpl{employeeStore: testEmployeeStore},
+			args: args{
+				ctx:    context.Background(),
+				id:     testEmployeeID,
+				newVal: 32.0,
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "Error",
+			emi:  employeeMicroImpl{employeeStore: testEmployeeStore},
+			args: args{
+				ctx:    context.Background(),
+				id:     testEmployeNotFoundID,
+				newVal: 32.0,
+			},
+			assertion: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.assertion(t, tt.emi.UpdateTimeOff(tt.args.ctx, tt.args.id, tt.args.newVal))
 		})
 	}
 }
