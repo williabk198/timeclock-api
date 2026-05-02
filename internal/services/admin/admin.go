@@ -37,9 +37,10 @@ func (a adminService) Person() PersonMicro {
 	}
 }
 
-func NewService(personStore datastores.PersonStore, contactStore datastores.ContactDatastore) Service {
+func NewService(personStore datastores.PersonStore, contactStore datastores.ContactDatastore, employeeStore datastores.EmployeeDatastore) Service {
 	return adminService{
-		personStore:  personStore,
-		contactStore: contactStore,
+		personStore:   personStore,
+		contactStore:  contactStore,
+		employeeStore: employeeStore,
 	}
 }

@@ -11,26 +11,58 @@ import (
 )
 
 type EmployeeDatastore interface {
-	SqlDatastore[models.Employee, uuid.UUID]
+	Add(ctx context.Context, employee models.Employee, metadata models.EmployeeMetadata) (id uuid.UUID, err error)
+	Delete(ctx context.Context, id uuid.UUID) (item models.Employee, err error)
+	GetAllPaginated(ctx context.Context, offset uint, limit uint) (items []models.Employee, err error)
+	GetSpecific(ctx context.Context, id uuid.UUID) (item models.Employee, err error)
+	UpdateEmployee(ctx context.Context, id uuid.UUID, item models.Employee) (err error)
+	UpdateExemptStatus(ctx context.Context, id uuid.UUID, isExempt bool) (err error)
+	UpdatePay(ctx context.Context, id uuid.UUID, payData models.EmployeePay) (err error)
+	UpdateStatus(ctx context.Context, id uuid.UUID, status models.EmployeeStatus) (err error)
+	UpdateSickTime(ctx context.Context, id uuid.UUID, newVal float64) (err error)
+	UpdateTimeOff(ctx context.Context, id uuid.UUID, newVal float64) (err error)
 }
 
 type employeeSqlStore struct {
-	dbConn     *sql.DB
-	sqlBuilder jagsqlb.SqlBuilder
-	tableName  string
+	dbConn            *sql.DB
+	sqlBuilder        jagsqlb.SqlBuilder
+	tableName         string
+	metadataTableName string
 }
 
 // Add implements EmployeeDatastore.
-func (ess employeeSqlStore) Add(ctx context.Context, item models.Employee) (id uuid.UUID, err error) {
-	query, params, err := ess.sqlBuilder.Insert(ess.tableName).Data(item).Returning("id").Build()
+func (ess employeeSqlStore) Add(ctx context.Context, employee models.Employee, metadata models.EmployeeMetadata) (id uuid.UUID, err error) {
+	//TODO: Have this function also handle inserting EmployeeMetadata so that it can be easily wrapped in a transaction
+	query, params, err := ess.sqlBuilder.Insert(ess.tableName).Data(employee).Returning("id").Build()
 	if err != nil {
 		return uuid.Nil, err
 	}
 
-	row := ess.dbConn.QueryRowContext(ctx, query, params...)
-	if err := row.Scan(&id); err != nil {
+	tx, err := ess.dbConn.BeginTx(ctx, nil)
+	if err != nil {
 		return uuid.Nil, err
 	}
+
+	row := tx.QueryRowContext(ctx, query, params...)
+	if err := row.Scan(&id); err != nil {
+		tx.Rollback()
+		return uuid.Nil, err
+	}
+	metadata.EmployeeID = id
+
+	query, params, err = ess.sqlBuilder.Insert(ess.metadataTableName).Data(metadata).Build()
+	if err != nil {
+		tx.Rollback()
+		return uuid.Nil, err
+	}
+
+	_, err = tx.ExecContext(ctx, query, params...)
+	if err != nil {
+		tx.Rollback()
+		return uuid.Nil, err
+	}
+
+	tx.Commit()
 
 	return id, nil
 }
@@ -72,9 +104,84 @@ func (ess employeeSqlStore) GetSpecific(ctx context.Context, id uuid.UUID) (item
 	return ess.employeeFromRow(row)
 }
 
-// Update implements EmployeeDatastore.
-func (ess employeeSqlStore) Update(ctx context.Context, id uuid.UUID, item models.Employee) (err error) {
+// UpdateEmployee implements EmployeeDatastore.
+func (ess employeeSqlStore) UpdateEmployee(ctx context.Context, id uuid.UUID, item models.Employee) (err error) {
 	query, params, err := ess.sqlBuilder.Update(ess.tableName).SetStruct(item).Where(condition.Equals("id", id)).Build()
+	if err != nil {
+		return err
+	}
+
+	_, err = ess.dbConn.ExecContext(ctx, query, params...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateExemptStatus implements [EmployeeDatastore].
+func (ess employeeSqlStore) UpdateExemptStatus(ctx context.Context, id uuid.UUID, isExempt bool) (err error) {
+	query, params, err := ess.sqlBuilder.Update(ess.metadataTableName).SetMap(map[string]any{"exempt": isExempt}).Where(condition.Equals("eid", id)).Build()
+	if err != nil {
+		return err
+	}
+
+	_, err = ess.dbConn.ExecContext(ctx, query, params...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdatePay implements [EmployeeDatastore].
+func (ess employeeSqlStore) UpdatePay(ctx context.Context, id uuid.UUID, newPayData models.EmployeePay) (err error) {
+	query, params, err := ess.sqlBuilder.Update(ess.metadataTableName).SetMap(map[string]any{"pay": newPayData.String()}).Where(condition.Equals("eid", id)).Build()
+	if err != nil {
+		return err
+	}
+
+	_, err = ess.dbConn.ExecContext(ctx, query, params...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateSickTime implements [EmployeeDatastore].
+func (ess employeeSqlStore) UpdateSickTime(ctx context.Context, id uuid.UUID, newVal float64) (err error) {
+	query, params, err := ess.sqlBuilder.Update(ess.metadataTableName).SetMap(map[string]any{"sick_time_hrs": newVal}).Where(condition.Equals("eid", id)).Build()
+	if err != nil {
+		return err
+	}
+
+	_, err = ess.dbConn.ExecContext(ctx, query, params...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateStatus implements [EmployeeDatastore].
+func (ess employeeSqlStore) UpdateStatus(ctx context.Context, id uuid.UUID, status models.EmployeeStatus) (err error) {
+	query, params, err := ess.sqlBuilder.Update(ess.metadataTableName).SetMap(map[string]any{"status": status}).Where(condition.Equals("eid", id)).Build()
+	if err != nil {
+		return err
+	}
+
+	_, err = ess.dbConn.ExecContext(ctx, query, params...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateTimeOff implements [EmployeeDatastore].
+func (ess employeeSqlStore) UpdateTimeOff(ctx context.Context, id uuid.UUID, newVal float64) (err error) {
+	query, params, err := ess.sqlBuilder.Update(ess.metadataTableName).SetMap(map[string]any{"time_off_hrs": newVal}).Where(condition.Equals("eid", id)).Build()
 	if err != nil {
 		return err
 	}
@@ -118,67 +225,9 @@ func (ess employeeSqlStore) employeesFromRows(rows *sql.Rows) ([]models.Employee
 
 func NewEmployeeStore(dbConn *sql.DB) EmployeeDatastore {
 	return employeeSqlStore{
-		dbConn:     dbConn,
-		sqlBuilder: jagsqlb.NewSqlBuilder(),
-		tableName:  "employees",
-	}
-}
-
-type EmployeeMetadataDatastore interface {
-	Add(ctx context.Context, data models.EmployeeMetadata) error
-	AdjustSickTime(ctx context.Context, employeeID uuid.UUID, adjustment float64) error
-	AdjustTimeOff(ctx context.Context, employeeID uuid.UUID, adjustment float64) error
-	Get(ctx context.Context, employeeID uuid.UUID) (models.EmployeeMetadata, error)
-	UpdatePay(ctx context.Context, employeeID uuid.UUID, newPayInfo models.EmployeePay) error
-	UpdateExemptStatus(ctx context.Context, employeeID uuid.UUID, newExemptVal bool) error
-	UpdateStatus(ctx context.Context, employeeID uuid.UUID, newStatus models.EmployeeStatus) error
-}
-
-type employeeMetadataSqlStore struct {
-	dbConn     *sql.DB
-	sqlBuilder jagsqlb.SqlBuilder
-	tableName  string
-}
-
-// Add implements EmployeeMetadataDatastore.
-func (emss employeeMetadataSqlStore) Add(ctx context.Context, data models.EmployeeMetadata) error {
-	panic("unimplemented")
-}
-
-// AdjustSickTime implements EmployeeMetadataDatastore.
-func (emss employeeMetadataSqlStore) AdjustSickTime(ctx context.Context, employeeID uuid.UUID, newVal float64) error {
-	panic("unimplemented")
-}
-
-// AdjustTimeOff implements EmployeeMetadataDatastore.
-func (emss employeeMetadataSqlStore) AdjustTimeOff(ctx context.Context, employeeID uuid.UUID, newVal float64) error {
-	panic("unimplemented")
-}
-
-// Get implements EmployeeMetadataDatastore.
-func (emss employeeMetadataSqlStore) Get(ctx context.Context, employeeID uuid.UUID) (models.EmployeeMetadata, error) {
-	panic("unimplemented")
-}
-
-// UpdateExemptStatus implements EmployeeMetadataDatastore.
-func (emss employeeMetadataSqlStore) UpdateExemptStatus(ctx context.Context, employeeID uuid.UUID, newExemptVal bool) error {
-	panic("unimplemented")
-}
-
-// UpdatePay implements EmployeeMetadataDatastore.
-func (emss employeeMetadataSqlStore) UpdatePay(ctx context.Context, employeeID uuid.UUID, newPayInfo models.EmployeePay) error {
-	panic("unimplemented")
-}
-
-// UpdateStatus implements EmployeeMetadataDatastore.
-func (emss employeeMetadataSqlStore) UpdateStatus(ctx context.Context, employeeID uuid.UUID, newStatus models.EmployeeStatus) error {
-	panic("unimplemented")
-}
-
-func NewEmployeeMetadataStore(dbConn *sql.DB) EmployeeMetadataDatastore {
-	return employeeMetadataSqlStore{
-		dbConn:     dbConn,
-		sqlBuilder: jagsqlb.NewSqlBuilder(),
-		tableName:  "metadata.employees",
+		dbConn:            dbConn,
+		sqlBuilder:        jagsqlb.NewSqlBuilder(),
+		tableName:         "employees",
+		metadataTableName: "metadata.employees",
 	}
 }

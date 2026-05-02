@@ -13,17 +13,21 @@ type EmployeeMicro interface {
 	Delete(ctx context.Context, id uuid.UUID) (models.Employee, error)
 	GetAll(ctx context.Context, offset uint, limit uint) ([]models.Employee, error)
 	GetSpecific(ctx context.Context, id uuid.UUID) (models.Employee, error)
-	Update(ctx context.Context, id uuid.UUID, newVal models.Employee) error
+	UpdateEmployee(ctx context.Context, id uuid.UUID, newVal models.Employee) error
+	UpdateExemptStatus(ctx context.Context, id uuid.UUID, newVal bool) error
+	UpdatePay(ctx context.Context, id uuid.UUID, newVal models.EmployeePay) error
+	UpdateSickTime(ctx context.Context, id uuid.UUID, newVal float64) error
+	UpdateStatus(ctx context.Context, id uuid.UUID, newVal models.EmployeeStatus) error
+	UpdateTimeOff(ctx context.Context, id uuid.UUID, newVal float64) error
 }
 
 type employeeMicroImpl struct {
-	employeeStore     datastores.EmployeeDatastore
-	employeeMetaStore datastores.EmployeeMetadataDatastore
+	employeeStore datastores.EmployeeDatastore
 }
 
 // Add implements EmployeeMicro.
 func (emi employeeMicroImpl) Add(ctx context.Context, employee models.Employee, metadata models.EmployeeMetadata) (uuid.UUID, error) {
-	return emi.employeeStore.Add(ctx, employee)
+	return emi.employeeStore.Add(ctx, employee, metadata)
 }
 
 // Delete implements EmployeeMicro.
@@ -41,7 +45,32 @@ func (emi employeeMicroImpl) GetSpecific(ctx context.Context, id uuid.UUID) (mod
 	return emi.employeeStore.GetSpecific(ctx, id)
 }
 
-// Update implements EmployeeMicro.
-func (emi employeeMicroImpl) Update(ctx context.Context, id uuid.UUID, newVal models.Employee) error {
-	return emi.employeeStore.Update(ctx, id, newVal)
+// UpdateEmployee implements EmployeeMicro.
+func (emi employeeMicroImpl) UpdateEmployee(ctx context.Context, id uuid.UUID, newVal models.Employee) error {
+	return emi.employeeStore.UpdateEmployee(ctx, id, newVal)
+}
+
+// UpdateExemptStatus implements [EmployeeMicro].
+func (emi employeeMicroImpl) UpdateExemptStatus(ctx context.Context, id uuid.UUID, newVal bool) error {
+	return emi.employeeStore.UpdateExemptStatus(ctx, id, newVal)
+}
+
+// UpdatePay implements [EmployeeMicro].
+func (emi employeeMicroImpl) UpdatePay(ctx context.Context, id uuid.UUID, newVal models.EmployeePay) error {
+	return emi.employeeStore.UpdatePay(ctx, id, newVal)
+}
+
+// UpdateSickTime implements [EmployeeMicro].
+func (emi employeeMicroImpl) UpdateSickTime(ctx context.Context, id uuid.UUID, newVal float64) error {
+	return emi.employeeStore.UpdateSickTime(ctx, id, newVal)
+}
+
+// UpdateStatus implements [EmployeeMicro].
+func (emi employeeMicroImpl) UpdateStatus(ctx context.Context, id uuid.UUID, newVal models.EmployeeStatus) error {
+	return emi.employeeStore.UpdateStatus(ctx, id, newVal)
+}
+
+// UpdateTimeOff implements [EmployeeMicro].
+func (emi employeeMicroImpl) UpdateTimeOff(ctx context.Context, id uuid.UUID, newVal float64) error {
+	return emi.employeeStore.UpdateTimeOff(ctx, id, newVal)
 }

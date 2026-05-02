@@ -13,8 +13,9 @@ import (
 
 func TestNewService(t *testing.T) {
 	type args struct {
-		adminStore   datastores.PersonStore
-		contactStore datastores.ContactDatastore
+		adminStore    datastores.PersonStore
+		contactStore  datastores.ContactDatastore
+		employeeStore datastores.EmployeeDatastore
 	}
 
 	testPersonStore := &mockPersonStore{}
@@ -36,7 +37,7 @@ func TestNewService(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, NewService(tt.args.adminStore, tt.args.contactStore))
+			assert.Equal(t, tt.want, NewService(tt.args.adminStore, tt.args.contactStore, tt.args.employeeStore))
 		})
 	}
 }
@@ -138,8 +139,8 @@ type mockEmployeeStore struct {
 	mock.Mock
 }
 
-func (mes *mockEmployeeStore) Add(ctx context.Context, item models.Employee) (id uuid.UUID, err error) {
-	args := mes.Called(ctx, item)
+func (mes *mockEmployeeStore) Add(ctx context.Context, item models.Employee, metadata models.EmployeeMetadata) (id uuid.UUID, err error) {
+	args := mes.Called(ctx, item, metadata)
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }
 func (mes *mockEmployeeStore) Delete(ctx context.Context, id uuid.UUID) (item models.Employee, err error) {
@@ -154,46 +155,27 @@ func (mes *mockEmployeeStore) GetSpecific(ctx context.Context, id uuid.UUID) (it
 	args := mes.Called(ctx, id)
 	return args.Get(0).(models.Employee), args.Error(1)
 }
-func (mes *mockEmployeeStore) Update(ctx context.Context, id uuid.UUID, item models.Employee) (err error) {
+func (mes *mockEmployeeStore) UpdateEmployee(ctx context.Context, id uuid.UUID, item models.Employee) (err error) {
 	args := mes.Called(ctx, id, item)
 	return args.Error(0)
 }
-
-type mockEmployeeMetaStore struct {
-	mock.Mock
-}
-
-func (mems *mockEmployeeMetaStore) Add(ctx context.Context, data models.EmployeeMetadata) error {
-	args := mems.Called(ctx, data)
+func (mes *mockEmployeeStore) UpdateExemptStatus(ctx context.Context, id uuid.UUID, isExempt bool) (err error) {
+	args := mes.Called(ctx, id, isExempt)
 	return args.Error(0)
 }
-
-func (mems *mockEmployeeMetaStore) AdjustSickTime(ctx context.Context, employeeID uuid.UUID, adjustment float64) error {
-	args := mems.Called(ctx, employeeID, adjustment)
+func (mes *mockEmployeeStore) UpdatePay(ctx context.Context, id uuid.UUID, newPayData models.EmployeePay) (err error) {
+	args := mes.Called(ctx, id, newPayData)
 	return args.Error(0)
 }
-
-func (mems *mockEmployeeMetaStore) AdjustTimeOff(ctx context.Context, employeeID uuid.UUID, adjustment float64) error {
-	args := mems.Called(ctx, employeeID, adjustment)
+func (mes *mockEmployeeStore) UpdateSickTime(ctx context.Context, id uuid.UUID, newVal float64) (err error) {
+	args := mes.Called(ctx, id, newVal)
 	return args.Error(0)
 }
-
-func (mems *mockEmployeeMetaStore) Get(ctx context.Context, employeeID uuid.UUID) (models.EmployeeMetadata, error) {
-	args := mems.Called(ctx, employeeID)
-	return args.Get(0).(models.EmployeeMetadata), args.Error(1)
-}
-
-func (mems *mockEmployeeMetaStore) UpdatePay(ctx context.Context, employeeID uuid.UUID, newPayInfo models.EmployeePay) error {
-	args := mems.Called(ctx, employeeID, newPayInfo)
+func (mes *mockEmployeeStore) UpdateStatus(ctx context.Context, id uuid.UUID, newStatus models.EmployeeStatus) (err error) {
+	args := mes.Called(ctx, id, newStatus)
 	return args.Error(0)
 }
-
-func (mems *mockEmployeeMetaStore) UpdateExemptStatus(ctx context.Context, employeeID uuid.UUID, newExemptVal bool) error {
-	args := mems.Called(ctx, employeeID, newExemptVal)
-	return args.Error(0)
-}
-
-func (mems *mockEmployeeMetaStore) UpdateStatus(ctx context.Context, employeeID uuid.UUID, newStatus models.EmployeeStatus) error {
-	args := mems.Called(ctx, employeeID, newStatus)
+func (mes *mockEmployeeStore) UpdateTimeOff(ctx context.Context, id uuid.UUID, newVal float64) (err error) {
+	args := mes.Called(ctx, id, newVal)
 	return args.Error(0)
 }

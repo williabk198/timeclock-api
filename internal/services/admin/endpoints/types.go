@@ -44,18 +44,19 @@ type PersonPhoneData struct {
 }
 
 type EmployeeData struct {
-	ID          string `json:"id"`
-	PersonID    string `json:"personID"`
-	ReportsToID string `json:"reportsToID"`
-	Title       string `json:"title"`
+	ID          string            `json:"id"`
+	PersonID    string            `json:"personID"`
+	ReportsToID string            `json:"reportsToID"`
+	Title       string            `json:"title"`
+	Metadata    *EmployeeMetadata `json:"metadata,omitempty"`
 }
 
 type EmployeeMetadata struct {
-	EmployeeID string             `json:"employeeID"`
-	Pay        models.EmployeePay `json:"pay"`
-	Status     int                `json:"status"`
-	HireDate   int64              `json:"hireDate"` // UNIX Timestamp
-	SickTime   float32            `json:"sickTime"`
-	TimeOff    float32            `json:"timeOff"`
-	Exempt     bool               `json:"exempt"`
+	Pay       models.EmployeePay `json:"pay"`
+	HireDate  int64              `json:"hireDate"`  // UNIX Timestamp
+	StartDate int64              `json:"startDate"` // UNIX Timestamp
+	SickTime  float32            `json:"sickTime"`
+	TimeOff   float32            `json:"timeOff"`
+	Exempt    bool               `json:"exempt"`
+	Status    int                `json:"status"`
 }

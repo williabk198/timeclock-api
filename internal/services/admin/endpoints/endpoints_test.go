@@ -129,7 +129,7 @@ type mockEmployeeMicro struct {
 }
 
 func (mem *mockEmployeeMicro) Add(ctx context.Context, employee models.Employee, metadata models.EmployeeMetadata) (uuid.UUID, error) {
-	args := mem.Called(ctx, employee)
+	args := mem.Called(ctx, employee, metadata)
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }
 
@@ -148,7 +148,32 @@ func (mem *mockEmployeeMicro) GetSpecific(ctx context.Context, id uuid.UUID) (mo
 	return args.Get(0).(models.Employee), args.Error(1)
 }
 
-func (mem *mockEmployeeMicro) Update(ctx context.Context, id uuid.UUID, newVal models.Employee) error {
+func (mem *mockEmployeeMicro) UpdateEmployee(ctx context.Context, id uuid.UUID, newVal models.Employee) error {
+	args := mem.Called(ctx, id, newVal)
+	return args.Error(0)
+}
+
+func (mem *mockEmployeeMicro) UpdateExemptStatus(ctx context.Context, id uuid.UUID, newVal bool) error {
+	args := mem.Called(ctx, id, newVal)
+	return args.Error(0)
+}
+
+func (mem *mockEmployeeMicro) UpdatePay(ctx context.Context, id uuid.UUID, newVal models.EmployeePay) error {
+	args := mem.Called(ctx, id, newVal)
+	return args.Error(0)
+}
+
+func (mem *mockEmployeeMicro) UpdateSickTime(ctx context.Context, id uuid.UUID, newVal float64) error {
+	args := mem.Called(ctx, id, newVal)
+	return args.Error(0)
+}
+
+func (mem *mockEmployeeMicro) UpdateStatus(ctx context.Context, id uuid.UUID, newVal models.EmployeeStatus) error {
+	args := mem.Called(ctx, id, newVal)
+	return args.Error(0)
+}
+
+func (mem *mockEmployeeMicro) UpdateTimeOff(ctx context.Context, id uuid.UUID, newVal float64) error {
 	args := mem.Called(ctx, id, newVal)
 	return args.Error(0)
 }

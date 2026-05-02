@@ -39,7 +39,11 @@ func (a adminEndpoints) Employee() EmployeeEndpoints {
 
 func NewAdminEndpointHandlers(dbSession *sql.DB) Endpoints {
 	return adminEndpoints{
-		adminService: admin.NewService(datastores.NewPersonStore(dbSession), datastores.NewContactStore(dbSession)),
+		adminService: admin.NewService(
+			datastores.NewPersonStore(dbSession),
+			datastores.NewContactStore(dbSession),
+			datastores.NewEmployeeStore(dbSession),
+		),
 	}
 }
 
