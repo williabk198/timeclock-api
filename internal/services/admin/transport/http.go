@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/williabk198/timeclock/internal/models"
 	"github.com/williabk198/timeclock/internal/services/admin/endpoints"
 	"github.com/williabk198/timeclock/pkg/httputil"
 )
@@ -189,6 +190,41 @@ func buildEmployeeEndpoints(employeeRouter *mux.Router, employeeEndpoints endpoi
 		decodeFetchItemRequestData("id"),
 		encodeResponseBodyJSON,
 	)).Methods(http.MethodDelete)
+
+	employeeRouter.Handle("/{id}/exempt", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		employeeEndpoints.UpdateExemptStatus,
+		decodeUpdateItemRequestData[bool]("id"),
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodPut)
+
+	employeeRouter.Handle("/{id}/pay", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		employeeEndpoints.UpdatePay,
+		decodeUpdateItemRequestData[models.EmployeePay]("id"),
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodPut)
+
+	employeeRouter.Handle("/{id}/sickTime", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		employeeEndpoints.UpdateSickTimeHours,
+		decodeUpdateItemRequestData[float64]("id"),
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodPut)
+
+	employeeRouter.Handle("/{id}/status", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		employeeEndpoints.UpdateStatus,
+		decodeUpdateItemRequestData[int]("id"),
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodPut)
+
+	employeeRouter.Handle("/{id}/timeOff", httputil.BuildRouteHandler(
+		routeHandleBuilder,
+		employeeEndpoints.UpdateTimeOffHours,
+		decodeUpdateItemRequestData[float64]("id"),
+		encodeResponseBodyJSON,
+	)).Methods(http.MethodPut)
 }
 
 func errorEncoder(ctx context.Context, err error, w http.ResponseWriter) {
