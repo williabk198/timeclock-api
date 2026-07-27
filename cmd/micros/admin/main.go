@@ -23,6 +23,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to parse database connection data: %v", err)
 	}
+	if err := dbSession.Ping(); err != nil {
+		log.Fatalf("failed to connect to database: %v", err)
+	}
 
 	// Initialize the route handler(s) and the server that will handle incoming requests.
 	adminEndpointHandlers := endpoints.NewAdminEndpointHandlers(dbSession)
