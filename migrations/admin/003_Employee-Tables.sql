@@ -1,5 +1,4 @@
-CREATE SCHEMA metadata;
-CREATE SCHEMA public;
+CREATE SCHEMA IF NOT EXISTS metadata;
 
 CREATE TABLE metadata.employees (
     eid uuid NOT NULL,
