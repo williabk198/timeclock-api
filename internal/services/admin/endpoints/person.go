@@ -1,0 +1,137 @@
+package endpoints
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/williabk198/timeclock/internal/models"
+	"github.com/williabk198/timeclock/internal/services/admin"
+	"github.com/williabk198/timeclock/internal/utils"
+)
+
+type PersonEndpoints interface {
+	Add(ctx context.Context, person PersonData) (PersonData, error)
+	Delete(ctx context.Context, id string) (PersonData, error)
+	GetSpecific(ctx context.Context, id string) (PersonData, error)
+	GetAll(ctx context.Context, reqData GetPaginatedRequestData) ([]PersonData, error)
+	Update(ctx context.Context, urd UpdateRequestData[PersonData]) (PersonData, error)
+}
+
+type adminPersonEndpoints struct {
+	personMicro admin.PersonMicro
+}
+
+// Add implements PersonEndpoints.
+func (ape adminPersonEndpoints) Add(ctx context.Context, person PersonData) (PersonData, error) {
+	pronouns, err := utils.ParsePronouns(person.Pronouns)
+	if err != nil {
+		return PersonData{}, fmt.Errorf("failed to process pronoun data: %w", err)
+	}
+
+	dbPerson := models.Person{
+		Name:        person.Name,
+		DateOfBirth: time.Unix(person.DateOfBirth, 0),
+		Gender:      models.Gender(person.Gender),
+		Pronouns:    pronouns,
+	}
+
+	id, err := ape.personMicro.Add(ctx, dbPerson)
+	if err != nil {
+		return PersonData{}, fmt.Errorf("failed to add person to database: %w", err)
+	}
+
+	person.ID = id.String()
+	return person, nil
+}
+
+// Delete implements PersonEndpoints.
+func (ape adminPersonEndpoints) Delete(ctx context.Context, idStr string) (PersonData, error) {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return PersonData{}, err
+	}
+
+	person, err := ape.personMicro.Delete(ctx, id)
+	if err != nil {
+		return PersonData{}, err
+	}
+
+	return PersonData{
+		ID:          id.String(),
+		Name:        person.Name,
+		DateOfBirth: person.DateOfBirth.Unix(),
+		Gender:      string(person.Gender),
+		Pronouns:    person.Pronouns.String(),
+	}, nil
+}
+
+// GetAll implements PersonEndpoints.
+func (ape adminPersonEndpoints) GetAll(ctx context.Context, reqData GetPaginatedRequestData) ([]PersonData, error) {
+	persons, err := ape.personMicro.GetAll(ctx, reqData.Offset, reqData.Limit)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]PersonData, len(persons))
+	for i, p := range persons {
+		result[i] = PersonData{
+			ID:          p.ID.String(),
+			Name:        p.Name,
+			DateOfBirth: p.DateOfBirth.Unix(),
+			Gender:      string(p.Gender),
+			Pronouns:    p.Pronouns.String(),
+		}
+	}
+
+	return result, nil
+}
+
+// GetSpecific implements PersonEndpoints.
+func (ape adminPersonEndpoints) GetSpecific(ctx context.Context, idStr string) (PersonData, error) {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return PersonData{}, err
+	}
+
+	person, err := ape.personMicro.GetSpecific(ctx, id)
+	if err != nil {
+		return PersonData{}, err
+	}
+
+	return PersonData{
+		ID:          id.String(),
+		Name:        person.Name,
+		DateOfBirth: person.DateOfBirth.Unix(),
+		Gender:      string(person.Gender),
+		Pronouns:    person.Pronouns.String(),
+	}, nil
+}
+
+// Update implements PersonEndpoints.
+func (ape adminPersonEndpoints) Update(ctx context.Context, updateReqData UpdateRequestData[PersonData]) (PersonData, error) {
+	id, err := uuid.Parse(updateReqData.ID)
+	if err != nil {
+		return PersonData{}, err
+	}
+
+	pronouns, err := utils.ParsePronouns(updateReqData.Data.Pronouns)
+	if err != nil {
+		return PersonData{}, err
+	}
+
+	updatedVals := models.Person{
+		Name:        updateReqData.Data.Name,
+		DateOfBirth: time.Unix(updateReqData.Data.DateOfBirth, 0),
+		Gender:      models.Gender(updateReqData.Data.Gender),
+		Pronouns:    pronouns,
+	}
+
+	err = ape.personMicro.Update(ctx, id, updatedVals)
+	if err != nil {
+		return PersonData{}, err
+	}
+
+	return updateReqData.Data, nil
+}

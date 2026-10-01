@@ -21,7 +21,7 @@ var (
 )
 
 func TestBuildRouteHandler(t *testing.T) {
-	// To see if the HTTP hander function returned by BuildRouteHandler is correct,
+	// To see if the HTTP handler function returned by BuildRouteHandler is correct,
 	// we must also execute the returned HTTP handler and examine what was returned
 	// if we expected a successful result. For test cases where we expect an error,
 	// just simply checking whether the error exists is enough.
@@ -46,7 +46,7 @@ func TestBuildRouteHandler(t *testing.T) {
 		args        args[testReqData, testRespData]
 		handlerArgs handlerArgs
 		wantResp    wantResp
-		assertion   assert.ErrorAssertionFunc
+		expectPanic bool
 	}{
 		{
 			name: "Success",
@@ -67,13 +67,12 @@ func TestBuildRouteHandler(t *testing.T) {
 				statusCode: http.StatusOK,
 				body:       []byte("{\"respVal\":\"test\"}\n"),
 			},
-			assertion: assert.NoError,
 		},
 		{
 			// Expect that the function will only return the first error that it encouters.
 			// In this case, it expects that the ErrorEncoder is checked first...
-			name:      "Error, Missing ErrorEncoder",
-			assertion: assert.Error,
+			name:        "Error, Missing ErrorEncoder",
+			expectPanic: true,
 		},
 		{
 			// ... and then the ErrorHandler...
@@ -83,7 +82,7 @@ func TestBuildRouteHandler(t *testing.T) {
 					ErrorEncoder: testErrorEncoder,
 				},
 			},
-			assertion: assert.Error,
+			expectPanic: true,
 		},
 		{
 			// ... and then the EndpointHandlerFunc...
@@ -94,7 +93,7 @@ func TestBuildRouteHandler(t *testing.T) {
 					ErrorHandler: testErrorHandler,
 				},
 			},
-			assertion: assert.Error,
+			expectPanic: true,
 		},
 		{
 			// ... and then the RequestDecoder...
@@ -106,7 +105,7 @@ func TestBuildRouteHandler(t *testing.T) {
 				},
 				endpointHandler: testEndpointHandler,
 			},
-			assertion: assert.Error,
+			expectPanic: true,
 		},
 		{
 			// ... and then the ResponseEncoder...
@@ -119,19 +118,20 @@ func TestBuildRouteHandler(t *testing.T) {
 				endpointHandler: testEndpointHandler,
 				reqDecoder:      testReqDecoder,
 			},
-			assertion: assert.Error,
+			expectPanic: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := BuildRouteHandler(tt.args.builder, tt.args.endpointHandler, tt.args.reqDecoder, tt.args.respEncoder)
-			tt.assertion(t, err)
-			if err != nil {
-				// Do not continue with the test if an error was encountered. Even if one was expected.
+			if tt.expectPanic {
+				assert.Panics(t, func() {
+					BuildRouteHandler(tt.args.builder, tt.args.endpointHandler, tt.args.reqDecoder, tt.args.respEncoder)
+				})
 				return
 			}
 
+			got := BuildRouteHandler(tt.args.builder, tt.args.endpointHandler, tt.args.reqDecoder, tt.args.respEncoder)
 			got.ServeHTTP(tt.handlerArgs.w, tt.handlerArgs.r)
 			resp := tt.handlerArgs.w.(*httptest.ResponseRecorder)
 
