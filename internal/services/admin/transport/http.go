@@ -11,11 +11,16 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/williabk198/timeclock/internal/models"
 	"github.com/williabk198/timeclock/internal/services/admin/endpoints"
+	"github.com/williabk198/timeclock/pkg/authclient"
 	"github.com/williabk198/timeclock/pkg/httputil"
 )
 
-func NewHttpHandler(adminEndpoints endpoints.Endpoints) http.Handler {
+// requiredScope is the token scope required to access any endpoint of the admin service.
+const requiredScope = "user:admin"
+
+func NewHttpHandler(adminEndpoints endpoints.Endpoints, introspector authclient.Introspector) http.Handler {
 	rootRouter := mux.NewRouter()
+	rootRouter.Use(authclient.RequireScope(introspector, requiredScope))
 
 	buildPersonRoutes(rootRouter.PathPrefix("/persons").Subrouter(), adminEndpoints.Person())
 	buildPersonContactRoutes(rootRouter.PathPrefix("/persons/{personID}/contacts").Subrouter(), adminEndpoints.Contact())

@@ -14,6 +14,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/williabk198/timeclock/internal/services/admin/endpoints"
 	"github.com/williabk198/timeclock/internal/services/admin/transport"
+	"github.com/williabk198/timeclock/pkg/authclient"
 )
 
 func main() {
@@ -29,9 +30,14 @@ func main() {
 
 	// Initialize the route handler(s) and the server that will handle incoming requests.
 	adminEndpointHandlers := endpoints.NewAdminEndpointHandlers(dbSession)
+	authServiceClient, err := authclient.NewGRPCClient(os.Getenv("AUTH_GRPC_ADDR"))
+	if err != nil {
+		log.Fatalf("failed to connect to auth service: %v", err)
+	}
+	defer authServiceClient.Close()
 	server := http.Server{
 		Addr:    fmt.Sprintf(":%s", os.Getenv("PORT")),
-		Handler: transport.NewHttpHandler(adminEndpointHandlers),
+		Handler: transport.NewHttpHandler(adminEndpointHandlers, authServiceClient),
 	}
 
 	// Start the server on another thread, and send any errors that may occur to a channel so that it can be handled later, if need be.
