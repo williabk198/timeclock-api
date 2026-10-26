@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -41,6 +42,19 @@ func main() {
 		httpErrChan <- server.ListenAndServe()
 	}()
 
+	grpcAddr := fmt.Sprintf(":%s", os.Getenv("GRPC_PORT"))
+	log.Println("Starting gRPC server at", grpcAddr)
+	listener, err := net.Listen("tcp", grpcAddr)
+	if err != nil {
+		log.Fatalf("failed to setup listener for gPRC server: %v", err)
+	}
+
+	grpcServer := transport.NewGRPCServer(authEndpointHandlers)
+	grpcErrChan := make(chan error)
+	go func() {
+		grpcErrChan <- grpcServer.Serve(listener)
+	}()
+
 	// Create and register a channel that listens for a terminate or interrupt signal from the operating system
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT)
@@ -50,10 +64,15 @@ func main() {
 	case err := <-httpErrChan:
 		// If we get something on the httpErrChan, then an error occurred while starting the HTTP server.
 		log.Printf("failed to start HTTP server: %v", err)
+	case err := <-grpcErrChan:
+		// If we get something on the grpcErrChan, then an erro roccurred while starting the gPRC server.
+		log.Printf("failed to start gPRC server: %v\n", err)
 	case sig := <-sigChan:
 		// If we get a terminate or interrupt signal from the OS, log it and the attempt to gracefully shutdown the server
 		log.Printf("Received %q signal. Shutting down", sig)
 	}
+
+	grpcServer.GracefulStop()
 
 	// Create a timeout context for server.Shutdown. Otherwise, it will wait indefinitely for connections to close
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)

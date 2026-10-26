@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package auth.v1;
+
+option go_package = "github.com/williabk198/timeclock/pkg/authpb/v1;authpbv1";
+
+// TokenIntrospection lets other services validate the opaque tokens issued by the
+// auth service. Since those tokens carry no embedded claims, this is the only way
+// for another service to determine whether a token is active and who it belongs to.
+//
+// This mirrors the semantics of RFC 7662 (OAuth 2.0 Token Introspection); it exists
+// as a gRPC service, alongside the auth service's HTTP "/introspect" endpoint, so
+// that internal, latency-sensitive service-to-service calls can avoid HTTP/JSON
+// overhead while external or non-Go consumers can still use the REST contract.
+service TokenIntrospection {
+  rpc Introspect(IntrospectRequest) returns (IntrospectResponse);
+}
+
+message IntrospectRequest {
+  // The raw opaque token value to validate. Required.
+  string token = 1;
+}
+
+message IntrospectResponse {
+  // Whether the token is currently active (i.e. known, not expired, not revoked).
+  // Every other field is unset/zero-valued when this is false.
+  bool active = 1;
+
+  // The space-separated scopes granted to the token (e.g. "default user:admin").
+  string scope = 2;
+
+  // The kind of token: "access" or "refresh".
+  string token_type = 3;
+
+  // The ID of the user the token belongs to.
+  string sub = 4;
+
+  // Unix timestamp (seconds) of when the token was issued.
+  int64 iat = 5;
+
+  // Unix timestamp (seconds) of when the token expires.
+  int64 exp = 6;
+}
